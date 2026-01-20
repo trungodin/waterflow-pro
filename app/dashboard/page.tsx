@@ -111,7 +111,7 @@ export default function Dashboard() {
                <select 
                  value={selectedMonth}
                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                 className="block w-32 pl-3 pr-8 py-2.5 text-base font-bold text-gray-900 bg-white border-2 border-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 sm:text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                 className="block w-40 pl-3 pr-8 py-2.5 text-base font-bold text-gray-900 bg-white border-2 border-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 sm:text-sm cursor-pointer hover:bg-blue-50 transition-colors"
                >
                  {Array.from({length: 12}, (_, i) => i + 1).map(m => (
                    <option key={m} value={m}>Tháng {m}</option>
@@ -124,7 +124,7 @@ export default function Dashboard() {
                <select
                  value={selectedYear}
                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                 className="block w-32 pl-3 pr-8 py-2.5 text-base font-bold text-gray-900 bg-white border-2 border-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 sm:text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+                 className="block w-40 pl-3 pr-8 py-2.5 text-base font-bold text-gray-900 bg-white border-2 border-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 sm:text-sm cursor-pointer hover:bg-blue-50 transition-colors"
                >
                  {[currentYear, currentYear - 1, currentYear - 2].map(y => (
                    <option key={y} value={y}>Năm {y}</option>
