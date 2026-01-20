@@ -25,6 +25,9 @@ export default function Navbar() {
             <Link href="/customers" className="text-gray-700 hover:text-blue-600 transition-colors">
               Khách hàng
             </Link>
+            <Link href="/readings" className="text-gray-700 hover:text-blue-600 transition-colors">
+              Ghi chỉ số
+            </Link>
             <Link href="/login" className="text-gray-700 hover:text-blue-600 transition-colors">
               Đăng nhập
             </Link>

@@ -46,9 +46,9 @@ export default function Dashboard() {
       const { data: mnInvoices } = await supabase.from('invoices')
         .select('consumption')
         .eq('period_month', selectedMonth)
-        .eq('period_year', selectedYear)
+        .eq('period_year', selectedYear) as any
       
-      const consumptionMonth = mnInvoices?.reduce((sum, inv) => sum + (inv.consumption || 0), 0) || 0
+      const consumptionMonth = mnInvoices?.reduce((sum: number, inv: any) => sum + (inv.consumption || 0), 0) || 0
 
       // Last month (for delta)
       const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1
@@ -57,34 +57,34 @@ export default function Dashboard() {
       const { data: prevMnInvoices } = await supabase.from('invoices')
         .select('consumption')
         .eq('period_month', prevMonth)
-        .eq('period_year', prevYear)
+        .eq('period_year', prevYear) as any
         
-      const consumptionMonthPrev = prevMnInvoices?.reduce((sum, inv) => sum + (inv.consumption || 0), 0) || 0
+      const consumptionMonthPrev = prevMnInvoices?.reduce((sum: number, inv: any) => sum + (inv.consumption || 0), 0) || 0
 
       // Year Consumption
       const { data: yrInvoices } = await supabase.from('invoices')
          .select('consumption')
-         .eq('period_year', selectedYear)
+         .eq('period_year', selectedYear) as any
       
-      const consumptionYear = yrInvoices?.reduce((sum, inv) => sum + (inv.consumption || 0), 0) || 0
+      const consumptionYear = yrInvoices?.reduce((sum: number, inv: any) => sum + (inv.consumption || 0), 0) || 0
 
       // Zero Consumption Count
-      const zeroCount = mnInvoices?.filter(inv => inv.consumption === 0).length || 0
+      const zeroCount = mnInvoices?.filter((inv: any) => inv.consumption === 0).length || 0
 
       // 3. Fetch Revenue Stats (from monthly_revenue view)
       const { data: revData } = await supabase.from('monthly_revenue')
         .select('*')
-        .eq('period_year', selectedYear)
+        .eq('period_year', selectedYear) as any
       
-      const revenueYear = revData?.reduce((sum, r) => sum + (r.total_revenue || 0), 0) || 0
-      const collectedYear = revData?.reduce((sum, r) => sum + (r.collected_revenue || 0), 0) || 0
-      const outstandingYear = revData?.reduce((sum, r) => sum + (r.outstanding_revenue || 0), 0) || 0
+      const revenueYear = revData?.reduce((sum: number, r: any) => sum + (r.total_revenue || 0), 0) || 0
+      const collectedYear = revData?.reduce((sum: number, r: any) => sum + (r.collected_revenue || 0), 0) || 0
+      const outstandingYear = revData?.reduce((sum: number, r: any) => sum + (r.outstanding_revenue || 0), 0) || 0
 
       // Previous Year Revenue
       const { data: revDataPrev } = await supabase.from('monthly_revenue')
         .select('total_revenue')
-        .eq('period_year', selectedYear - 1)
-      const revenueYearPrev = revDataPrev?.reduce((sum, r) => sum + (r.total_revenue || 0), 0) || 0
+        .eq('period_year', selectedYear - 1) as any
+      const revenueYearPrev = revDataPrev?.reduce((sum: number, r: any) => sum + (r.total_revenue || 0), 0) || 0
 
       setStats({
         totalCustomers: totalCustomers || 0,
@@ -103,7 +103,7 @@ export default function Dashboard() {
       // Combine current year and previous year data
       const chartPoints = Array.from({ length: 12 }, (_, i) => {
         const month = i + 1
-        const curr = revData?.find(r => r.period_month === month)
+        const curr = revData?.find((r: any) => r.period_month === month)
         // Note: We might need to fetch prev year monthly data separately for detailed chart
         return {
           name: `T${month}`,
