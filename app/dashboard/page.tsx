@@ -2,17 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
-import { supabase } from '@/lib/supabase'
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar
 } from 'recharts'
+import { getDashboardData, getComparisonData } from '@/app/actions/dashboard'
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalCustomers: 0,
-    activeCustomers: 0,
+    activeCustomers: 0, 
     monthlyConsumption: 0,
     monthlyConsumptionPrev: 0,
     yearlyConsumption: 0,
@@ -31,89 +31,47 @@ export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
 
   useEffect(() => {
-    fetchDashboardData()
+    fetchData()
   }, [selectedYear, selectedMonth])
 
-  const fetchDashboardData = async () => {
+  const fetchData = async () => {
     setLoading(true)
     try {
-      // 1. Fetch Customer Stats
-      const { count: totalCustomers } = await supabase.from('customers').select('*', { count: 'exact', head: true })
-      const { count: activeCustomers } = await supabase.from('customers').select('*', { count: 'exact', head: true }).eq('status', 'active')
-
-      // 2. Fetch Consumption Stats (from Invoices)
-      // This month
-      const { data: mnInvoices } = await supabase.from('invoices')
-        .select('consumption')
-        .eq('period_month', selectedMonth)
-        .eq('period_year', selectedYear) as any
+      // 1. Fetch KPI Data (Server Action)
+      const kpiData = await getDashboardData(selectedMonth, selectedYear, selectedYear)
       
-      const consumptionMonth = mnInvoices?.reduce((sum: number, inv: any) => sum + (inv.consumption || 0), 0) || 0
-
-      // Last month (for delta)
-      const prevMonth = selectedMonth === 1 ? 12 : selectedMonth - 1
-      const prevYear = selectedMonth === 1 ? selectedYear - 1 : selectedYear
-      
-      const { data: prevMnInvoices } = await supabase.from('invoices')
-        .select('consumption')
-        .eq('period_month', prevMonth)
-        .eq('period_year', prevYear) as any
-        
-      const consumptionMonthPrev = prevMnInvoices?.reduce((sum: number, inv: any) => sum + (inv.consumption || 0), 0) || 0
-
-      // Year Consumption
-      const { data: yrInvoices } = await supabase.from('invoices')
-         .select('consumption')
-         .eq('period_year', selectedYear) as any
-      
-      const consumptionYear = yrInvoices?.reduce((sum: number, inv: any) => sum + (inv.consumption || 0), 0) || 0
-
-      // Zero Consumption Count
-      const zeroCount = mnInvoices?.filter((inv: any) => inv.consumption === 0).length || 0
-
-      // 3. Fetch Revenue Stats (from monthly_revenue view)
-      const { data: revData } = await supabase.from('monthly_revenue')
-        .select('*')
-        .eq('period_year', selectedYear) as any
-      
-      const revenueYear = revData?.reduce((sum: number, r: any) => sum + (r.total_revenue || 0), 0) || 0
-      const collectedYear = revData?.reduce((sum: number, r: any) => sum + (r.collected_revenue || 0), 0) || 0
-      const outstandingYear = revData?.reduce((sum: number, r: any) => sum + (r.outstanding_revenue || 0), 0) || 0
-
-      // Previous Year Revenue
-      const { data: revDataPrev } = await supabase.from('monthly_revenue')
-        .select('total_revenue')
-        .eq('period_year', selectedYear - 1) as any
-      const revenueYearPrev = revDataPrev?.reduce((sum: number, r: any) => sum + (r.total_revenue || 0), 0) || 0
-
       setStats({
-        totalCustomers: totalCustomers || 0,
-        activeCustomers: activeCustomers || 0,
-        monthlyConsumption: consumptionMonth,
-        monthlyConsumptionPrev: consumptionMonthPrev,
-        yearlyConsumption: consumptionYear,
-        zeroConsumptionCount: zeroCount,
-        yearlyRevenue: revenueYear,
-        yearlyRevenuePrev: revenueYearPrev,
-        yearlyCollected: collectedYear,
-        yearlyOutstanding: outstandingYear
+        totalCustomers: Number(kpiData.TongDHN_Current) || 0,
+        activeCustomers: Number(kpiData.TongDHN_Current) || 0, 
+        monthlyConsumption: Number(kpiData.SanLuong_Current) || 0,
+        monthlyConsumptionPrev: Number(kpiData.SanLuong_Prev) || 0,
+        yearlyConsumption: Number(kpiData.SanLuong_Year) || 0,
+        zeroConsumptionCount: Number(kpiData.DHN_BangKhong_Current) || 0,
+        yearlyRevenue: Number(kpiData.DoanhThu) || 0,
+        yearlyRevenuePrev: Number(kpiData.DoanhThu_Prev) || 0,
+        yearlyCollected: Number(kpiData.ThucThu) || 0,
+        yearlyOutstanding: (Number(kpiData.DoanhThu) || 0) - (Number(kpiData.ThucThu) || 0)
       })
 
-      // 4. Prepare Chart Data
-      // Combine current year and previous year data
-      const chartPoints = Array.from({ length: 12 }, (_, i) => {
-        const month = i + 1
-        const curr = revData?.find((r: any) => r.period_month === month)
-        // Note: We might need to fetch prev year monthly data separately for detailed chart
+      // 2. Fetch Chart Comparison Data (Current Year vs Prev Year)
+      const prevYear = selectedYear - 1
+      const { revenueData, collectionData } = await getComparisonData(selectedYear, prevYear)
+      
+      // Process Data for Recharts
+      const months = Array.from({ length: 12 }, (_, i) => i + 1)
+      const processed = months.map(m => {
+        const revCurr = revenueData.find((d: any) => d.Ky == m && d.Nam == selectedYear)
+        const colCurr = collectionData.find((d: any) => d.Ky == m && d.Nam == selectedYear)
+        
         return {
-          name: `T${month}`,
-          DoanhThu: curr?.total_revenue || 0,
-          ThucThu: curr?.collected_revenue || 0,
-          TonThu: curr?.outstanding_revenue || 0
+          name: `T${m}`,
+          DoanhThu: Number(revCurr?.DoanhThu) || 0,
+          ThucThu: Number(colCurr?.ThucThu) || 0,
+          TonThu: (Number(revCurr?.DoanhThu) || 0) - (Number(colCurr?.ThucThu) || 0)
         }
       })
-      
-      setChartData(chartPoints)
+
+      setChartData(processed)
 
     } catch (error) {
       console.error('Error loading dashboard:', error)
@@ -166,7 +124,7 @@ export default function Dashboard() {
              </select>
              
              <button 
-                onClick={fetchDashboardData}
+                onClick={fetchData}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
              >
                Làm mới
