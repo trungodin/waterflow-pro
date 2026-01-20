@@ -1,20 +1,23 @@
-# 🎉 PROGRESS UPDATE - UI FIXES (LOCAL COMMIT)
+# 🎉 PROGRESS UPDATE - DASHBOARD METRICS REFINEMENT
 
 **Date:** 2026-01-20
-**Status:** Dashboard Layout Optimized (Local)
+**Status:** Metrics Refined & Layout Fixed (Local)
 
 ---
+
+## 📊 METRIC ENHANCEMENTS
+- **Water Value Breakdown:** Added "Tiền nước" (Base Water Rate) to Revenue, Collection, and Outstanding stats.
+- **Completion Rate Upgrade:** Added a specific completion rate (percentage bar) for "Tiền nước" within the KPI card.
+- **Accurate Year-over-Year:** Switched Revenue Comparison logic to **Year-to-Date (YTD)**. 
+  - *Previous:* Compared Current YTD vs Full Previous Year (causing skews like -90%).
+  - *Now:* Compares Current YTD vs Previous Year YTD (e.g., Jan 2026 vs Jan 2025).
 
 ## 🎨 UI IMPROVEMENTS
-- **Navbar Overlap Fix:** Added top padding (`pt-20`) to Dashboard, Customers, and Readings pages to prevent the fixed Navbar from covering page content.
-- **Fixed Header Alignment:** The Dashboard filter section is now properly aligned.
-- **Type Safety:** Resolved TypeScript issues.
+- **Navbar Fixed:** Pages now have proper top padding (`pt-20`) to avoid overlap.
+- **Header Aligned:** Dashboard filters are neat and tidy.
 
 ## 🔄 DEPLOYMENT STATUS
-- **Local:** Fixes committed to git.
-- **Production (Vercel):** *Pending user request.* (As per instruction).
+- **Local:** All fixes committed.
+- **Production:** Pending manual deploy request.
 
 ---
-
-## 🌐 LOCAL TESTING
-Check `http://localhost:3000/dashboard` to verify the fix.

@@ -197,68 +197,84 @@ export default function Dashboard() {
               📊 Thu tiền (Năm {selectedYear})
             </h3>
             
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-4">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-4 items-stretch">
                {/* Doanh thu */}
-               <div className="rounded-lg p-4 border border-gray-200">
-                 <dt className="text-sm font-medium text-gray-500 truncate">Doanh thu</dt>
-                 <dd className="mt-1 text-2xl font-bold text-green-600">
-                    {formatCurrency(stats.yearlyRevenue)}
-                 </dd>
-                 <p className="text-xs text-gray-500 mt-1">
-                   Tiền nước: {formatCurrency(stats.yearlyRevenueGB)}
-                 </p>
-                 {stats.yearlyRevenuePrev > 0 && (
-                   <p className="text-xs text-gray-500 mt-1">
-                     So với năm trước: {stats.yearlyRevenue >= stats.yearlyRevenuePrev ? '+' : ''}
-                     {(((stats.yearlyRevenue - stats.yearlyRevenuePrev) / stats.yearlyRevenuePrev) * 100).toFixed(1)}%
+               <div className="rounded-lg p-4 border border-gray-200 flex flex-col justify-between">
+                 <div>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Doanh thu</dt>
+                    <dd className="mt-1 flex items-baseline gap-2 flex-wrap">
+                        <span className="text-2xl font-bold text-green-600">
+                            {formatCurrency(stats.yearlyRevenue)}
+                        </span>
+                        {stats.yearlyRevenuePrev > 0 && (
+                        <span className={`text-sm font-semibold ${stats.yearlyRevenue >= stats.yearlyRevenuePrev ? 'text-green-600' : 'text-red-600'}`}>
+                            {stats.yearlyRevenue >= stats.yearlyRevenuePrev ? '▲' : '▼'}
+                            {Math.abs(((stats.yearlyRevenue - stats.yearlyRevenuePrev) / stats.yearlyRevenuePrev) * 100).toFixed(1)}%
+                        </span>
+                        )}
+                    </dd>
+                 </div>
+                 <div className="mt-4 pt-3 border-t border-gray-100">
+                   <p className="text-sm font-bold text-gray-700">
+                     Tiền nước: <span className="text-green-700">{formatCurrency(stats.yearlyRevenueGB)}</span>
                    </p>
-                 )}
+                 </div>
                </div>
 
                {/* Thực thu */}
-               <div className="rounded-lg p-4 border border-gray-200">
-                 <dt className="text-sm font-medium text-gray-500 truncate">Thực thu</dt>
-                 <dd className="mt-1 text-2xl font-bold text-green-600">
-                    {formatCurrency(stats.yearlyCollected)}
-                 </dd>
-                 <p className="text-xs text-gray-500 mt-1">
-                   Tiền nước: {formatCurrency(stats.yearlyCollectedGB)}
-                 </p>
+               <div className="rounded-lg p-4 border border-gray-200 flex flex-col justify-between">
+                 <div>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Thực thu</dt>
+                    <dd className="mt-1 text-2xl font-bold text-green-600">
+                        {formatCurrency(stats.yearlyCollected)}
+                    </dd>
+                 </div>
+                 <div className="mt-4 pt-3 border-t border-gray-100">
+                   <p className="text-sm font-bold text-gray-700">
+                     Tiền nước: <span className="text-green-700">{formatCurrency(stats.yearlyCollectedGB)}</span>
+                   </p>
+                 </div>
                </div>
 
                {/* Tồn thu */}
-               <div className="rounded-lg p-4 border border-gray-200">
-                 <dt className="text-sm font-medium text-gray-500 truncate">Tồn thu</dt>
-                 <dd className="mt-1 text-2xl font-bold text-red-500">
-                    {formatCurrency(stats.yearlyOutstanding)}
-                 </dd>
-                 <p className="text-xs text-gray-500 mt-1">
-                   Tiền nước: {formatCurrency(stats.yearlyOutstandingGB)}
-                 </p>
+               <div className="rounded-lg p-4 border border-gray-200 flex flex-col justify-between">
+                 <div>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Tồn thu</dt>
+                    <dd className="mt-1 text-2xl font-bold text-red-500">
+                        {formatCurrency(stats.yearlyOutstanding)}
+                    </dd>
+                 </div>
+                 <div className="mt-4 pt-3 border-t border-gray-100">
+                   <p className="text-sm font-bold text-gray-700">
+                     Tiền nước: <span className="text-red-600">{formatCurrency(stats.yearlyOutstandingGB)}</span>
+                   </p>
+                 </div>
                </div>
 
                {/* % Đạt */}
-               <div className="rounded-lg p-4 border border-gray-200">
-                 <dt className="text-sm font-medium text-gray-500 truncate">% Đạt</dt>
-                 <dd className="mt-1 text-2xl font-bold text-blue-600">
-                    {stats.yearlyRevenue > 0 ? ((stats.yearlyCollected / stats.yearlyRevenue) * 100).toFixed(2) : 0}%
-                 </dd>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                     <div 
-                       className="bg-blue-600 h-2.5 rounded-full" 
-                       style={{ width: `${stats.yearlyRevenue > 0 ? Math.min((stats.yearlyCollected / stats.yearlyRevenue) * 100, 100) : 0}%` }}
-                     ></div>
-                  </div>
+               <div className="rounded-lg p-4 border border-gray-200 flex flex-col justify-between">
+                 <div>
+                    <dt className="text-sm font-medium text-gray-500 truncate">% Đạt</dt>
+                    <dd className="mt-1 text-2xl font-bold text-blue-600">
+                        {stats.yearlyRevenue > 0 ? ((stats.yearlyCollected / stats.yearlyRevenue) * 100).toFixed(2) : 0}%
+                    </dd>
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div 
+                        className="bg-blue-600 h-2.5 rounded-full" 
+                        style={{ width: `${stats.yearlyRevenue > 0 ? Math.min((stats.yearlyCollected / stats.yearlyRevenue) * 100, 100) : 0}%` }}
+                        ></div>
+                    </div>
+                 </div>
 
-                  {/* % Đạt Tiền Nước */}
-                  <div className="mt-3 pt-2 border-t border-gray-100">
-                     <div className="flex justify-between items-baseline">
-                        <dt className="text-xs font-medium text-gray-500">Tiền nước</dt>
-                        <dd className="text-lg font-bold text-cyan-600">
+                 {/* % Đạt Tiền Nước */}
+                 <div className="mt-3 pt-3 border-t border-gray-100">
+                     <div className="flex justify-between items-baseline mb-1">
+                        <span className="text-sm font-bold text-gray-700">Tiền nước</span>
+                        <span className="text-lg font-bold text-cyan-600">
                            {stats.yearlyRevenueGB > 0 ? ((stats.yearlyCollectedGB / stats.yearlyRevenueGB) * 100).toFixed(2) : 0}%
-                        </dd>
+                        </span>
                      </div>
-                     <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                     <div className="w-full bg-gray-200 rounded-full h-1.5">
                         <div 
                           className="bg-cyan-500 h-1.5 rounded-full" 
                           style={{ width: `${stats.yearlyRevenueGB > 0 ? Math.min((stats.yearlyCollectedGB / stats.yearlyRevenueGB) * 100, 100) : 0}%` }}
