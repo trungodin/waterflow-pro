@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WaterFlow Pro",
+  title: "Đội Quản lý Ghi thu nước",
   description: "Hệ thống quản lý ghi thu nước thông minh",
 };
 

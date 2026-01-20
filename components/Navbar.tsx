@@ -11,7 +11,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <span className="text-2xl">💧</span>
-            <span className="text-xl font-bold text-gray-900">WaterFlow Pro</span>
+            <span className="text-xl font-bold text-gray-900">Đội Quản lý Ghi thu nước</span>
           </Link>
 
           {/* Desktop Menu */}
@@ -21,12 +21,6 @@ export default function Navbar() {
             </Link>
             <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 transition-colors">
               Dashboard
-            </Link>
-            <Link href="/customers" className="text-gray-700 hover:text-blue-600 transition-colors">
-              Khách hàng
-            </Link>
-            <Link href="/readings" className="text-gray-700 hover:text-blue-600 transition-colors">
-              Ghi chỉ số
             </Link>
             <Link href="/login" className="text-gray-700 hover:text-blue-600 transition-colors">
               Đăng nhập
