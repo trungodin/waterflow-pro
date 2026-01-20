@@ -1,22 +1,21 @@
-# 🎉 PROGRESS UPDATE - PREMIUM REDESIGN
+# 🎉 PROGRESS UPDATE - LOGIC & NAMING
 
 **Date:** 2026-01-20
-**Status:** Professional/Premium UI Completed
+**Status:** Logic Adjusted & Renamed
 
 ---
 
-## 💎 DESIGN OVERHAUL
-- **Visual Style:** Transformed into a "Clean Business" aesthetic with white cards, soft shadows (`shadow-sm` -> `hover:shadow-md`), and rounded corners.
-- **Iconography:** Added subtle watermark SVG icons to each KPI card for a modern, dashboard-app feel.
-- **Typography:** Upgraded to high-impact bold fonts (`text-3xl`, `font-extrabold`) for key metrics.
-- **Structured Layout:** Defined clear sections for "Chỉ số Sản xuất" (Production) and "Tình hình Kinh doanh" (Revenue) with distinct visual cues.
+## ⚡ LOGIC CHANGE (REVENUE)
+- **Full Year Basis:** "Kinh Doanh" (Business/Revenue) stats now calculate for the **Entire Year** selected, regardless of the Month filter.
+- **Production (No Change):** "Sản Xuất" stats still respect the specific Month filter selected.
 
-## 🧹 REFINEMENTS
-- **Removed:** "Đồng hồ nước hoạt động" (as requested).
-- **Control Bar:** Redesigned filter bar to be cleaner with better alignment.
+## 🏷️ RENAMING
+- **Concise Titles:**
+  - "Chỉ số Sản xuất" -> **"Sản Xuất"**
+  - "Tình hình Kinh doanh" -> **"Kinh Doanh"**
 
 ## 🔄 DEPLOYMENT
-- **Local:** Design committed.
-- **Next:** User to review "The Professional Look".
+- **Local:** Committed.
+- **Next:** User to verify calculations on Localhost.
 
 ---
