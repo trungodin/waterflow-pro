@@ -22,7 +22,8 @@ export default function LoginPage() {
     
     try {
       await signIn(email, password)
-      router.push('/dashboard')
+      // Use window.location for full page reload to ensure auth state is updated
+      window.location.href = '/dashboard'
     } catch (err: any) {
       setError(err.message || 'Đăng nhập thất bại')
     } finally {

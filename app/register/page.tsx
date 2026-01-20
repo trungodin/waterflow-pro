@@ -23,7 +23,7 @@ export default function RegisterPage() {
       await signUp(email, password, fullName)
       setSuccess(true)
       setTimeout(() => {
-        router.push('/login')
+        window.location.href = '/login'
       }, 2000)
     } catch (err: any) {
       setError(err.message || 'Đăng ký thất bại')
