@@ -48,7 +48,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess }: AddCust
     try {
       const { error } = await supabase
         .from('customers')
-        .insert([formData])
+        .insert([formData] as any)
 
       if (error) {
         if (error.code === '23505') { // Unique violation
