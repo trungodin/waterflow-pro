@@ -135,6 +135,7 @@ export default function ReadingsPage() {
         // Update
         const { error: updateError } = await supabase
           .from('meter_readings')
+          // @ts-ignore
           .update(payload)
           .eq('id', item.readingId)
         error = updateError
@@ -165,7 +166,7 @@ export default function ReadingsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-20">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
