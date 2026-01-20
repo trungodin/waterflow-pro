@@ -102,18 +102,16 @@ export default function Dashboard() {
         {/* Header & Filters */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard Tổng quan</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Số liệu thống kê Kỳ {selectedMonth}/{selectedYear}
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
              <div className="relative">
+               <span className="absolute -top-2 left-2 px-1 bg-white text-xs font-bold text-blue-600 z-10">Tháng</span>
                <select 
                  value={selectedMonth}
                  onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                 className="block w-32 pl-3 pr-8 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm"
+                 className="block w-32 pl-3 pr-8 py-2.5 text-base font-bold text-gray-900 bg-white border-2 border-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 sm:text-sm cursor-pointer hover:bg-blue-50 transition-colors"
                >
                  {Array.from({length: 12}, (_, i) => i + 1).map(m => (
                    <option key={m} value={m}>Tháng {m}</option>
@@ -122,10 +120,11 @@ export default function Dashboard() {
              </div>
              
              <div className="relative">
+               <span className="absolute -top-2 left-2 px-1 bg-white text-xs font-bold text-blue-600 z-10">Năm</span>
                <select
                  value={selectedYear}
                  onChange={(e) => setSelectedYear(Number(e.target.value))}
-                 className="block w-32 pl-3 pr-8 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm"
+                 className="block w-32 pl-3 pr-8 py-2.5 text-base font-bold text-gray-900 bg-white border-2 border-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-600 sm:text-sm cursor-pointer hover:bg-blue-50 transition-colors"
                >
                  {[currentYear, currentYear - 1, currentYear - 2].map(y => (
                    <option key={y} value={y}>Năm {y}</option>
@@ -135,7 +134,7 @@ export default function Dashboard() {
              
              <button 
                 onClick={fetchData}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap"
+                className="inline-flex items-center px-6 py-2.5 border-2 border-blue-600 rounded-lg shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap transition-colors"
              >
                Làm mới
              </button>
@@ -284,45 +283,6 @@ export default function Dashboard() {
                </div>
             </div>
           </div>
-        </div>
-
-        {/* 3. BIỂU ĐỒ */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-           {/* Biểu đồ Doanh thu & Thực thu */}
-           <div className="bg-white shadow rounded-lg p-6">
-             <h3 className="text-lg font-medium text-gray-900 mb-4">Biểu đồ Doanh thu (Năm {selectedYear})</h3>
-             <div className="h-80">
-               <ResponsiveContainer width="100%" height="100%">
-                 <LineChart data={chartData}>
-                   <CartesianGrid strokeDasharray="3 3" />
-                   <XAxis dataKey="name" />
-                   <YAxis />
-                   <Tooltip formatter={(value: any) => formatCurrency(Number(value) || 0)} />
-                   <Legend />
-                   <Line type="monotone" dataKey="DoanhThu" stroke="#FF5733" name="Doanh Thu" strokeWidth={2} />
-                   <Line type="monotone" dataKey="ThucThu" stroke="#33CFFF" name="Thực Thu" strokeWidth={2} />
-                 </LineChart>
-               </ResponsiveContainer>
-             </div>
-           </div>
-
-           {/* Biểu đồ Tỷ lệ thu */}
-           <div className="bg-white shadow rounded-lg p-6">
-             <h3 className="text-lg font-medium text-gray-900 mb-4">Tỷ lệ Thực thu theo tháng</h3>
-             <div className="h-80">
-               <ResponsiveContainer width="100%" height="100%">
-                 <BarChart data={chartData}>
-                   <CartesianGrid strokeDasharray="3 3" />
-                   <XAxis dataKey="name" />
-                   <YAxis unit="%" />
-                   <Tooltip formatter={(value: any) => `${(Number(value) || 0).toFixed(1)}%`} />
-                   <Legend />
-                   <Bar dataKey="ThucThu" fill="#82ca9d" name="Thực Thu" stackId="a" />
-                   <Bar dataKey="TonThu" fill="#ff4b4b" name="Tồn Thu" stackId="a" />
-                 </BarChart>
-               </ResponsiveContainer>
-             </div>
-           </div>
         </div>
 
       </main>
