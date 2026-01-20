@@ -18,9 +18,12 @@ export default function Dashboard() {
     yearlyConsumption: 0,
     zeroConsumptionCount: 0,
     yearlyRevenue: 0,
+    yearlyRevenueGB: 0,
     yearlyRevenuePrev: 0,
     yearlyCollected: 0,
+    yearlyCollectedGB: 0,
     yearlyOutstanding: 0,
+    yearlyOutstandingGB: 0,
   })
   const [chartData, setChartData] = useState<any[]>([])
   
@@ -48,9 +51,12 @@ export default function Dashboard() {
         yearlyConsumption: Number(kpiData.SanLuong_Year) || 0,
         zeroConsumptionCount: Number(kpiData.DHN_BangKhong_Current) || 0,
         yearlyRevenue: Number(kpiData.DoanhThu) || 0,
+        yearlyRevenueGB: Number(kpiData.DoanhThu_GB) || 0,
         yearlyRevenuePrev: Number(kpiData.DoanhThu_Prev) || 0,
         yearlyCollected: Number(kpiData.ThucThu) || 0,
-        yearlyOutstanding: (Number(kpiData.DoanhThu) || 0) - (Number(kpiData.ThucThu) || 0)
+        yearlyCollectedGB: Number(kpiData.ThucThu_GB) || 0,
+        yearlyOutstanding: (Number(kpiData.DoanhThu) || 0) - (Number(kpiData.ThucThu) || 0),
+        yearlyOutstandingGB: (Number(kpiData.DoanhThu_GB) || 0) - (Number(kpiData.ThucThu_GB) || 0)
       })
 
       // 2. Fetch Chart Comparison Data (Current Year vs Prev Year)
@@ -198,6 +204,9 @@ export default function Dashboard() {
                  <dd className="mt-1 text-2xl font-bold text-green-600">
                     {formatCurrency(stats.yearlyRevenue)}
                  </dd>
+                 <p className="text-xs text-gray-500 mt-1">
+                   Tiền nước: {formatCurrency(stats.yearlyRevenueGB)}
+                 </p>
                  {stats.yearlyRevenuePrev > 0 && (
                    <p className="text-xs text-gray-500 mt-1">
                      So với năm trước: {stats.yearlyRevenue >= stats.yearlyRevenuePrev ? '+' : ''}
@@ -212,6 +221,9 @@ export default function Dashboard() {
                  <dd className="mt-1 text-2xl font-bold text-green-600">
                     {formatCurrency(stats.yearlyCollected)}
                  </dd>
+                 <p className="text-xs text-gray-500 mt-1">
+                   Tiền nước: {formatCurrency(stats.yearlyCollectedGB)}
+                 </p>
                </div>
 
                {/* Tồn thu */}
@@ -220,6 +232,9 @@ export default function Dashboard() {
                  <dd className="mt-1 text-2xl font-bold text-red-500">
                     {formatCurrency(stats.yearlyOutstanding)}
                  </dd>
+                 <p className="text-xs text-gray-500 mt-1">
+                   Tiền nước: {formatCurrency(stats.yearlyOutstandingGB)}
+                 </p>
                </div>
 
                {/* % Đạt */}
