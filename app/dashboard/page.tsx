@@ -243,12 +243,28 @@ export default function Dashboard() {
                  <dd className="mt-1 text-2xl font-bold text-blue-600">
                     {stats.yearlyRevenue > 0 ? ((stats.yearlyCollected / stats.yearlyRevenue) * 100).toFixed(2) : 0}%
                  </dd>
-                 <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                    <div 
-                      className="bg-blue-600 h-2.5 rounded-full" 
-                      style={{ width: `${stats.yearlyRevenue > 0 ? Math.min((stats.yearlyCollected / stats.yearlyRevenue) * 100, 100) : 0}%` }}
-                    ></div>
-                 </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                     <div 
+                       className="bg-blue-600 h-2.5 rounded-full" 
+                       style={{ width: `${stats.yearlyRevenue > 0 ? Math.min((stats.yearlyCollected / stats.yearlyRevenue) * 100, 100) : 0}%` }}
+                     ></div>
+                  </div>
+
+                  {/* % Đạt Tiền Nước */}
+                  <div className="mt-3 pt-2 border-t border-gray-100">
+                     <div className="flex justify-between items-baseline">
+                        <dt className="text-xs font-medium text-gray-500">Tiền nước</dt>
+                        <dd className="text-lg font-bold text-cyan-600">
+                           {stats.yearlyRevenueGB > 0 ? ((stats.yearlyCollectedGB / stats.yearlyRevenueGB) * 100).toFixed(2) : 0}%
+                        </dd>
+                     </div>
+                     <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                        <div 
+                          className="bg-cyan-500 h-1.5 rounded-full" 
+                          style={{ width: `${stats.yearlyRevenueGB > 0 ? Math.min((stats.yearlyCollectedGB / stats.yearlyRevenueGB) * 100, 100) : 0}%` }}
+                        ></div>
+                     </div>
+                  </div>
                </div>
             </div>
           </div>
