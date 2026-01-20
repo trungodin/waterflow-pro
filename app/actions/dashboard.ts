@@ -12,23 +12,23 @@ export async function getDashboardData(ky: number, nam: number, namRevenue: numb
     TermA_CTE AS (
         SELECT SUM(hd_a.TONGCONG_BD) AS Sum_A_tongcong_bd, SUM(hd_a.GIABAN_BD) AS Sum_A_giaban_bd
         FROM HoaDon hd_a WITH (NOLOCK)
-        WHERE hd_a.NAM = ${currentYearForRevenue} AND hd_a.KY <= ${ky}
+        WHERE hd_a.NAM = ${currentYearForRevenue}
           AND (hd_a.NV_GIAI <> 'NKD' OR hd_a.NGAYGIAI IS NULL OR YEAR(hd_a.NGAYGIAI) <> hd_a.NAM)
     ),
     TermB_CTE AS (
         SELECT SUM(hd_b.TONGCONG_BD - hd_b.TONGCONG) AS Sum_B_adjustment_tc, SUM(hd_b.GIABAN_BD - hd_b.GIABAN) AS Sum_B_adjustment_gb
         FROM HoaDon hd_b WITH (NOLOCK)
-        WHERE hd_b.NAM = ${currentYearForRevenue} AND hd_b.KY <= ${ky} AND YEAR(hd_b.NGAYGIAI) = ${currentYearForRevenue} AND hd_b.NGAYGIAI IS NOT NULL AND hd_b.NGAYGIAI <= '${endOfYearStr}'
+        WHERE hd_b.NAM = ${currentYearForRevenue} AND YEAR(hd_b.NGAYGIAI) = ${currentYearForRevenue} AND hd_b.NGAYGIAI IS NOT NULL AND hd_b.NGAYGIAI <= '${endOfYearStr}'
     ),
     ThucThu_CTE AS (
         SELECT SUM(t.TONGCONG) AS ActualThucThu_TC, SUM(t.GIABAN) AS ActualThucThu_GB
         FROM HoaDon t WITH (NOLOCK)
-        WHERE t.NAM = ${currentYearForRevenue} AND t.KY <= ${ky} AND t.NGAYGIAI IS NOT NULL AND t.NGAYGIAI <= '${endOfYearStr}' AND t.NAM = YEAR(t.NGAYGIAI) AND (t.NV_GIAI <> 'NKD' OR t.NV_GIAI IS NULL)
+        WHERE t.NAM = ${currentYearForRevenue} AND t.NGAYGIAI IS NOT NULL AND t.NGAYGIAI <= '${endOfYearStr}' AND t.NAM = YEAR(t.NGAYGIAI) AND (t.NV_GIAI <> 'NKD' OR t.NV_GIAI IS NULL)
     ),
     DoanhThu_Prev_CTE AS (
         SELECT SUM(hd_p.TONGCONG_BD) as DoanhThu_Prev_TC, SUM(hd_p.GIABAN_BD) as DoanhThu_Prev_GB
         FROM HoaDon hd_p WITH (NOLOCK)
-        WHERE hd_p.NAM = ${currentYearForRevenue - 1} AND hd_p.KY <= ${ky}
+        WHERE hd_p.NAM = ${currentYearForRevenue - 1}
     )
     SELECT 
         (ISNULL((SELECT Sum_A_tongcong_bd FROM TermA_CTE), 0) - ISNULL((SELECT Sum_B_adjustment_tc FROM TermB_CTE), 0)) AS DoanhThu, 

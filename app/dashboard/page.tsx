@@ -155,7 +155,7 @@ export default function Dashboard() {
              <div className="p-2 bg-blue-100 rounded-lg">
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
              </div>
-             <h3 className="text-xl font-bold text-gray-800">Chỉ số Sản xuất <span className="text-sm font-normal text-gray-500 ml-2">(Tháng {selectedMonth}/{selectedYear})</span></h3>
+             <h3 className="text-xl font-bold text-gray-800">Sản Xuất <span className="text-sm font-normal text-gray-500 ml-2">(Tháng {selectedMonth}/{selectedYear})</span></h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -227,7 +227,7 @@ export default function Dashboard() {
              <div className="p-2 bg-green-100 rounded-lg">
                 <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
              </div>
-             <h3 className="text-xl font-bold text-gray-800">Tình hình Kinh doanh <span className="text-sm font-normal text-gray-500 ml-2">(Năm {selectedYear})</span></h3>
+             <h3 className="text-xl font-bold text-gray-800">Kinh Doanh <span className="text-sm font-normal text-gray-500 ml-2">(Năm {selectedYear})</span></h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
