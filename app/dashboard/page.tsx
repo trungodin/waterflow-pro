@@ -94,7 +94,7 @@ export default function Dashboard() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header & Filters */}
-        <div className="md:flex md:items-center md:justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard Tổng quan</h1>
             <p className="mt-1 text-sm text-gray-500">
@@ -102,30 +102,34 @@ export default function Dashboard() {
             </p>
           </div>
           
-          <div className="mt-4 flex gap-4 md:mt-0">
-             <select 
-               value={selectedMonth}
-               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-               className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-             >
-               {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                 <option key={m} value={m}>Tháng {m}</option>
-               ))}
-             </select>
+          <div className="flex flex-wrap items-center gap-3">
+             <div className="relative">
+               <select 
+                 value={selectedMonth}
+                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                 className="block w-32 pl-3 pr-8 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm"
+               >
+                 {Array.from({length: 12}, (_, i) => i + 1).map(m => (
+                   <option key={m} value={m}>Tháng {m}</option>
+                 ))}
+               </select>
+             </div>
              
-             <select
-               value={selectedYear}
-               onChange={(e) => setSelectedYear(Number(e.target.value))}
-               className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-             >
-               {[currentYear, currentYear - 1, currentYear - 2].map(y => (
-                 <option key={y} value={y}>Năm {y}</option>
-               ))}
-             </select>
+             <div className="relative">
+               <select
+                 value={selectedYear}
+                 onChange={(e) => setSelectedYear(Number(e.target.value))}
+                 className="block w-32 pl-3 pr-8 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md shadow-sm"
+               >
+                 {[currentYear, currentYear - 1, currentYear - 2].map(y => (
+                   <option key={y} value={y}>Năm {y}</option>
+                 ))}
+               </select>
+             </div>
              
              <button 
                 onClick={fetchData}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap"
              >
                Làm mới
              </button>
@@ -246,7 +250,7 @@ export default function Dashboard() {
                    <CartesianGrid strokeDasharray="3 3" />
                    <XAxis dataKey="name" />
                    <YAxis />
-                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                   <Tooltip formatter={(value: any) => formatCurrency(Number(value) || 0)} />
                    <Legend />
                    <Line type="monotone" dataKey="DoanhThu" stroke="#FF5733" name="Doanh Thu" strokeWidth={2} />
                    <Line type="monotone" dataKey="ThucThu" stroke="#33CFFF" name="Thực Thu" strokeWidth={2} />
@@ -264,7 +268,7 @@ export default function Dashboard() {
                    <CartesianGrid strokeDasharray="3 3" />
                    <XAxis dataKey="name" />
                    <YAxis unit="%" />
-                   <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+                   <Tooltip formatter={(value: any) => `${(Number(value) || 0).toFixed(1)}%`} />
                    <Legend />
                    <Bar dataKey="ThucThu" fill="#82ca9d" name="Thực Thu" stackId="a" />
                    <Bar dataKey="TonThu" fill="#ff4b4b" name="Tồn Thu" stackId="a" />

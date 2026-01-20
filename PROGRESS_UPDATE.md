@@ -1,41 +1,34 @@
-# 🎉 PROGRESS UPDATE - DASHBOARD & AUTHENTICATION
+# 🎉 PROGRESS UPDATE - DASHBOARD V2 (LEGACY INTEGRATION)
 
 **Date:** 2026-01-20
-**Status:** Completed Phase 2 & 3 (Partial)
+**Status:** Dashboard Re-architecture Completed
 
 ---
 
-## 🚀 NEW FEATURES DEPLOYED:
+## 🔄 MAJOR ARCHITECTURE CHANGE: SOAP API INTEGRATION
+We have switched the Dashboard Data Source from Supabase (Mock) to the **Production Legacy SOAP API**, matching 100% the logic of the old `ghithu-webapp` project.
 
-### **1. Authentication System (Fixed)** 🔐
-- ✅ **Secure Login:** Fixed redirect issues and cookie persistence using `@supabase/ssr`.
-- ✅ **Middleware:** Properly protects routes like `/dashboard`, `/customers` from unauthorized access.
-- ✅ **Hydration Fix:** Resolved browser extension conflicts.
+### **1. Integration Details**
+- **Source:** Direct connection to `ws_Banggia.asmx` via SOAP.
+- **Logic:** Server-side execution of SQL Queries for KPi (Revenue, Consumption) and Comparison Charts.
+- **Security:** Proxying requests via Next.js Server Actions to avoid CORS/Mixed Content issues.
 
-### **2. Advanced Dashboard** 📊
-- **Replicated features from `ghithu-webapp`:**
-  - ✅ **KPI Cards:** Track Total Customers, Active Meters, Monthly Consumption.
-  - ✅ **Revenue Stats:** Real-time tracking of Revenue, Collected, and Outstanding amounts.
-  - ✅ **Interactive Charts:** 
-    - **Line Chart:** Revenue trends vs. Collected amount.
-    - **Stacked Bar Chart:** Collection performance ratio.
-  - ✅ **Filters:** Filter data by Month and Year.
+### **2. Features Restored**
+- **Exact KPIs:** Revenue, Collection, Outstanding, Consumption (replicated Python SQL logic).
+- **Real-time Data:** Data is fetched live from the central database (MSSQL).
+- **Comparison:** Year-over-Year comparison charts.
 
-### **3. Customer Management** 👥
-- ✅ **List View:** Searchable/Filterable customer list.
-- ✅ **Add Customer:** integrated modal for quick data entry.
+---
+
+## ⚠️ DEPLOYMENT NOTE
+Since we are connecting to a legacy HTTP API (`http://14.161.13.194...`), this is handled server-side.
+**If Dashboard shows 0 or errors:**
+- Check Vercel Logs.
+- Ensure the legacy server allows connections from Vercel IPs.
 
 ---
 
 ## 🌐 LIVE URL:
 **https://demo-vercel-seven-rho.vercel.app/dashboard**
-
----
-
-## 🔜 NEXT PHASE: INVOICING & READINGS
-We are moving to the core business logic:
-1.  **Water Readings:** Input meter index -> Auto-calculate usage.
-2.  **Invoicing:** Auto-generate invoices based on usage * price.
-3.  **Payments:** Record payments against invoices.
 
 ---
