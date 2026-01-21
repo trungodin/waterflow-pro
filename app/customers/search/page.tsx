@@ -2,19 +2,80 @@
 
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
-import { searchCustomers, type Customer } from '@/app/actions/customers'
+import { 
+  searchCustomers, 
+  getCustomerDetails,
+  getPaymentHistory,
+  getGBValues,
+  getCoValues,
+  type Customer,
+  type CustomerDetail,
+  type CustomerSearchParams
+} from '@/app/actions/customers'
 
 export default function CustomerSearchPage() {
-  const [searchTerm, setSearchTerm] = useState('')
+  // Form states
+  const [danhba, setDanhba] = useState('')
+  const [tenkh, setTenkh] = useState('')
+  const [diaChi, setDiaChi] = useState('')
+  const [mlt2, setMlt2] = useState('')
+  const [sdt, setSdt] = useState('')
+  const [sothan, setSothan] = useState('')
+  const [gb, setGb] = useState('Tất cả')
+  const [tongNo, setTongNo] = useState('')
+  const [tienHd, setTienHd] = useState('')
+  const [co, setCo] = useState('Tất cả')
+  const [soBienLai, setSoBienLai] = useState('')
+
+  // Data states
+  const [gbOptions, setGbOptions] = useState<string[]>(['Tất cả'])
+  const [coOptions, setCoOptions] = useState<string[]>(['Tất cả'])
   const [customers, setCustomers] = useState<Customer[]>([])
+  const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set())
+  const [customerDetails, setCustomerDetails] = useState<Map<string, CustomerDetail>>(new Map())
+  const [paymentHistories, setPaymentHistories] = useState<Map<string, any[]>>(new Map())
+  
+  // UI states
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [loadingDetails, setLoadingDetails] = useState<Set<string>>(new Set())
+
+  // Load GB and Co options on mount
+  useEffect(() => {
+    const loadOptions = async () => {
+      const [gbVals, coVals] = await Promise.all([
+        getGBValues(),
+        getCoValues()
+      ])
+      setGbOptions(gbVals)
+      setCoOptions(coVals)
+    }
+    loadOptions()
+  }, [])
 
   const handleSearch = async () => {
     setLoading(true)
     setSearched(true)
+    setSelectedCustomers(new Set())
+    setCustomerDetails(new Map())
+    setPaymentHistories(new Map())
+    
     try {
-      const results = await searchCustomers(searchTerm, 100)
+      const params: CustomerSearchParams = {
+        danhba,
+        tenkh,
+        dia_chi: diaChi,
+        mlt2,
+        sdt,
+        sothan,
+        gb: gb !== 'Tất cả' ? gb : undefined,
+        tong_no: tongNo,
+        tien_hd: tienHd,
+        co: co !== 'Tất cả' ? co : undefined,
+        so_bien_lai: soBienLai
+      }
+      
+      const results = await searchCustomers(params)
       setCustomers(results)
     } catch (error) {
       console.error('Search error:', error)
@@ -23,16 +84,48 @@ export default function CustomerSearchPage() {
     }
   }
 
-  const handleClear = () => {
-    setSearchTerm('')
-    setCustomers([])
-    setSearched(false)
+  const toggleCustomer = async (danhBa: string) => {
+    const newSelected = new Set(selectedCustomers)
+    
+    if (newSelected.has(danhBa)) {
+      newSelected.delete(danhBa)
+    } else {
+      newSelected.add(danhBa)
+      
+      // Load details if not already loaded
+      if (!customerDetails.has(danhBa)) {
+        setLoadingDetails(prev => new Set(prev).add(danhBa))
+        try {
+          const details = await getCustomerDetails(danhBa)
+          if (details) {
+            setCustomerDetails(prev => new Map(prev).set(danhBa, details))
+          }
+        } catch (error) {
+          console.error('Error loading details:', error)
+        } finally {
+          setLoadingDetails(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(danhBa)
+            return newSet
+          })
+        }
+      }
+    }
+    
+    setSelectedCustomers(newSelected)
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch()
+  const loadPaymentHistory = async (danhBa: string) => {
+    try {
+      const history = await getPaymentHistory(danhBa)
+      setPaymentHistories(prev => new Map(prev).set(danhBa, history))
+    } catch (error) {
+      console.error('Error loading payment history:', error)
     }
+  }
+
+  const formatCurrency = (val: number) => {
+    return new Intl.NumberFormat('vi-VN').format(val) + ' VNĐ'
   }
 
   const formatDanhBa = (danhBa: string) => {
@@ -44,52 +137,138 @@ export default function CustomerSearchPage() {
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Tra cứu Khách hàng</h1>
-          <p className="text-gray-500 mt-1">Tìm kiếm theo danh bạ, tên khách hàng, địa chỉ</p>
+          <h1 className="text-3xl font-bold text-gray-900">🔎 Tra cứu Thông tin Khách hàng</h1>
+          <p className="text-gray-500 mt-1">Nhập thông tin bên dưới rồi nhấn 'Tìm kiếm'. Sau đó, tích vào ô 'Xem' để xem chi tiết.</p>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Form */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex gap-3">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Row 1 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Danh bạ</label>
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Nhập danh bạ, tên khách hàng, địa chỉ, đường..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                value={danhba}
+                onChange={(e) => setDanhba(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tên Khách hàng</label>
+              <input
+                type="text"
+                value={tenkh}
+                onChange={(e) => setTenkh(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ (VD: 285 Võ Văn Tần)</label>
+              <input
+                type="text"
+                value={diaChi}
+                onChange={(e) => setDiaChi(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Row 2 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Mã lộ trình (MLT2)</label>
+              <input
+                type="text"
+                value={mlt2}
+                onChange={(e) => setMlt2(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+              <input
+                type="text"
+                value={sdt}
+                onChange={(e) => setSdt(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Số thân đồng hồ</label>
+              <input
+                type="text"
+                value={sothan}
+                onChange={(e) => setSothan(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Row 3 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Giá biểu (GB)</label>
+              <select
+                value={gb}
+                onChange={(e) => setGb(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {gbOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tổng nợ (VNĐ)</label>
+              <input
+                type="text"
+                value={tongNo}
+                onChange={(e) => setTongNo(e.target.value)}
+                placeholder="Nhập số tiền nợ..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tiền hóa đơn (VNĐ)</label>
+              <input
+                type="text"
+                value={tienHd}
+                onChange={(e) => setTienHd(e.target.value)}
+                placeholder="Nhập số tiền hóa đơn..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Row 4 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cỡ ĐH</label>
+              <select
+                value={co}
+                onChange={(e) => setCo(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {coOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Số biên lai</label>
+              <input
+                type="text"
+                value={soBienLai}
+                onChange={(e) => setSoBienLai(e.target.value)}
+                placeholder="VD: 339/5"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="mt-6">
             <button
               onClick={handleSearch}
               disabled={loading}
-              className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Đang tìm...
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                  </svg>
-                  Tìm kiếm
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleClear}
-              className="px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all"
-            >
-              ❌ Xóa
+              {loading ? 'Đang tìm kiếm...' : 'Tìm kiếm'}
             </button>
           </div>
         </div>
@@ -115,65 +294,136 @@ export default function CustomerSearchPage() {
               </div>
             ) : customers.length === 0 ? (
               <div className="p-12 text-center">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <p className="mt-4 text-gray-500">Không tìm thấy khách hàng nào</p>
-                <p className="text-sm text-gray-400 mt-1">Thử tìm kiếm với từ khóa khác</p>
+                <p className="text-gray-500">Không tìm thấy khách hàng nào</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Danh bạ
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Tên khách hàng
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Số nhà
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Đường
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        GB
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Thao tác
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {customers.map((customer, index) => (
-                      <tr key={index} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-mono font-semibold text-gray-900">
-                          {formatDanhBa(customer.DanhBa)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {customer.TenKH}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {customer.SoNha}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {customer.Duong}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {customer.GB}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button className="text-blue-600 hover:text-blue-800 font-medium">
-                            Chi tiết →
-                          </button>
-                        </td>
+              <>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Xem</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Danh bạ</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên KH</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số nhà</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đường</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">GB</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {customers.map((customer) => (
+                        <tr key={customer.DanhBa} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedCustomers.has(customer.DanhBa)}
+                              onChange={() => toggleCustomer(customer.DanhBa)}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                            />
+                          </td>
+                          <td className="px-6 py-4 font-mono font-semibold text-sm">{formatDanhBa(customer.DanhBa)}</td>
+                          <td className="px-6 py-4 text-sm">{customer.TenKH}</td>
+                          <td className="px-6 py-4 text-sm">{customer.So}</td>
+                          <td className="px-6 py-4 text-sm">{customer.Duong}</td>
+                          <td className="px-6 py-4 text-sm">{customer.GB}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Customer Details */}
+                {Array.from(selectedCustomers).map(danhBa => {
+                  const details = customerDetails.get(danhBa)
+                  const isLoading = loadingDetails.has(danhBa)
+                  const history = paymentHistories.get(danhBa)
+
+                  return (
+                    <div key={danhBa} className="border-t border-gray-200 p-6">
+                      {isLoading ? (
+                        <div className="text-center py-8">
+                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                          <p className="mt-2 text-gray-500">Đang tải chi tiết...</p>
+                        </div>
+                      ) : details ? (
+                        <div>
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="text-2xl font-bold text-yellow-600">{formatDanhBa(details.DanhBa)}</h3>
+                              <p className="text-gray-600">{details.So} {details.Duong}</p>
+                              <p className="font-semibold">{details.TenKH}</p>
+                            </div>
+                            <button
+                              onClick={() => loadPaymentHistory(danhBa)}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                              Kiểm tra thanh toán
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-6 mb-4">
+                            <div>
+                              <p className="text-blue-600">Số điện thoại: <span className="font-bold text-gray-900">{details.SDT || 'N/A'}</span></p>
+                              <p className="text-blue-600">MLT: <span className="font-bold text-gray-900">{details.MLT2}</span></p>
+                              <p className="text-blue-600">Giá biểu: <span className="font-bold text-gray-900">{details.GB}</span></p>
+                              <p className="text-blue-600">Định mức: <span className="font-bold text-gray-900">{details.DM}</span></p>
+                              <p className="text-blue-600">Nhân viên đọc: <span className="font-bold text-gray-900">{details.TenNhanVienDoc}</span></p>
+                            </div>
+                            <div>
+                              <p className="text-blue-600">Cỡ ĐH: <span className="font-bold text-gray-900">{details.Co}</span></p>
+                              <p className="text-blue-600">Hiệu: <span className="font-bold text-gray-900">{details.Hieu}</span></p>
+                              <p className="text-blue-600">Số thân: <span className="font-bold text-gray-900">{details.SoThan}</span></p>
+                              <p className="text-blue-600">Ngày gắn: <span className="font-bold text-gray-900">{details.NgayGan || 'N/A'}</span></p>
+                              <p className="text-blue-600">Hộp: <span className="font-bold text-gray-900">{details.HopBaoVe === 1 ? 'Có' : 'Không'}</span></p>
+                            </div>
+                            <div>
+                              <p className="text-blue-600">Tình trạng: <span className={`font-bold ${details.TinhTrang?.toLowerCase().includes('khóa') ? 'text-red-600' : 'text-gray-900'}`}>{details.TinhTrang}</span></p>
+                              {details.NgayKhoa && <p className="text-blue-600">Ngày khóa: <span className="font-bold text-gray-900">{details.NgayKhoa}</span></p>}
+                              <p className="text-blue-600">Tổng cộng nợ: <span className="font-bold text-gray-900">{formatCurrency(details.TongCongNo)}</span></p>
+                              <p className="text-blue-600">Số kỳ nợ: <span className="font-bold text-gray-900">{details.SoKyNo}</span></p>
+                              <p className="text-blue-600">Các kỳ nợ: <span className="font-bold text-gray-900">{details.KyNamNo}</span></p>
+                            </div>
+                          </div>
+
+                          {history && history.length > 0 && (
+                            <div className="mt-6 border-t pt-4">
+                              <h4 className="font-semibold mb-3">Lịch sử thanh toán</h4>
+                              <div className="overflow-x-auto">
+                                <table className="min-w-full text-sm">
+                                  <thead className="bg-gray-50">
+                                    <tr>
+                                      <th className="px-3 py-2 text-left">Kỳ</th>
+                                      <th className="px-3 py-2 text-left">Năm</th>
+                                      <th className="px-3 py-2 text-right">Tổng cộng</th>
+                                      <th className="px-3 py-2 text-left">Ngày giải</th>
+                                      <th className="px-3 py-2 text-left">NV giải</th>
+                                      <th className="px-3 py-2 text-left">Số biên lai</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y">
+                                    {history.map((h, idx) => (
+                                      <tr key={idx}>
+                                        <td className="px-3 py-2">{h.Ky}</td>
+                                        <td className="px-3 py-2">{h.Nam}</td>
+                                        <td className="px-3 py-2 text-right">{formatCurrency(h.TongCong)}</td>
+                                        <td className="px-3 py-2">{h.NgayGiai ? new Date(h.NgayGiai).toLocaleDateString('vi-VN') : ''}</td>
+                                        <td className="px-3 py-2">{h.NVGiai}</td>
+                                        <td className="px-3 py-2">{h.SoBienLai}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-red-500">Lỗi khi tải chi tiết khách hàng</p>
+                      )}
+                    </div>
+                  )
+                })}
+              </>
             )}
           </div>
         )}
