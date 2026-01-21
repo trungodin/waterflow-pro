@@ -54,6 +54,25 @@ export default function CustomerSearchPage() {
   }, [])
 
   const handleSearch = async () => {
+    // Check if at least one field is filled
+    const hasAnyFilter = 
+      danhba.trim() || 
+      tenkh.trim() || 
+      diaChi.trim() || 
+      mlt2.trim() || 
+      sdt.trim() || 
+      sothan.trim() || 
+      (gb && gb !== 'Tất cả') || 
+      tongNo.trim() || 
+      tienHd.trim() || 
+      (co && co !== 'Tất cả') || 
+      soBienLai.trim()
+
+    if (!hasAnyFilter) {
+      alert('Vui lòng nhập ít nhất một thông tin để tìm kiếm.')
+      return
+    }
+
     setLoading(true)
     setSearched(true)
     setSelectedCustomers(new Set())
@@ -62,23 +81,28 @@ export default function CustomerSearchPage() {
     
     try {
       const params: CustomerSearchParams = {
-        danhba,
-        tenkh,
-        dia_chi: diaChi,
-        mlt2,
-        sdt,
-        sothan,
-        gb: gb !== 'Tất cả' ? gb : undefined,
-        tong_no: tongNo,
-        tien_hd: tienHd,
-        co: co !== 'Tất cả' ? co : undefined,
-        so_bien_lai: soBienLai
+        danhba: danhba.trim() || undefined,
+        tenkh: tenkh.trim() || undefined,
+        dia_chi: diaChi.trim() || undefined,
+        mlt2: mlt2.trim() || undefined,
+        sdt: sdt.trim() || undefined,
+        sothan: sothan.trim() || undefined,
+        gb: (gb && gb !== 'Tất cả') ? gb : undefined,
+        tong_no: tongNo.trim() || undefined,
+        tien_hd: tienHd.trim() || undefined,
+        co: (co && co !== 'Tất cả') ? co : undefined,
+        so_bien_lai: soBienLai.trim() || undefined
       }
       
+      console.log('Search params:', params)
+      
       const results = await searchCustomers(params)
+      console.log('Search results:', results)
+      
       setCustomers(results)
     } catch (error) {
       console.error('Search error:', error)
+      alert('Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại.')
     } finally {
       setLoading(false)
     }
@@ -147,7 +171,7 @@ export default function CustomerSearchPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Row 1 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Danh bạ</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Danh bạ</label>
               <input
                 type="text"
                 value={danhba}
@@ -156,7 +180,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tên Khách hàng</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Tên Khách hàng</label>
               <input
                 type="text"
                 value={tenkh}
@@ -165,18 +189,19 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ (VD: 285 Võ Văn Tần)</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Địa chỉ (VD: 285 Võ Văn Tần)</label>
               <input
                 type="text"
                 value={diaChi}
                 onChange={(e) => setDiaChi(e.target.value)}
+                placeholder="285 Võ Văn Tần"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             {/* Row 2 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mã lộ trình (MLT2)</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Mã lộ trình (MLT2)</label>
               <input
                 type="text"
                 value={mlt2}
@@ -185,7 +210,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Số điện thoại</label>
               <input
                 type="text"
                 value={sdt}
@@ -194,7 +219,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Số thân đồng hồ</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Số thân đồng hồ</label>
               <input
                 type="text"
                 value={sothan}
@@ -205,7 +230,7 @@ export default function CustomerSearchPage() {
 
             {/* Row 3 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Giá biểu (GB)</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Giá biểu (GB)</label>
               <select
                 value={gb}
                 onChange={(e) => setGb(e.target.value)}
@@ -217,7 +242,7 @@ export default function CustomerSearchPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tổng nợ (VNĐ)</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Tổng nợ (VNĐ)</label>
               <input
                 type="text"
                 value={tongNo}
@@ -227,7 +252,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tiền hóa đơn (VNĐ)</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Tiền hóa đơn (VNĐ)</label>
               <input
                 type="text"
                 value={tienHd}
@@ -239,7 +264,7 @@ export default function CustomerSearchPage() {
 
             {/* Row 4 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Cỡ ĐH</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Cỡ ĐH</label>
               <select
                 value={co}
                 onChange={(e) => setCo(e.target.value)}
@@ -251,7 +276,7 @@ export default function CustomerSearchPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Số biên lai</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Số biên lai</label>
               <input
                 type="text"
                 value={soBienLai}
@@ -262,7 +287,7 @@ export default function CustomerSearchPage() {
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 flex gap-3">
             <button
               onClick={handleSearch}
               disabled={loading}
@@ -270,6 +295,28 @@ export default function CustomerSearchPage() {
             >
               {loading ? 'Đang tìm kiếm...' : 'Tìm kiếm'}
             </button>
+            {searched && (
+              <button
+                onClick={() => {
+                  setDanhba('')
+                  setTenkh('')
+                  setDiaChi('')
+                  setMlt2('')
+                  setSdt('')
+                  setSothan('')
+                  setGb('Tất cả')
+                  setTongNo('')
+                  setTienHd('')
+                  setCo('Tất cả')
+                  setSoBienLai('')
+                  setCustomers([])
+                  setSearched(false)
+                }}
+                className="px-6 py-3 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all"
+              >
+                Xóa bộ lọc
+              </button>
+            )}
           </div>
         </div>
 
