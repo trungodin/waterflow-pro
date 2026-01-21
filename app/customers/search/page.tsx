@@ -462,7 +462,7 @@ export default function CustomerSearchPage() {
                           <div className="flex justify-between items-start mb-4 bg-gray-900 p-4 rounded-lg">
                             <div>
                               <h3 className="text-2xl font-bold text-yellow-600">
-                                {formatDanhBa(details.DanhBa)} <span className="text-white font-normal">{details.So} {details.Duong}</span>
+                                {formatDanhBa(details.DanhBa)} <span className="text-white font-normal">- {details.So} {details.Duong}</span>
                               </h3>
                               <p className="font-semibold text-white text-lg">{details.TenKH}</p>
                             </div>
