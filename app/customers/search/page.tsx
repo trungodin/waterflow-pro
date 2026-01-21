@@ -497,8 +497,10 @@ export default function CustomerSearchPage() {
                               <p className="text-blue-600">
                                 <span className="font-medium">Tình trạng:</span>{' '}
                                 <span 
-                                  className={details.TinhTrang?.toLowerCase().includes('khóa') ? 'font-bold' : ''}
-                                  style={details.TinhTrang?.toLowerCase().includes('khóa') ? { color: '#dc2626', fontWeight: 'bold' } : {}}
+                                  style={details.TinhTrang?.toLowerCase().includes('khóa') 
+                                    ? { color: '#ff4d4d', fontWeight: 'bold' } 
+                                    : { color: '#111827' }
+                                  }
                                 >
                                   {details.TinhTrang}
                                 </span>
