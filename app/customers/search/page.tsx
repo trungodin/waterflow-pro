@@ -206,7 +206,7 @@ export default function CustomerSearchPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Row 1 */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Danh bạ</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Danh bạ</label>
               <input
                 type="text"
                 value={danhba}
@@ -216,7 +216,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Tên Khách hàng</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Tên Khách hàng</label>
               <input
                 type="text"
                 value={tenkh}
@@ -226,7 +226,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Địa chỉ (VD: 285 Võ Văn Tần)</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Địa chỉ (VD: 285 Võ Văn Tần)</label>
               <input
                 type="text"
                 value={diaChi}
@@ -237,7 +237,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Mã lộ trình (MLT2)</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Mã lộ trình (MLT2)</label>
               <input
                 type="text"
                 value={mlt2}
@@ -249,7 +249,7 @@ export default function CustomerSearchPage() {
 
             {/* Row 2 */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Số điện thoại</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Số điện thoại</label>
               <input
                 type="text"
                 value={sdt}
@@ -259,7 +259,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Số thân đồng hồ</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Số thân đồng hồ</label>
               <input
                 type="text"
                 value={sothan}
@@ -269,7 +269,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Giá biểu (GB)</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Giá biểu (GB)</label>
               <select
                 value={gb}
                 onChange={(e) => setGb(e.target.value)}
@@ -281,7 +281,7 @@ export default function CustomerSearchPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Cỡ ĐH</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Cỡ ĐH</label>
               <select
                 value={co}
                 onChange={(e) => setCo(e.target.value)}
@@ -295,7 +295,7 @@ export default function CustomerSearchPage() {
 
             {/* Row 3 */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Tổng nợ (VNĐ)</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Tổng nợ (VNĐ)</label>
               <input
                 type="text"
                 value={tongNo}
@@ -306,7 +306,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Tiền hóa đơn (VNĐ)</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Tiền hóa đơn (VNĐ)</label>
               <input
                 type="text"
                 value={tienHd}
@@ -317,7 +317,7 @@ export default function CustomerSearchPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Số biên lai</label>
+              <label className="block text-sm font-medium text-gray-900 mb-1">Số biên lai</label>
               <input
                 type="text"
                 value={soBienLai}
@@ -449,8 +449,8 @@ export default function CustomerSearchPage() {
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <h3 className="text-2xl font-bold text-yellow-600">{formatDanhBa(details.DanhBa)}</h3>
-                              <p className="text-gray-900 font-semibold">{details.So} {details.Duong}</p>
-                              <p className="font-bold text-gray-900">{details.TenKH}</p>
+                              <p className="text-gray-900 font-medium">{details.So} {details.Duong}</p>
+                              <p className="font-semibold text-gray-900">{details.TenKH}</p>
                             </div>
                             <button
                               onClick={() => loadPaymentHistory(danhBa)}
@@ -462,25 +462,25 @@ export default function CustomerSearchPage() {
 
                           <div className="grid grid-cols-3 gap-6 mb-4">
                             <div className="space-y-2">
-                              <p className="text-blue-700 font-semibold">Số điện thoại: <span className="font-bold text-gray-900">{details.SDT || 'N/A'}</span></p>
-                              <p className="text-blue-700 font-semibold">MLT: <span className="font-bold text-gray-900">{details.MLT2}</span></p>
-                              <p className="text-blue-700 font-semibold">Giá biểu: <span className="font-bold text-gray-900">{details.GB}</span></p>
-                              <p className="text-blue-700 font-semibold">Định mức: <span className="font-bold text-gray-900">{details.DM}</span></p>
-                              <p className="text-blue-700 font-semibold">Nhân viên đọc: <span className="font-bold text-gray-900">{details.TenNhanVienDoc}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Số điện thoại:</span> <span className="text-gray-900">{details.SDT || 'N/A'}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">MLT:</span> <span className="text-gray-900">{details.MLT2}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Giá biểu:</span> <span className="text-gray-900">{details.GB}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Định mức:</span> <span className="text-gray-900">{details.DM}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Nhân viên đọc:</span> <span className="text-gray-900">{details.TenNhanVienDoc}</span></p>
                             </div>
                             <div className="space-y-2">
-                              <p className="text-blue-700 font-semibold">Cỡ ĐH: <span className="font-bold text-gray-900">{details.Co}</span></p>
-                              <p className="text-blue-700 font-semibold">Hiệu: <span className="font-bold text-gray-900">{details.Hieu}</span></p>
-                              <p className="text-blue-700 font-semibold">Số thân: <span className="font-bold text-gray-900">{details.SoThan}</span></p>
-                              <p className="text-blue-700 font-semibold">Ngày gắn: <span className="font-bold text-gray-900">{details.NgayGan || 'N/A'}</span></p>
-                              <p className="text-blue-700 font-semibold">Hộp: <span className="font-bold text-gray-900">{details.HopBaoVe === 1 ? 'Có' : 'Không'}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Cỡ ĐH:</span> <span className="text-gray-900">{details.Co}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Hiệu:</span> <span className="text-gray-900">{details.Hieu}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Số thân:</span> <span className="text-gray-900">{details.SoThan}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Ngày gắn:</span> <span className="text-gray-900">{details.NgayGan || 'N/A'}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Hộp:</span> <span className="text-gray-900">{details.HopBaoVe === 1 ? 'Có' : 'Không'}</span></p>
                             </div>
                             <div className="space-y-2">
-                              <p className="text-blue-700 font-semibold">Tình trạng: <span className={`font-bold ${details.TinhTrang?.toLowerCase().includes('khóa') ? 'text-red-600' : 'text-gray-900'}`}>{details.TinhTrang}</span></p>
-                              {details.NgayKhoa && <p className="text-blue-700 font-semibold">Ngày khóa: <span className="font-bold text-gray-900">{details.NgayKhoa}</span></p>}
-                              <p className="text-blue-700 font-semibold">Tổng cộng nợ: <span className="font-bold text-gray-900">{formatCurrency(details.TongCongNo)}</span></p>
-                              <p className="text-blue-700 font-semibold">Số kỳ nợ: <span className="font-bold text-gray-900">{details.SoKyNo}</span></p>
-                              <p className="text-blue-700 font-semibold">Các kỳ nợ: <span className="font-bold text-gray-900">{details.KyNamNo}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Tình trạng:</span> <span className={`${details.TinhTrang?.toLowerCase().includes('khóa') ? 'text-red-600' : 'text-gray-900'}`}>{details.TinhTrang}</span></p>
+                              {details.NgayKhoa && <p className="text-blue-600"><span className="font-medium">Ngày khóa:</span> <span className="text-gray-900">{details.NgayKhoa}</span></p>}
+                              <p className="text-blue-600"><span className="font-medium">Tổng cộng nợ:</span> <span className="text-gray-900">{formatCurrency(details.TongCongNo)}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Số kỳ nợ:</span> <span className="text-gray-900">{details.SoKyNo}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Các kỳ nợ:</span> <span className="text-gray-900">{details.KyNamNo}</span></p>
                             </div>
                           </div>
 
