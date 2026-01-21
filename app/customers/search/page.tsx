@@ -200,6 +200,25 @@ export default function CustomerSearchPage() {
     }
   }
 
+  const formatDateTime = (dateStr: string | null | undefined) => {
+    if (!dateStr) return ''
+    try {
+      const date = new Date(dateStr)
+      if (isNaN(date.getTime())) {
+        return dateStr
+      }
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+      return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
+    } catch {
+      return dateStr || ''
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -556,7 +575,7 @@ export default function CustomerSearchPage() {
                                         <td className="px-3 py-2 text-right font-semibold text-gray-900">{formatNumber(h.TongCong)}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.NgayGiai ? new Date(h.NgayGiai).toLocaleDateString('vi-VN') : ''}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.NVGiai}</td>
-                                        <td className="px-3 py-2 font-medium text-gray-900">{h.NgayThuHo ? new Date(h.NgayThuHo).toLocaleDateString('vi-VN') : ''}</td>
+                                        <td className="px-3 py-2 font-medium text-gray-900">{formatDateTime(h.NgayThuHo)}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.NganHangThuHo || ''}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.SoHoaDon || ''}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.SoBienLai || ''}</td>
