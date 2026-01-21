@@ -395,9 +395,14 @@ export default function CustomerSearchPage() {
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Xem</th>
                         <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Danh bạ</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">MLT2</th>
                         <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Tên KH</th>
                         <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Số nhà</th>
                         <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Đường</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">SDT</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Số thân</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Hiệu ĐH</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Cỡ ĐH</th>
                         <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">GB</th>
                       </tr>
                     </thead>
@@ -413,9 +418,14 @@ export default function CustomerSearchPage() {
                             />
                           </td>
                           <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900">{formatDanhBa(customer.DanhBa)}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.MLT2}</td>
                           <td className="px-6 py-4 text-sm font-semibold text-gray-900">{customer.TenKH}</td>
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.So}</td>
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.Duong}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.SDT || ''}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.SoThan || ''}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.Hieu || ''}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.Co || ''}</td>
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.GB}</td>
                         </tr>
                       ))}
