@@ -170,6 +170,19 @@ export default function CustomerSearchPage() {
     return String(danhBa).padStart(11, '0')
   }
 
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return 'N/A'
+    try {
+      const date = new Date(dateStr)
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      return `${day}-${month}-${year}`
+    } catch {
+      return dateStr
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -472,7 +485,7 @@ export default function CustomerSearchPage() {
                               <p className="text-blue-600"><span className="font-medium">Cỡ ĐH:</span> <span className="text-gray-900">{details.Co}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Hiệu:</span> <span className="text-gray-900">{details.Hieu}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Số thân:</span> <span className="text-gray-900">{details.SoThan}</span></p>
-                              <p className="text-blue-600"><span className="font-medium">Ngày gắn:</span> <span className="text-gray-900">{details.NgayGan || 'N/A'}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Ngày gắn:</span> <span className="text-gray-900">{formatDate(details.NgayGan)}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Hộp:</span> <span className="text-gray-900">{details.HopBaoVe === 1 ? 'Có' : 'Không'}</span></p>
                             </div>
                             <div className="space-y-2">
