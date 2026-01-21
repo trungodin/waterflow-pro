@@ -203,7 +203,7 @@ export default function CustomerSearchPage() {
 
         {/* Search Form */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Row 1 */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1">Danh bạ</label>
@@ -236,8 +236,6 @@ export default function CustomerSearchPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
-            {/* Row 2 */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1">Mã lộ trình (MLT2)</label>
               <input
@@ -248,6 +246,8 @@ export default function CustomerSearchPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+
+            {/* Row 2 */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1">Số điện thoại</label>
               <input
@@ -268,8 +268,6 @@ export default function CustomerSearchPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
-
-            {/* Row 3 */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1">Giá biểu (GB)</label>
               <select
@@ -282,6 +280,20 @@ export default function CustomerSearchPage() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-1">Cỡ ĐH</label>
+              <select
+                value={co}
+                onChange={(e) => setCo(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {coOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Row 3 */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1">Tổng nợ (VNĐ)</label>
               <input
@@ -303,20 +315,6 @@ export default function CustomerSearchPage() {
                 placeholder="Nhập số tiền hóa đơn..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-            </div>
-
-            {/* Row 4 */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-1">Cỡ ĐH</label>
-              <select
-                value={co}
-                onChange={(e) => setCo(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {coOptions.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-1">Số biên lai</label>
