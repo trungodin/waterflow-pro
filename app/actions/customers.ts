@@ -277,9 +277,17 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
       details.KyNamNo = 'Không có'
     }
 
-    // 4. Status (default - can be enhanced with Google Sheets later)
-    details.TinhTrang = 'Bình thường'
-    details.NgayKhoa = ''
+    // 4. Get status from Google Sheets ON_OFF
+    try {
+      const { getCustomerStatus } = await import('@/lib/googlesheets')
+      const status = await getCustomerStatus(formattedDanhba)
+      details.TinhTrang = status.tinhTrang
+      details.NgayKhoa = status.ngayKhoa
+    } catch (error) {
+      console.error('[getCustomerDetails] Error getting status from Google Sheets:', error)
+      details.TinhTrang = 'Bình thường'
+      details.NgayKhoa = ''
+    }
 
     console.log('[getCustomerDetails] Final details:', details)
     return details as CustomerDetail
