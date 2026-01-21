@@ -38,9 +38,23 @@ export async function getCustomerStatus(danhba: string) {
 
     // Find header row
     const headers = rows[0]
-    const danhBaIndex = headers.findIndex((h: string) => h.toLowerCase().includes('danh') && h.toLowerCase().includes('bạ'))
-    const tinhTrangIndex = headers.findIndex((h: string) => h.toLowerCase().includes('tình') && h.toLowerCase().includes('trạng'))
-    const ngayKhoaIndex = headers.findIndex((h: string) => h.toLowerCase().includes('ngày') && h.toLowerCase().includes('khóa'))
+    console.log('[getCustomerStatus] Headers:', headers)
+    
+    // Match column names from app cũ: danh_ba, tinh_trang, ngay_khoa
+    const danhBaIndex = headers.findIndex((h: string) => {
+      const lower = h.toLowerCase().replace(/\s/g, '_')
+      return lower === 'danh_ba' || lower.includes('danh') && (lower.includes('ba') || lower.includes('bạ'))
+    })
+    const tinhTrangIndex = headers.findIndex((h: string) => {
+      const lower = h.toLowerCase().replace(/\s/g, '_')
+      return lower === 'tinh_trang' || lower.includes('tình') && lower.includes('trạng')
+    })
+    const ngayKhoaIndex = headers.findIndex((h: string) => {
+      const lower = h.toLowerCase().replace(/\s/g, '_')
+      return lower === 'ngay_khoa' || lower.includes('ngày') && lower.includes('khóa')
+    })
+
+    console.log('[getCustomerStatus] Column indices:', { danhBaIndex, tinhTrangIndex, ngayKhoaIndex })
 
     if (danhBaIndex === -1 || tinhTrangIndex === -1) {
       console.error('[getCustomerStatus] Required columns not found')
@@ -49,6 +63,7 @@ export async function getCustomerStatus(danhba: string) {
 
     // Format danhba to 11 digits
     const formattedDanhba = String(danhba).padStart(11, '0')
+    console.log('[getCustomerStatus] Looking for danhba:', formattedDanhba)
 
     // Find matching rows (get the latest one)
     const matchingRows = rows
@@ -58,17 +73,24 @@ export async function getCustomerStatus(danhba: string) {
         return rowDanhba === formattedDanhba
       })
 
+    console.log('[getCustomerStatus] Found matching rows:', matchingRows.length)
+
     if (matchingRows.length === 0) {
+      console.log('[getCustomerStatus] No matching rows found, returning default')
       return { tinhTrang: 'Bình thường', ngayKhoa: '' }
     }
 
     // Get the latest row
     const latestRow = matchingRows[matchingRows.length - 1]
+    console.log('[getCustomerStatus] Latest row:', latestRow)
     
-    return {
+    const result = {
       tinhTrang: latestRow[tinhTrangIndex] || 'Bình thường',
       ngayKhoa: ngayKhoaIndex !== -1 ? (latestRow[ngayKhoaIndex] || '') : ''
     }
+    console.log('[getCustomerStatus] Returning:', result)
+    
+    return result
 
   } catch (error) {
     console.error('[getCustomerStatus] Error:', error)
