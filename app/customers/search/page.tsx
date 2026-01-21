@@ -195,7 +195,7 @@ export default function CustomerSearchPage() {
         }
       `}</style>
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-24">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">🔎 Tra cứu Thông tin Khách hàng</h1>
           <p className="text-gray-500 mt-1">Nhập thông tin bên dưới rồi nhấn 'Tìm kiếm'. Sau đó, tích vào ô 'Xem' để xem chi tiết.</p>
