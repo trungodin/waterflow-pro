@@ -152,8 +152,8 @@ export default function CustomerSearchPage() {
     return new Intl.NumberFormat('vi-VN').format(val) + ' VNĐ'
   }
 
-  const formatDanhBa = (danhBa: string) => {
-    return danhBa.padStart(11, '0')
+  const formatDanhBa = (danhBa: string | number) => {
+    return String(danhBa).padStart(11, '0')
   }
 
   return (
