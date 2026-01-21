@@ -22,7 +22,7 @@ export async function getCustomerStatus(danhba: string) {
     
     if (!spreadsheetId) {
       console.error('[getCustomerStatus] GOOGLE_SHEET_ID not configured')
-      return { tinhTrang: 'Bình thường', ngayKhoa: '' }
+      return { tinhTrang: 'Bình thường', ngayKhoa: '', ngayMo: '' }
     }
 
     // Read ON_OFF sheet
@@ -33,7 +33,7 @@ export async function getCustomerStatus(danhba: string) {
 
     const rows = response.data.values
     if (!rows || rows.length === 0) {
-      return { tinhTrang: 'Bình thường', ngayKhoa: '' }
+      return { tinhTrang: 'Bình thường', ngayKhoa: '', ngayMo: '' }
     }
 
     // Find header row
