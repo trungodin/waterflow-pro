@@ -378,12 +378,12 @@ export default function CustomerSearchPage() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Xem</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Danh bạ</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tên KH</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Số nhà</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Đường</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">GB</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Xem</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Danh bạ</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Tên KH</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Số nhà</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">Đường</th>
+                        <th className="px-6 py-3 text-left text-xs font-bold text-gray-900 uppercase">GB</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -392,16 +392,16 @@ export default function CustomerSearchPage() {
                           <td className="px-6 py-4">
                             <input
                               type="checkbox"
-                              checked={selectedCustomers.has(customer.DanhBa)}
+                              checked={selectedCustomers.has(String(customer.DanhBa))}
                               onChange={() => toggleCustomer(customer.DanhBa)}
                               className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                             />
                           </td>
-                          <td className="px-6 py-4 font-mono font-semibold text-sm">{formatDanhBa(customer.DanhBa)}</td>
-                          <td className="px-6 py-4 text-sm">{customer.TenKH}</td>
-                          <td className="px-6 py-4 text-sm">{customer.So}</td>
-                          <td className="px-6 py-4 text-sm">{customer.Duong}</td>
-                          <td className="px-6 py-4 text-sm">{customer.GB}</td>
+                          <td className="px-6 py-4 font-mono font-bold text-sm text-gray-900">{formatDanhBa(customer.DanhBa)}</td>
+                          <td className="px-6 py-4 text-sm font-semibold text-gray-900">{customer.TenKH}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.So}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.Duong}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{customer.GB}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -426,65 +426,65 @@ export default function CustomerSearchPage() {
                           <div className="flex justify-between items-start mb-4">
                             <div>
                               <h3 className="text-2xl font-bold text-yellow-600">{formatDanhBa(details.DanhBa)}</h3>
-                              <p className="text-gray-600">{details.So} {details.Duong}</p>
-                              <p className="font-semibold">{details.TenKH}</p>
+                              <p className="text-gray-900 font-semibold">{details.So} {details.Duong}</p>
+                              <p className="font-bold text-gray-900">{details.TenKH}</p>
                             </div>
                             <button
                               onClick={() => loadPaymentHistory(danhBa)}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
                             >
                               Kiểm tra thanh toán
                             </button>
                           </div>
 
                           <div className="grid grid-cols-3 gap-6 mb-4">
-                            <div>
-                              <p className="text-blue-600">Số điện thoại: <span className="font-bold text-gray-900">{details.SDT || 'N/A'}</span></p>
-                              <p className="text-blue-600">MLT: <span className="font-bold text-gray-900">{details.MLT2}</span></p>
-                              <p className="text-blue-600">Giá biểu: <span className="font-bold text-gray-900">{details.GB}</span></p>
-                              <p className="text-blue-600">Định mức: <span className="font-bold text-gray-900">{details.DM}</span></p>
-                              <p className="text-blue-600">Nhân viên đọc: <span className="font-bold text-gray-900">{details.TenNhanVienDoc}</span></p>
+                            <div className="space-y-2">
+                              <p className="text-blue-700 font-semibold">Số điện thoại: <span className="font-bold text-gray-900">{details.SDT || 'N/A'}</span></p>
+                              <p className="text-blue-700 font-semibold">MLT: <span className="font-bold text-gray-900">{details.MLT2}</span></p>
+                              <p className="text-blue-700 font-semibold">Giá biểu: <span className="font-bold text-gray-900">{details.GB}</span></p>
+                              <p className="text-blue-700 font-semibold">Định mức: <span className="font-bold text-gray-900">{details.DM}</span></p>
+                              <p className="text-blue-700 font-semibold">Nhân viên đọc: <span className="font-bold text-gray-900">{details.TenNhanVienDoc}</span></p>
                             </div>
-                            <div>
-                              <p className="text-blue-600">Cỡ ĐH: <span className="font-bold text-gray-900">{details.Co}</span></p>
-                              <p className="text-blue-600">Hiệu: <span className="font-bold text-gray-900">{details.Hieu}</span></p>
-                              <p className="text-blue-600">Số thân: <span className="font-bold text-gray-900">{details.SoThan}</span></p>
-                              <p className="text-blue-600">Ngày gắn: <span className="font-bold text-gray-900">{details.NgayGan || 'N/A'}</span></p>
-                              <p className="text-blue-600">Hộp: <span className="font-bold text-gray-900">{details.HopBaoVe === 1 ? 'Có' : 'Không'}</span></p>
+                            <div className="space-y-2">
+                              <p className="text-blue-700 font-semibold">Cỡ ĐH: <span className="font-bold text-gray-900">{details.Co}</span></p>
+                              <p className="text-blue-700 font-semibold">Hiệu: <span className="font-bold text-gray-900">{details.Hieu}</span></p>
+                              <p className="text-blue-700 font-semibold">Số thân: <span className="font-bold text-gray-900">{details.SoThan}</span></p>
+                              <p className="text-blue-700 font-semibold">Ngày gắn: <span className="font-bold text-gray-900">{details.NgayGan || 'N/A'}</span></p>
+                              <p className="text-blue-700 font-semibold">Hộp: <span className="font-bold text-gray-900">{details.HopBaoVe === 1 ? 'Có' : 'Không'}</span></p>
                             </div>
-                            <div>
-                              <p className="text-blue-600">Tình trạng: <span className={`font-bold ${details.TinhTrang?.toLowerCase().includes('khóa') ? 'text-red-600' : 'text-gray-900'}`}>{details.TinhTrang}</span></p>
-                              {details.NgayKhoa && <p className="text-blue-600">Ngày khóa: <span className="font-bold text-gray-900">{details.NgayKhoa}</span></p>}
-                              <p className="text-blue-600">Tổng cộng nợ: <span className="font-bold text-gray-900">{formatCurrency(details.TongCongNo)}</span></p>
-                              <p className="text-blue-600">Số kỳ nợ: <span className="font-bold text-gray-900">{details.SoKyNo}</span></p>
-                              <p className="text-blue-600">Các kỳ nợ: <span className="font-bold text-gray-900">{details.KyNamNo}</span></p>
+                            <div className="space-y-2">
+                              <p className="text-blue-700 font-semibold">Tình trạng: <span className={`font-bold ${details.TinhTrang?.toLowerCase().includes('khóa') ? 'text-red-600' : 'text-gray-900'}`}>{details.TinhTrang}</span></p>
+                              {details.NgayKhoa && <p className="text-blue-700 font-semibold">Ngày khóa: <span className="font-bold text-gray-900">{details.NgayKhoa}</span></p>}
+                              <p className="text-blue-700 font-semibold">Tổng cộng nợ: <span className="font-bold text-gray-900">{formatCurrency(details.TongCongNo)}</span></p>
+                              <p className="text-blue-700 font-semibold">Số kỳ nợ: <span className="font-bold text-gray-900">{details.SoKyNo}</span></p>
+                              <p className="text-blue-700 font-semibold">Các kỳ nợ: <span className="font-bold text-gray-900">{details.KyNamNo}</span></p>
                             </div>
                           </div>
 
                           {history && history.length > 0 && (
                             <div className="mt-6 border-t pt-4">
-                              <h4 className="font-semibold mb-3">Lịch sử thanh toán</h4>
+                              <h4 className="font-bold text-gray-900 mb-3 text-lg">Lịch sử thanh toán</h4>
                               <div className="overflow-x-auto">
                                 <table className="min-w-full text-sm">
                                   <thead className="bg-gray-50">
                                     <tr>
-                                      <th className="px-3 py-2 text-left">Kỳ</th>
-                                      <th className="px-3 py-2 text-left">Năm</th>
-                                      <th className="px-3 py-2 text-right">Tổng cộng</th>
-                                      <th className="px-3 py-2 text-left">Ngày giải</th>
-                                      <th className="px-3 py-2 text-left">NV giải</th>
-                                      <th className="px-3 py-2 text-left">Số biên lai</th>
+                                      <th className="px-3 py-2 text-left font-bold text-gray-900">Kỳ</th>
+                                      <th className="px-3 py-2 text-left font-bold text-gray-900">Năm</th>
+                                      <th className="px-3 py-2 text-right font-bold text-gray-900">Tổng cộng</th>
+                                      <th className="px-3 py-2 text-left font-bold text-gray-900">Ngày giải</th>
+                                      <th className="px-3 py-2 text-left font-bold text-gray-900">NV giải</th>
+                                      <th className="px-3 py-2 text-left font-bold text-gray-900">Số biên lai</th>
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y">
                                     {history.map((h, idx) => (
-                                      <tr key={idx}>
-                                        <td className="px-3 py-2">{h.Ky}</td>
-                                        <td className="px-3 py-2">{h.Nam}</td>
-                                        <td className="px-3 py-2 text-right">{formatCurrency(h.TongCong)}</td>
-                                        <td className="px-3 py-2">{h.NgayGiai ? new Date(h.NgayGiai).toLocaleDateString('vi-VN') : ''}</td>
-                                        <td className="px-3 py-2">{h.NVGiai}</td>
-                                        <td className="px-3 py-2">{h.SoBienLai}</td>
+                                      <tr key={idx} className="hover:bg-gray-50">
+                                        <td className="px-3 py-2 font-semibold text-gray-900">{h.Ky}</td>
+                                        <td className="px-3 py-2 font-semibold text-gray-900">{h.Nam}</td>
+                                        <td className="px-3 py-2 text-right font-semibold text-gray-900">{formatCurrency(h.TongCong)}</td>
+                                        <td className="px-3 py-2 font-medium text-gray-900">{h.NgayGiai ? new Date(h.NgayGiai).toLocaleDateString('vi-VN') : ''}</td>
+                                        <td className="px-3 py-2 font-medium text-gray-900">{h.NVGiai}</td>
+                                        <td className="px-3 py-2 font-medium text-gray-900">{h.SoBienLai}</td>
                                       </tr>
                                     ))}
                                   </tbody>
@@ -494,7 +494,7 @@ export default function CustomerSearchPage() {
                           )}
                         </div>
                       ) : (
-                        <p className="text-red-500">Lỗi khi tải chi tiết khách hàng</p>
+                        <p className="text-red-600 font-semibold">Lỗi khi tải chi tiết khách hàng</p>
                       )}
                     </div>
                   )
