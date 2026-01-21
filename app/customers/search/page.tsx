@@ -473,6 +473,9 @@ export default function CustomerSearchPage() {
                                       <th className="px-3 py-2 text-right font-bold text-gray-900">Tổng cộng</th>
                                       <th className="px-3 py-2 text-left font-bold text-gray-900">Ngày giải</th>
                                       <th className="px-3 py-2 text-left font-bold text-gray-900">NV giải</th>
+                                      <th className="px-3 py-2 text-left font-bold text-gray-900">Ngày thu hộ</th>
+                                      <th className="px-3 py-2 text-left font-bold text-gray-900">Ngân hàng thu hộ</th>
+                                      <th className="px-3 py-2 text-left font-bold text-gray-900">Số hóa đơn</th>
                                       <th className="px-3 py-2 text-left font-bold text-gray-900">Số biên lai</th>
                                     </tr>
                                   </thead>
@@ -484,7 +487,10 @@ export default function CustomerSearchPage() {
                                         <td className="px-3 py-2 text-right font-semibold text-gray-900">{formatCurrency(h.TongCong)}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.NgayGiai ? new Date(h.NgayGiai).toLocaleDateString('vi-VN') : ''}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.NVGiai}</td>
-                                        <td className="px-3 py-2 font-medium text-gray-900">{h.SoBienLai}</td>
+                                        <td className="px-3 py-2 font-medium text-gray-900">{h.NgayThuHo ? new Date(h.NgayThuHo).toLocaleDateString('vi-VN') : ''}</td>
+                                        <td className="px-3 py-2 font-medium text-gray-900">{h.NganHangThuHo || ''}</td>
+                                        <td className="px-3 py-2 font-medium text-gray-900">{h.SoHoaDon || ''}</td>
+                                        <td className="px-3 py-2 font-medium text-gray-900">{h.SoBienLai || ''}</td>
                                       </tr>
                                     ))}
                                   </tbody>

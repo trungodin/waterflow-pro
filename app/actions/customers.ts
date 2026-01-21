@@ -292,9 +292,11 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
 
 export async function getPaymentHistory(danhba: string) {
   try {
+    console.log('[getPaymentHistory] Input danhba:', danhba)
     const danhbaInt = parseInt(danhba)
     
-    const query = `
+    // Step 1: Get main invoice data with SoBK
+    const mainQuery = `
       SELECT 
         hd.DANHBA, hd.Ky, hd.Nam, hd.TONGCONG,
         unc.NgayThu AS NgayGiai, hd.NV_GIAI, hd.SOHOADON,
@@ -305,26 +307,57 @@ export async function getPaymentHistory(danhba: string) {
       ORDER BY hd.Nam DESC, hd.Ky DESC
     `
     
-    const results = await executeSqlQuery('f_Select_SQL_Thutien', query)
+    console.log('[getPaymentHistory] Main query:', mainQuery)
+    const mainResults = await executeSqlQuery('f_Select_SQL_Thutien', mainQuery)
+    console.log('[getPaymentHistory] Main results count:', mainResults?.length || 0)
     
-    if (!results || results.length === 0) {
+    if (!mainResults || mainResults.length === 0) {
       return []
     }
 
-    // Format results
-    return results.map((r: any) => ({
-      DanhBa: String(r.DANHBA).padStart(11, '0'),
-      Ky: r.Ky,
-      Nam: r.Nam,
-      TongCong: r.TONGCONG,
-      NgayGiai: r.NgayGiai,
-      NVGiai: r.NV_GIAI,
-      SoHoaDon: r.SOHOADON,
-      SoBienLai: r.SoBK
-    }))
+    // Step 2: Get BGW data (bank payment info)
+    const sohoadonList = mainResults
+      .map((r: any) => r.SOHOADON)
+      .filter((s: any) => s != null && s !== '')
+    
+    let bgwData: any[] = []
+    
+    if (sohoadonList.length > 0) {
+      const formattedList = sohoadonList.map((s: any) => `'${s}'`).join(',')
+      const bgwQuery = `
+        SELECT SHDon AS SOHOADON, NgayThanhToan AS NgayThuHo, MaNH AS NganHangThuHo
+        FROM BGW_HD
+        WHERE SHDon IN (${formattedList})
+      `
+      
+      console.log('[getPaymentHistory] BGW query:', bgwQuery)
+      bgwData = await executeSqlQuery('f_Select_SQL_Nganhang', bgwQuery)
+      console.log('[getPaymentHistory] BGW results count:', bgwData?.length || 0)
+    }
+
+    // Step 3: Merge data
+    const results = mainResults.map((main: any) => {
+      const bgw = bgwData.find((b: any) => String(b.SOHOADON) === String(main.SOHOADON))
+      
+      return {
+        DanhBa: String(main.DANHBA).padStart(11, '0'),
+        Ky: main.Ky,
+        Nam: main.Nam,
+        TongCong: main.TONGCONG,
+        NgayGiai: main.NgayGiai,
+        NVGiai: main.NV_GIAI,
+        SoHoaDon: main.SOHOADON,
+        SoBienLai: main.SoBK,
+        NgayThuHo: bgw?.NgayThuHo || null,
+        NganHangThuHo: bgw?.NganHangThuHo || null
+      }
+    })
+
+    console.log('[getPaymentHistory] Final results:', results)
+    return results
 
   } catch (error) {
-    console.error('Error getting payment history:', error)
+    console.error('[getPaymentHistory] Error:', error)
     return []
   }
 }
