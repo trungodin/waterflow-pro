@@ -69,8 +69,8 @@ export async function searchCustomers(params: CustomerSearchParams) {
       const currentYear = new Date().getFullYear()
       const sblQuery = `
         SELECT DISTINCT TOP 50000 hd.DANHBA
-        FROM ThuUNC AS unc
-        INNER JOIN HoaDon AS hd ON unc.Id_hd = hd.id
+        FROM ThuUNC AS unc WITH (NOLOCK)
+        INNER JOIN HoaDon AS hd WITH (NOLOCK) ON unc.Id_hd = hd.id
         WHERE unc.SoBK = N'${so_bien_lai.replace(/'/g, "''")}'
           AND YEAR(unc.NgayThu) = ${currentYear}
       `
@@ -89,12 +89,12 @@ export async function searchCustomers(params: CustomerSearchParams) {
       
       const query = `
         SELECT DanhBa, MLT2, TenKH, So, Duong, SDT, SoThan, Hieu, Co, GB
-        FROM KhachHang
+        FROM KhachHang WITH (NOLOCK)
         WHERE DanhBa IN (${danhbaIn})
       `
       
       console.log('[searchCustomers] Final query:', query)
-      const results = await executeSqlQuery('f_Select_SQL_KhachHang', query)
+      const results = await executeSqlQuery('f_Select_SQL_Doc_so', query)
       console.log('[searchCustomers] Final results:', results)
       return results as Customer[]
     }
@@ -108,20 +108,20 @@ export async function searchCustomers(params: CustomerSearchParams) {
         const tongNoValue = parseFloat(tong_no.replace(/[,.]/g, ''))
         console.log('[searchCustomers] Debt amount:', tongNoValue)
         debtQuery = `
-          SELECT DANHBA, SUM(TONGCONG_BD) AS TongNo
-          FROM HoaDon
+          SELECT DANHBA, SUM(TONGCONG) AS TongNo
+          FROM HoaDon WITH (NOLOCK)
           WHERE NGAYGIAI IS NULL
           GROUP BY DANHBA
-          HAVING ABS(SUM(TONGCONG_BD) - ${tongNoValue}) < 1
+          HAVING ABS(SUM(TONGCONG) - ${tongNoValue}) < 1
         `
       } else if (tien_hd) {
         const tienHdValue = parseFloat(tien_hd.replace(/[,.]/g, ''))
         console.log('[searchCustomers] Invoice amount:', tienHdValue)
         debtQuery = `
           SELECT DISTINCT DANHBA
-          FROM HoaDon
+          FROM HoaDon WITH (NOLOCK)
           WHERE NGAYGIAI IS NULL
-            AND ABS(TONGCONG_BD - ${tienHdValue}) < 1
+            AND ABS(TONGCONG - ${tienHdValue}) < 1
         `
       }
       
@@ -139,12 +139,12 @@ export async function searchCustomers(params: CustomerSearchParams) {
       
       const query = `
         SELECT DanhBa, MLT2, TenKH, So, Duong, SDT, SoThan, Hieu, Co, GB
-        FROM KhachHang
+        FROM KhachHang WITH (NOLOCK)
         WHERE DanhBa IN (${danhbaIn})
       `
       
       console.log('[searchCustomers] Final query:', query)
-      const results = await executeSqlQuery('f_Select_SQL_KhachHang', query)
+      const results = await executeSqlQuery('f_Select_SQL_Doc_so', query)
       console.log('[searchCustomers] Final results:', results)
       return results as Customer[]
     }
