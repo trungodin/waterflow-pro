@@ -494,7 +494,7 @@ export default function CustomerSearchPage() {
                               <p className="text-blue-600"><span className="font-medium">Hộp:</span> <span className="text-gray-900">{details.HopBaoVe === 1 ? 'Có' : 'Không'}</span></p>
                             </div>
                             <div className="space-y-2">
-                              <p className="text-blue-600"><span className="font-medium">Tình trạng:</span> <span className={`${details.TinhTrang?.toLowerCase().includes('khóa') ? 'text-red-600' : 'text-gray-900'}`}>{details.TinhTrang}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Tình trạng:</span> <span className={`${details.TinhTrang?.toLowerCase().includes('khóa') ? 'text-red-600 font-bold' : 'text-gray-900'}`}>{details.TinhTrang}</span></p>
                               {details.NgayKhoa && <p className="text-blue-600"><span className="font-medium">Ngày khóa:</span> <span className="text-gray-900">{details.NgayKhoa}</span></p>}
                               <p className="text-blue-600"><span className="font-medium">Tổng cộng nợ:</span> <span className="text-gray-900">{formatCurrencyWithVND(details.TongCongNo)}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Số kỳ nợ:</span> <span className="text-gray-900">{details.SoKyNo}</span></p>
