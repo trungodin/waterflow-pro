@@ -497,7 +497,9 @@ export default function CustomerSearchPage() {
                               <p className="text-blue-600">
                                 <span className="font-medium">Tình trạng:</span>{' '}
                                 <span 
-                                  style={details.TinhTrang?.toLowerCase().includes('khóa') 
+                                  style={
+                                    (details.TinhTrang?.toLowerCase().includes('khóa') || 
+                                     details.TinhTrang?.toLowerCase().includes('khoá'))
                                     ? { color: '#ff4d4d', fontWeight: 'bold' } 
                                     : { color: '#111827' }
                                   }
@@ -505,7 +507,7 @@ export default function CustomerSearchPage() {
                                   {details.TinhTrang}
                                 </span>
                               </p>
-                              {details.NgayKhoa && <p className="text-blue-600"><span className="font-medium">Ngày khóa:</span> <span className="text-gray-900">{details.NgayKhoa}</span></p>}
+                              {(details.NgayKhoa && (details.TinhTrang?.toLowerCase().includes('khóa') || details.TinhTrang?.toLowerCase().includes('khoá'))) && <p className="text-blue-600"><span className="font-medium">Ngày khóa:</span> <span className="text-gray-900">{formatDate(details.NgayKhoa)}</span></p>}
                               <p className="text-blue-600"><span className="font-medium">Tổng cộng nợ:</span> <span className="text-gray-900">{formatCurrencyWithVND(details.TongCongNo)}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Số kỳ nợ:</span> <span className="text-gray-900">{details.SoKyNo}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Các kỳ nợ:</span> <span className="text-gray-900">{details.KyNamNo}</span></p>
