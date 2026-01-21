@@ -156,7 +156,11 @@ export default function CustomerSearchPage() {
     }
   }
 
-  const formatCurrency = (val: number) => {
+  const formatNumber = (val: number) => {
+    return new Intl.NumberFormat('vi-VN').format(val)
+  }
+
+  const formatCurrencyWithVND = (val: number) => {
     return new Intl.NumberFormat('vi-VN').format(val) + ' VNĐ'
   }
 
@@ -492,7 +496,7 @@ export default function CustomerSearchPage() {
                             <div className="space-y-2">
                               <p className="text-blue-600"><span className="font-medium">Tình trạng:</span> <span className={`${details.TinhTrang?.toLowerCase().includes('khóa') ? 'text-red-600' : 'text-gray-900'}`}>{details.TinhTrang}</span></p>
                               {details.NgayKhoa && <p className="text-blue-600"><span className="font-medium">Ngày khóa:</span> <span className="text-gray-900">{details.NgayKhoa}</span></p>}
-                              <p className="text-blue-600"><span className="font-medium">Tổng cộng nợ:</span> <span className="text-gray-900">{formatCurrency(details.TongCongNo)}</span></p>
+                              <p className="text-blue-600"><span className="font-medium">Tổng cộng nợ:</span> <span className="text-gray-900">{formatCurrencyWithVND(details.TongCongNo)}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Số kỳ nợ:</span> <span className="text-gray-900">{details.SoKyNo}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Các kỳ nợ:</span> <span className="text-gray-900">{details.KyNamNo}</span></p>
                             </div>
@@ -521,7 +525,7 @@ export default function CustomerSearchPage() {
                                       <tr key={idx} className="hover:bg-gray-50">
                                         <td className="px-3 py-2 font-semibold text-gray-900">{h.Ky}</td>
                                         <td className="px-3 py-2 font-semibold text-gray-900">{h.Nam}</td>
-                                        <td className="px-3 py-2 text-right font-semibold text-gray-900">{formatCurrency(h.TongCong)}</td>
+                                        <td className="px-3 py-2 text-right font-semibold text-gray-900">{formatNumber(h.TongCong)}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.NgayGiai ? new Date(h.NgayGiai).toLocaleDateString('vi-VN') : ''}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.NVGiai}</td>
                                         <td className="px-3 py-2 font-medium text-gray-900">{h.NgayThuHo ? new Date(h.NgayThuHo).toLocaleDateString('vi-VN') : ''}</td>
