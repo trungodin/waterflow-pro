@@ -177,7 +177,20 @@ export default function CustomerSearchPage() {
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return 'N/A'
     try {
+      // Check if already in dd/mm/yyyy or dd-mm-yyyy format
+      if (/^\d{1,2}[/-]\d{1,2}[/-]\d{4}/.test(dateStr)) {
+        const parts = dateStr.split(/[/-]/)
+        const day = parts[0].padStart(2, '0')
+        const month = parts[1].padStart(2, '0')
+        const year = parts[2]
+        return `${day}-${month}-${year}`
+      }
+      
+      // Try parsing as ISO date
       const date = new Date(dateStr)
+      if (isNaN(date.getTime())) {
+        return dateStr // Return original if can't parse
+      }
       const day = String(date.getDate()).padStart(2, '0')
       const month = String(date.getMonth() + 1).padStart(2, '0')
       const year = date.getFullYear()
@@ -501,6 +514,8 @@ export default function CustomerSearchPage() {
                                     (details.TinhTrang?.toLowerCase().includes('khóa') || 
                                      details.TinhTrang?.toLowerCase().includes('khoá'))
                                     ? { color: '#ff4d4d', fontWeight: 'bold' } 
+                                    : (details.TinhTrang?.toLowerCase().includes('mở'))
+                                    ? { color: '#22c55e', fontWeight: 'bold' }
                                     : { color: '#111827' }
                                   }
                                 >
@@ -508,6 +523,7 @@ export default function CustomerSearchPage() {
                                 </span>
                               </p>
                               {(details.NgayKhoa && (details.TinhTrang?.toLowerCase().includes('khóa') || details.TinhTrang?.toLowerCase().includes('khoá'))) && <p className="text-blue-600"><span className="font-medium">Ngày khóa:</span> <span className="text-gray-900">{formatDate(details.NgayKhoa)}</span></p>}
+                              {(details.NgayMo && details.TinhTrang?.toLowerCase().includes('mở')) && <p className="text-blue-600"><span className="font-medium">Ngày mở:</span> <span className="text-gray-900">{formatDate(details.NgayMo)}</span></p>}
                               <p className="text-blue-600"><span className="font-medium">Tổng cộng nợ:</span> <span className="text-gray-900">{formatCurrencyWithVND(details.TongCongNo)}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Số kỳ nợ:</span> <span className="text-gray-900">{details.SoKyNo}</span></p>
                               <p className="text-blue-600"><span className="font-medium">Các kỳ nợ:</span> <span className="text-gray-900">{details.KyNamNo}</span></p>

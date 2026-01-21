@@ -45,6 +45,7 @@ export interface CustomerDetail {
   HopBaoVe: number
   TinhTrang: string
   NgayKhoa?: string
+  NgayMo?: string
   TongCongNo: number
   SoKyNo: number
   KyNamNo: string
@@ -283,10 +284,12 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
       const status = await getCustomerStatus(formattedDanhba)
       details.TinhTrang = status.tinhTrang
       details.NgayKhoa = status.ngayKhoa
+      details.NgayMo = status.ngayMo
     } catch (error) {
       console.error('[getCustomerDetails] Error getting status from Google Sheets:', error)
       details.TinhTrang = 'Bình thường'
       details.NgayKhoa = ''
+      details.NgayMo = ''
     }
 
     console.log('[getCustomerDetails] Final details:', details)
