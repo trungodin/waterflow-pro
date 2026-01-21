@@ -34,6 +34,9 @@ export default function CustomerSearchPage() {
   const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set())
   const [customerDetails, setCustomerDetails] = useState<Map<string, CustomerDetail>>(new Map())
   const [paymentHistories, setPaymentHistories] = useState<Map<string, any[]>>(new Map())
+  const [historyPages, setHistoryPages] = useState<Map<string, number>>(new Map())
+
+  const ITEMS_PER_PAGE = 24
   
   // UI states
   const [loading, setLoading] = useState(false)
@@ -549,9 +552,14 @@ export default function CustomerSearchPage() {
                             </div>
                           </div>
 
-                          {history && history.length > 0 && (
+                          {history && history.length > 0 && (() => {
+                            const currentPage = historyPages.get(danhBa) || 1
+                            const totalPages = Math.ceil(history.length / ITEMS_PER_PAGE)
+                            const displayedHistory = history.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE)
+                            
+                            return (
                             <div className="mt-6 border-t pt-4">
-                              <h4 className="font-bold text-gray-900 mb-3 text-lg">Lịch sử thanh toán</h4>
+                              <h4 className="font-bold text-gray-900 mb-3 text-lg">Lịch sử thanh toán ({history.length} bản ghi)</h4>
                               <div className="overflow-x-auto">
                                 <table className="min-w-full text-sm">
                                   <thead className="bg-gray-50">
@@ -568,7 +576,7 @@ export default function CustomerSearchPage() {
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y">
-                                    {history.map((h, idx) => (
+                                    {displayedHistory.map((h, idx) => (
                                       <tr key={idx} className="hover:bg-gray-50">
                                         <td className="px-3 py-2 font-semibold text-gray-900">{h.Ky}</td>
                                         <td className="px-3 py-2 font-semibold text-gray-900">{h.Nam}</td>
@@ -584,8 +592,29 @@ export default function CustomerSearchPage() {
                                   </tbody>
                                 </table>
                               </div>
+                              
+                              {totalPages > 1 && (
+                                <div className="flex justify-center items-center gap-4 mt-6 pb-2">
+                                  <button 
+                                    onClick={() => setHistoryPages(prev => new Map(prev).set(danhBa, currentPage - 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all"
+                                  >
+                                    Trước
+                                  </button>
+                                  <span className="text-gray-900 font-medium">Trang {currentPage} / {totalPages}</span>
+                                  <button 
+                                    onClick={() => setHistoryPages(prev => new Map(prev).set(danhBa, currentPage + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all"
+                                  >
+                                    Sau
+                                  </button>
+                                </div>
+                              )}
                             </div>
-                          )}
+                            )
+                          })()}
                         </div>
                       ) : (
                         <p className="text-red-600 font-semibold">Lỗi khi tải chi tiết khách hàng</p>
