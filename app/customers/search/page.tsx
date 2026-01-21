@@ -459,11 +459,12 @@ export default function CustomerSearchPage() {
                         </div>
                       ) : details ? (
                         <div>
-                          <div className="flex justify-between items-start mb-4">
+                          <div className="flex justify-between items-start mb-4 bg-gray-900 p-4 rounded-lg">
                             <div>
-                              <h3 className="text-2xl font-bold text-yellow-600">{formatDanhBa(details.DanhBa)}</h3>
-                              <p className="text-gray-900 font-medium">{details.So} {details.Duong}</p>
-                              <p className="font-semibold text-gray-900">{details.TenKH}</p>
+                              <h3 className="text-2xl font-bold text-yellow-600">
+                                {formatDanhBa(details.DanhBa)} <span className="text-white font-normal">{details.So} {details.Duong}</span>
+                              </h3>
+                              <p className="font-semibold text-white text-lg">{details.TenKH}</p>
                             </div>
                             <button
                               onClick={() => loadPaymentHistory(danhBa)}
