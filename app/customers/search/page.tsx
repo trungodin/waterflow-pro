@@ -108,28 +108,36 @@ export default function CustomerSearchPage() {
     }
   }
 
-  const toggleCustomer = async (danhBa: string) => {
+  const toggleCustomer = async (danhBa: string | number) => {
+    const danhBaStr = String(danhBa)
     const newSelected = new Set(selectedCustomers)
     
-    if (newSelected.has(danhBa)) {
-      newSelected.delete(danhBa)
+    if (newSelected.has(danhBaStr)) {
+      newSelected.delete(danhBaStr)
     } else {
-      newSelected.add(danhBa)
+      newSelected.add(danhBaStr)
       
       // Load details if not already loaded
-      if (!customerDetails.has(danhBa)) {
-        setLoadingDetails(prev => new Set(prev).add(danhBa))
+      if (!customerDetails.has(danhBaStr)) {
+        setLoadingDetails(prev => new Set(prev).add(danhBaStr))
         try {
-          const details = await getCustomerDetails(danhBa)
+          console.log('[toggleCustomer] Loading details for:', danhBaStr)
+          const details = await getCustomerDetails(danhBaStr)
+          console.log('[toggleCustomer] Details loaded:', details)
+          
           if (details) {
-            setCustomerDetails(prev => new Map(prev).set(danhBa, details))
+            setCustomerDetails(prev => new Map(prev).set(danhBaStr, details))
+          } else {
+            console.error('[toggleCustomer] No details returned')
+            alert(`Không thể tải thông tin chi tiết cho danh bạ ${danhBaStr}`)
           }
         } catch (error) {
-          console.error('Error loading details:', error)
+          console.error('[toggleCustomer] Error loading details:', error)
+          alert(`Lỗi khi tải chi tiết: ${error}`)
         } finally {
           setLoadingDetails(prev => {
             const newSet = new Set(prev)
-            newSet.delete(danhBa)
+            newSet.delete(danhBaStr)
             return newSet
           })
         }
@@ -160,13 +168,24 @@ export default function CustomerSearchPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      {/* Global styles for placeholder */}
+      {/* Global styles for placeholder and input text */}
       <style jsx global>{`
         input::placeholder,
         select::placeholder {
-          color: #374151 !important;
-          font-weight: 500 !important;
+          color: #6B7280 !important;
+          font-weight: 400 !important;
           opacity: 1 !important;
+        }
+        
+        input,
+        select {
+          color: #111827 !important;
+          font-weight: 500 !important;
+        }
+        
+        input:focus,
+        select:focus {
+          color: #000000 !important;
         }
       `}</style>
       

@@ -214,11 +214,21 @@ export async function searchCustomers(params: CustomerSearchParams) {
 
 export async function getCustomerDetails(danhba: string): Promise<CustomerDetail | null> {
   try {
+    console.log('[getCustomerDetails] Input danhba:', danhba)
+    
+    // Ensure danhba is properly formatted (11 digits)
+    const formattedDanhba = String(danhba).padStart(11, '0')
+    console.log('[getCustomerDetails] Formatted danhba:', formattedDanhba)
+    
     // 1. Get customer info
-    const khQuery = `SELECT * FROM KhachHang WHERE DanhBa = '${danhba}'`
+    const khQuery = `SELECT * FROM KhachHang WHERE DanhBa = '${formattedDanhba}'`
+    console.log('[getCustomerDetails] Customer query:', khQuery)
+    
     const khResults = await executeSqlQuery('f_Select_SQL_Doc_so', khQuery)
+    console.log('[getCustomerDetails] Customer results:', khResults)
     
     if (!khResults || khResults.length === 0) {
+      console.log('[getCustomerDetails] No customer found')
       return null
     }
     
@@ -230,19 +240,23 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
       SELECT TOP 1 mds.NhanVienID 
       FROM DocSo AS ds 
       INNER JOIN MayDS AS mds ON ds.May = mds.May 
-      WHERE ds.DanhBa = '${danhba}' 
+      WHERE ds.DanhBa = '${formattedDanhba}' 
       ORDER BY ds.Nam DESC, ds.Ky DESC
     `
+    console.log('[getCustomerDetails] Reader query:', nvQuery)
     const nvResults = await executeSqlQuery('f_Select_SQL_Doc_so', nvQuery)
+    console.log('[getCustomerDetails] Reader results:', nvResults)
     details.TenNhanVienDoc = nvResults && nvResults.length > 0 ? nvResults[0].NhanVienID : 'N/A'
 
     // 3. Get debt info
     const hdQuery = `
       SELECT KY, NAM, TONGCONG 
       FROM HoaDon 
-      WHERE DANHBA = '${danhba}' AND NGAYGIAI IS NULL
+      WHERE DANHBA = '${formattedDanhba}' AND NGAYGIAI IS NULL
     `
+    console.log('[getCustomerDetails] Debt query:', hdQuery)
     const hdResults = await executeSqlQuery('f_Select_SQL_Thutien', hdQuery)
+    console.log('[getCustomerDetails] Debt results:', hdResults)
     
     if (hdResults && hdResults.length > 0) {
       const validDebts = hdResults.filter((r: any) => parseFloat(r.TONGCONG || 0) > 0)
@@ -267,10 +281,11 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
     details.TinhTrang = 'Bình thường'
     details.NgayKhoa = ''
 
+    console.log('[getCustomerDetails] Final details:', details)
     return details as CustomerDetail
 
   } catch (error) {
-    console.error('Error getting customer details:', error)
+    console.error('[getCustomerDetails] Error:', error)
     return null
   }
 }
