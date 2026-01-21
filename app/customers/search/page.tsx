@@ -160,6 +160,16 @@ export default function CustomerSearchPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
+      {/* Global styles for placeholder */}
+      <style jsx global>{`
+        input::placeholder,
+        select::placeholder {
+          color: #374151 !important;
+          font-weight: 500 !important;
+          opacity: 1 !important;
+        }
+      `}</style>
+      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">🔎 Tra cứu Thông tin Khách hàng</h1>

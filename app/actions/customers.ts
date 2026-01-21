@@ -53,6 +53,8 @@ export interface CustomerDetail {
 
 export async function searchCustomers(params: CustomerSearchParams) {
   try {
+    console.log('[searchCustomers] Input params:', params)
+    
     const { 
       danhba, tenkh, dia_chi, mlt2, sdt, sothan, 
       gb, tong_no, tien_hd, co, so_bien_lai 
@@ -63,6 +65,7 @@ export async function searchCustomers(params: CustomerSearchParams) {
 
     // Priority 1: Số biên lai (standalone - ignore other filters)
     if (so_bien_lai) {
+      console.log('[searchCustomers] Searching by receipt number:', so_bien_lai)
       const currentYear = new Date().getFullYear()
       const sblQuery = `
         SELECT DISTINCT TOP 50000 hd.DANHBA
@@ -72,9 +75,12 @@ export async function searchCustomers(params: CustomerSearchParams) {
           AND YEAR(unc.NgayThu) = ${currentYear}
       `
       
+      console.log('[searchCustomers] Receipt query:', sblQuery)
       const sblResults = await executeSqlQuery('f_Select_SQL_Thutien', sblQuery)
+      console.log('[searchCustomers] Receipt results:', sblResults)
       
       if (!sblResults || sblResults.length === 0) {
+        console.log('[searchCustomers] No results for receipt number')
         return []
       }
       
@@ -87,16 +93,20 @@ export async function searchCustomers(params: CustomerSearchParams) {
         WHERE DanhBa IN (${danhbaIn})
       `
       
+      console.log('[searchCustomers] Final query:', query)
       const results = await executeSqlQuery('f_Select_SQL_KhachHang', query)
+      console.log('[searchCustomers] Final results:', results)
       return results as Customer[]
     }
 
     // Priority 2: Tổng nợ / Tiền hóa đơn
     if (tong_no || tien_hd) {
+      console.log('[searchCustomers] Searching by debt/invoice')
       let debtQuery = ""
       
       if (tong_no) {
         const tongNoValue = parseFloat(tong_no.replace(/[,.]/g, ''))
+        console.log('[searchCustomers] Debt amount:', tongNoValue)
         debtQuery = `
           SELECT DANHBA, SUM(TONGCONG_BD) AS TongNo
           FROM HoaDon
@@ -106,6 +116,7 @@ export async function searchCustomers(params: CustomerSearchParams) {
         `
       } else if (tien_hd) {
         const tienHdValue = parseFloat(tien_hd.replace(/[,.]/g, ''))
+        console.log('[searchCustomers] Invoice amount:', tienHdValue)
         debtQuery = `
           SELECT DISTINCT DANHBA
           FROM HoaDon
@@ -114,9 +125,12 @@ export async function searchCustomers(params: CustomerSearchParams) {
         `
       }
       
+      console.log('[searchCustomers] Debt query:', debtQuery)
       const debtResults = await executeSqlQuery('f_Select_SQL_Thutien', debtQuery)
+      console.log('[searchCustomers] Debt results:', debtResults)
       
       if (!debtResults || debtResults.length === 0) {
+        console.log('[searchCustomers] No results for debt/invoice')
         return []
       }
       
@@ -129,25 +143,29 @@ export async function searchCustomers(params: CustomerSearchParams) {
         WHERE DanhBa IN (${danhbaIn})
       `
       
+      console.log('[searchCustomers] Final query:', query)
       const results = await executeSqlQuery('f_Select_SQL_KhachHang', query)
+      console.log('[searchCustomers] Final results:', results)
       return results as Customer[]
     }
 
     // Priority 3: Normal filters
+    console.log('[searchCustomers] Using normal filters')
+    
     if (danhba) {
-      whereClauses.push(`DanhBa LIKE N'%${danhba.replace(/'/g, "''").trim()}%'`)
+      whereClauses.push(`DanhBa LIKE '%${danhba.replace(/'/g, "''").trim()}%'`)
     }
     if (mlt2) {
-      whereClauses.push(`MLT2 LIKE N'%${mlt2.replace(/'/g, "''").trim()}%'`)
+      whereClauses.push(`MLT2 LIKE '%${mlt2.replace(/'/g, "''").trim()}%'`)
     }
     if (tenkh) {
       whereClauses.push(`TenKH LIKE N'%${tenkh.replace(/'/g, "''").trim()}%' COLLATE ${COLLATION}`)
     }
     if (sdt) {
-      whereClauses.push(`SDT LIKE N'%${sdt.replace(/'/g, "''").trim()}%'`)
+      whereClauses.push(`SDT LIKE '%${sdt.replace(/'/g, "''").trim()}%'`)
     }
     if (sothan) {
-      whereClauses.push(`SoThan LIKE N'%${sothan.replace(/'/g, "''").trim()}%'`)
+      whereClauses.push(`SoThan LIKE '%${sothan.replace(/'/g, "''").trim()}%'`)
     }
     if (gb && gb !== "Tất cả") {
       whereClauses.push(`GB = N'${gb.replace(/'/g, "''")}'`)
@@ -168,6 +186,7 @@ export async function searchCustomers(params: CustomerSearchParams) {
     }
 
     if (whereClauses.length === 0) {
+      console.log('[searchCustomers] No filters provided')
       return []
     }
 
@@ -175,16 +194,20 @@ export async function searchCustomers(params: CustomerSearchParams) {
     const query = `
       SELECT TOP 50000
         DanhBa, MLT2, TenKH, So, Duong, SDT, SoThan, Hieu, Co, GB
-      FROM KhachHang
+      FROM KhachHang WITH (NOLOCK)
       WHERE ${whereClause}
       ORDER BY DanhBa
     `
 
-    const results = await executeSqlQuery('f_Select_SQL_KhachHang', query)
+    console.log('[searchCustomers] Normal query:', query)
+    const results = await executeSqlQuery('f_Select_SQL_Doc_so', query)
+    console.log('[searchCustomers] Normal results count:', results?.length || 0)
+    console.log('[searchCustomers] Normal results sample:', results?.slice(0, 3))
+    
     return results as Customer[]
 
   } catch (error) {
-    console.error('Error searching customers:', error)
+    console.error('[searchCustomers] Error:', error)
     return []
   }
 }
