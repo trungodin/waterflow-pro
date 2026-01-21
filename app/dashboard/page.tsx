@@ -16,10 +16,12 @@ export default function Dashboard() {
     monthlyConsumption: 0,
     monthlyConsumptionPrev: 0,
     yearlyConsumption: 0,
+    yearlyConsumptionPrev: 0,
     zeroConsumptionCount: 0,
     yearlyRevenue: 0,
     yearlyRevenueGB: 0,
     yearlyRevenuePrev: 0,
+    yearlyRevenueGBPrev: 0,
     yearlyCollected: 0,
     yearlyCollectedGB: 0,
     yearlyOutstanding: 0,
@@ -49,10 +51,12 @@ export default function Dashboard() {
         monthlyConsumption: Number(kpiData.SanLuong_Current) || 0,
         monthlyConsumptionPrev: Number(kpiData.SanLuong_Prev) || 0,
         yearlyConsumption: Number(kpiData.SanLuong_Year) || 0,
+        yearlyConsumptionPrev: Number(kpiData.SanLuong_Year_Prev) || 0,
         zeroConsumptionCount: Number(kpiData.DHN_BangKhong_Current) || 0,
         yearlyRevenue: Number(kpiData.DoanhThu) || 0,
         yearlyRevenueGB: Number(kpiData.DoanhThu_GB) || 0,
         yearlyRevenuePrev: Number(kpiData.DoanhThu_Prev) || 0,
+        yearlyRevenueGBPrev: Number(kpiData.DoanhThu_GB_Prev) || 0,
         yearlyCollected: Number(kpiData.ThucThu) || 0,
         yearlyCollectedGB: Number(kpiData.ThucThu_GB) || 0,
         yearlyOutstanding: (Number(kpiData.DoanhThu) || 0) - (Number(kpiData.ThucThu) || 0),
@@ -199,6 +203,12 @@ export default function Dashboard() {
                    <span className="text-3xl font-extrabold text-indigo-600">{formatNumber(stats.yearlyConsumption)}</span>
                    <span className="text-sm font-bold text-gray-400 mb-1">m³</span>
                  </div>
+                 {stats.yearlyConsumptionPrev > 0 && (
+                   <div className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stats.yearlyConsumption >= stats.yearlyConsumptionPrev ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                     {stats.yearlyConsumption >= stats.yearlyConsumptionPrev ? '▲' : '▼'} 
+                     <span className="ml-1">{formatNumber(Math.abs(stats.yearlyConsumption - stats.yearlyConsumptionPrev))} m³</span>
+                   </div>
+                 )}
                </div>
                <div className="absolute right-0 bottom-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                   <svg className="w-24 h-24 text-indigo-600 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
@@ -208,7 +218,7 @@ export default function Dashboard() {
              {/* Card: ĐHN = 0 */}
              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden group">
                <div className="relative z-10">
-                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">ĐHN Thay thế / 0 m³</p>
+                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">ĐHN 0 m³</p>
                  <div className="mt-2">
                    <span className="text-3xl font-extrabold text-orange-500">{formatNumber(stats.zeroConsumptionCount)}</span>
                  </div>
@@ -243,8 +253,7 @@ export default function Dashboard() {
                   {stats.yearlyRevenuePrev > 0 && (
                     <div className={`mt-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${stats.yearlyRevenue >= stats.yearlyRevenuePrev ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                         {stats.yearlyRevenue >= stats.yearlyRevenuePrev ? '▲' : '▼'}
-                        <span className="ml-1">{Math.abs(((stats.yearlyRevenue - stats.yearlyRevenuePrev) / stats.yearlyRevenuePrev) * 100).toFixed(1)}%</span>
-                        <span className="font-normal ml-1 text-gray-500">(so cùng kỳ)</span>
+                        <span className="ml-1">{formatCurrency(Math.abs(stats.yearlyRevenue - stats.yearlyRevenuePrev))}</span>
                     </div>
                   )}
                </div>

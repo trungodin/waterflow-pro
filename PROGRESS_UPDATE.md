@@ -1,21 +1,16 @@
-# 🎉 PROGRESS UPDATE - LOGIC & NAMING
+# 🎉 PROGRESS UPDATE - CLEANUP & REDIRECT
 
 **Date:** 2026-01-20
-**Status:** Logic Adjusted & Renamed
+**Status:** Cleanup Completed
 
 ---
 
-## ⚡ LOGIC CHANGE (REVENUE)
-- **Full Year Basis:** "Kinh Doanh" (Business/Revenue) stats now calculate for the **Entire Year** selected, regardless of the Month filter.
-- **Production (No Change):** "Sản Xuất" stats still respect the specific Month filter selected.
+## 🧹 NAVIGATION CLEANUP
+- **Navbar:** Removed "Trang chủ" link and "Bắt đầu" button. The interace is now strictly for internal tool usage.
+- **Homepage (/)**: Now automatically **Redirects** to `/dashboard`. No more marketing landing page.
 
-## 🏷️ RENAMING
-- **Concise Titles:**
-  - "Chỉ số Sản xuất" -> **"Sản Xuất"**
-  - "Tình hình Kinh doanh" -> **"Kinh Doanh"**
-
-## 🔄 DEPLOYMENT
-- **Local:** Committed.
-- **Next:** User to verify calculations on Localhost.
+## 🚀 DEPLOYMENT Status
+- **Vercel:** Redeploying... (Fixes middleware error + Cleanup).
+- **GitHub:** Code synced to `trungodin/waterflow-pro`.
 
 ---
