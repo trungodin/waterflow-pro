@@ -160,6 +160,12 @@ export default function CustomerSearchPage() {
     return new Intl.NumberFormat('vi-VN').format(val) + ' VNĐ'
   }
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
+
   const formatDanhBa = (danhBa: string | number) => {
     return String(danhBa).padStart(11, '0')
   }
@@ -205,6 +211,7 @@ export default function CustomerSearchPage() {
                 type="text"
                 value={danhba}
                 onChange={(e) => setDanhba(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -214,6 +221,7 @@ export default function CustomerSearchPage() {
                 type="text"
                 value={tenkh}
                 onChange={(e) => setTenkh(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -223,6 +231,7 @@ export default function CustomerSearchPage() {
                 type="text"
                 value={diaChi}
                 onChange={(e) => setDiaChi(e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="285 Võ Văn Tần"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -235,6 +244,7 @@ export default function CustomerSearchPage() {
                 type="text"
                 value={mlt2}
                 onChange={(e) => setMlt2(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -244,6 +254,7 @@ export default function CustomerSearchPage() {
                 type="text"
                 value={sdt}
                 onChange={(e) => setSdt(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -253,6 +264,7 @@ export default function CustomerSearchPage() {
                 type="text"
                 value={sothan}
                 onChange={(e) => setSothan(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
@@ -276,6 +288,7 @@ export default function CustomerSearchPage() {
                 type="text"
                 value={tongNo}
                 onChange={(e) => setTongNo(e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="Nhập số tiền nợ..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -286,6 +299,7 @@ export default function CustomerSearchPage() {
                 type="text"
                 value={tienHd}
                 onChange={(e) => setTienHd(e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="Nhập số tiền hóa đơn..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -310,6 +324,7 @@ export default function CustomerSearchPage() {
                 type="text"
                 value={soBienLai}
                 onChange={(e) => setSoBienLai(e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="VD: 339/5"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
