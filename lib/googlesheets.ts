@@ -102,3 +102,80 @@ export async function getCustomerStatus(danhba: string) {
     return { tinhTrang: 'Bình thường', ngayKhoa: '', ngayMo: '' }
   }
 }
+
+import { unstable_cache } from 'next/cache'
+
+async function getOnOffDataInternal() {
+  try {
+    const sheets = getGoogleSheetsClient()
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID
+    
+    if (!spreadsheetId) {
+      console.error('[getOnOffData] GOOGLE_SHEET_ID not configured')
+      return []
+    }
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'ON_OFF!A:Z',
+    })
+
+    const rows = response.data.values
+    if (!rows || rows.length === 0) {
+      return []
+    }
+
+    const headers = rows[0]
+    
+    // Helper to find index
+    const findIndex = (keywords: string[]) => {
+      return headers.findIndex((h: string) => {
+        const lower = h.toLowerCase().replace(/\s/g, '_')
+        return keywords.some(k => lower === k || lower.includes(k))
+      })
+    }
+
+    const colIndices = {
+      tinhTrang: findIndex(['tinh_trang', 'tình_trạng']),
+      danhBa: findIndex(['danh_ba', 'danh_bạ']),
+      tenKH: findIndex(['ten_kh', 'tên_kh', 'tên_khách_hàng']),
+      soNha: findIndex(['so_nha', 'số_nhà']),
+      duong: findIndex(['duong', 'đường']),
+      tongKy: findIndex(['tong_ky', 'tổng_kỳ']),
+      tongNo: findIndex(['tong_no', 'tổng_nợ']),
+      ngayKhoa: findIndex(['ngay_khoa', 'ngày_khóa', 'ngày_khoá']),
+      ngayMo: findIndex(['ngay_mo', 'ngày_mở']),
+      kyNam: findIndex(['ky_nam', 'kỳ_năm']),
+      nhomKhoa: findIndex(['nhom_khoa', 'nhóm_khóa']),
+      kieuKhoa: findIndex(['kieu_khoa', 'kiểu_khóa'])
+    }
+
+    const data = rows.slice(1).map((row: any[]) => ({
+      TinhTrang: colIndices.tinhTrang !== -1 ? row[colIndices.tinhTrang] : '',
+      DanhBa: colIndices.danhBa !== -1 ? String(row[colIndices.danhBa]).padStart(11, '0') : '',
+      TenKH: colIndices.tenKH !== -1 ? row[colIndices.tenKH] : '',
+      SoNha: colIndices.soNha !== -1 ? row[colIndices.soNha] : '',
+      Duong: colIndices.duong !== -1 ? row[colIndices.duong] : '',
+      TongKy: colIndices.tongKy !== -1 ? row[colIndices.tongKy] : '',
+      TongNo: colIndices.tongNo !== -1 ? row[colIndices.tongNo] : '',
+      NgayKhoa: colIndices.ngayKhoa !== -1 ? row[colIndices.ngayKhoa] : '',
+      NgayMo: colIndices.ngayMo !== -1 ? row[colIndices.ngayMo] : '',
+      KyNam: colIndices.kyNam !== -1 ? row[colIndices.kyNam] : '',
+      NhomKhoa: colIndices.nhomKhoa !== -1 ? row[colIndices.nhomKhoa] : '',
+      KieuKhoa: colIndices.kieuKhoa !== -1 ? row[colIndices.kieuKhoa] : '',
+    }))
+    
+    return data
+
+  } catch (error) {
+    console.error('[getOnOffData] Error:', error)
+    return []
+  }
+}
+
+// Cache for 1 hour (3600 seconds) - ON_OFF data doesn't change frequently
+export const getOnOffData = unstable_cache(
+  async () => getOnOffDataInternal(),
+  ['on_off_data'],
+  { revalidate: 3600, tags: ['on_off_data'] }
+)

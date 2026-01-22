@@ -26,6 +26,9 @@ export default function Navbar() {
             <Link href="/customers/search" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
               Tra cứu KH
             </Link>
+            <Link href="/payments" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
+              Thu Tiền
+            </Link>
             <Link href="/login" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">
               Đăng nhập
             </Link>

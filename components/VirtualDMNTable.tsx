@@ -1,0 +1,308 @@
+'use client'
+
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
+
+interface VirtualTableProps {
+  data: any[]
+  searchTerm: string
+  formatCurrency: (val: string | number) => string | number
+}
+
+// Default columns configuration - Generous widths to fit content automatically
+const DEFAULT_COLUMNS = [
+  { id: 'danhBa', label: 'Danh Bạ', width: 110 },
+  { id: 'tenKH', label: 'Tên Khách Hàng', width: 350 },
+  { id: 'soNha', label: 'Số Nhà', width: 100 },
+  { id: 'duong', label: 'Đường', width: 250 },
+  { id: 'tinhTrang', label: 'Tình Trạng', width: 110, align: 'center' },
+  { id: 'tongKy', label: 'Kỳ', width: 50, align: 'center' },
+  { id: 'tongNo', label: 'Tổng Nợ', width: 110, align: 'right' },
+  { id: 'kyNam', label: 'Kỳ/Năm', width: 220 },
+  { id: 'nhomKhoa', label: 'Nhóm Khóa', width: 110, align: 'center' },
+  { id: 'ngayMo', label: 'Ngày Mở', width: 110, align: 'right' },
+]
+
+export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: VirtualTableProps) {
+  // --- Column Resizing Logic ---
+  const [columns, setColumns] = useState(DEFAULT_COLUMNS)
+  const [isResizing, setIsResizing] = useState<string | null>(null)
+  const resizingRef = useRef<{ startX: number, startWidth: number, colIndex: number } | null>(null)
+
+  const startResizing = (e: React.MouseEvent, colIndex: number) => {
+    e.preventDefault()
+    setIsResizing(columns[colIndex].id)
+    resizingRef.current = {
+      startX: e.clientX,
+      startWidth: columns[colIndex].width,
+      colIndex
+    }
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+  }
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!resizingRef.current) return
+    const { startX, startWidth, colIndex } = resizingRef.current
+    const diff = e.clientX - startX
+    const newWidth = Math.max(50, startWidth + diff)
+
+    setColumns(prev => {
+      const newCols = [...prev]
+      newCols[colIndex] = { ...newCols[colIndex], width: newWidth }
+      return newCols
+    })
+  }, [])
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(null)
+    resizingRef.current = null
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+  }, [handleMouseMove])
+
+  // --- Data Grouping ---
+  const groupedData = useMemo(() => {
+    return data.reduce((acc: Record<string, any[]>, item: any) => {
+      let dateKey = item.NgayKhoa || 'Chưa xác định'
+      if (dateKey.includes(' ')) dateKey = dateKey.split(' ')[0]
+      
+      if (!acc[dateKey]) acc[dateKey] = []
+      acc[dateKey].push(item)
+      return acc
+    }, {} as Record<string, any[]>)
+  }, [data])
+
+  const sortedDates = useMemo(() => {
+    return Object.keys(groupedData).sort((a, b) => {
+      const parseDate = (d: string) => {
+        if (d === 'Chưa xác định') return 0
+        const parts = d.split('/')
+        if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime()
+        return 0
+      }
+      return parseDate(b) - parseDate(a)
+    })
+  }, [groupedData])
+
+  const flattenedData = useMemo(() => {
+    const result: Array<{ type: 'header' | 'row', data: any, date?: string, isEven?: boolean }> = []
+    
+    sortedDates.forEach(date => {
+      result.push({ type: 'header', data: { date }, date })
+      groupedData[date].forEach((item: any, idx: number) => {
+        result.push({ type: 'row', data: item, date, isEven: idx % 2 === 0 })
+      })
+    })
+    
+    return result
+  }, [sortedDates, groupedData])
+
+  // --- Virtualization ---
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scrollTop, setScrollTop] = useState(0)
+
+  const itemHeight = 40
+  const containerHeight = 600
+  const totalHeight = flattenedData.length * itemHeight
+
+  const startIndex = Math.max(0, Math.floor(scrollTop / itemHeight) - 5)
+  const endIndex = Math.min(
+    flattenedData.length - 1,
+    Math.floor((scrollTop + containerHeight) / itemHeight) + 5
+  )
+
+  const visibleItems = []
+  for (let i = startIndex; i <= endIndex; i++) {
+    visibleItems.push({
+      index: i,
+      ...flattenedData[i]
+    })
+  }
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop)
+  }
+
+  // --- Rendering ---
+  const gridTemplate = columns.map(c => `${c.width}px`).join(' ')
+  const totalWidth = columns.reduce((sum, c) => sum + c.width, 0) + 20
+
+  const renderRow = (item: any, index: number) => {
+    const style: React.CSSProperties = {
+      position: 'absolute',
+      top: index * itemHeight,
+      left: 0,
+      width: totalWidth,
+      height: itemHeight,
+    }
+
+    if (item.type === 'header') {
+      const count = groupedData[item.date!].length
+      const total = groupedData[item.date!].reduce((sum: number, d: any) => {
+        const val = parseFloat(String(d.TongNo || '0').replace(/[.,]/g, ''))
+        return sum + (isNaN(val) ? 0 : val)
+      }, 0)
+      
+      return (
+        <div key={index} style={style} className="bg-blue-100 border-y border-blue-300 px-4 flex justify-between items-center z-10 sticky left-0 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-700">📅</span>
+            <span className="font-bold text-blue-900 text-sm">Ngày khóa: {item.date}</span>
+          </div>
+          <div className="text-xs font-medium text-blue-900">
+            <span className="font-bold">{count}</span> khách hàng • Tổng nợ: <span className="font-bold text-red-700">{formatCurrency(total)} VNĐ</span>
+          </div>
+        </div>
+      )
+    }
+
+    const row = item.data
+    
+    const statusLower = (row.TinhTrang || '').toLowerCase()
+    const isKhoa = statusLower.includes('khóa') || statusLower.includes('khoá') || statusLower.includes('đóng')
+    const isMo = statusLower.includes('mở') || statusLower.includes('mo') || statusLower.includes('bình thường')
+
+    let statusClass = "bg-gray-100 text-gray-700 border border-gray-300"
+    if (isKhoa) statusClass = "bg-red-50 text-red-700 border border-red-200 font-bold"
+    if (isMo && !isKhoa) statusClass = "bg-green-50 text-green-700 border border-green-200 font-bold"
+
+    // Zebra striping: bg-white for odd, bg-gray-50 for even (or vice versa based on index logic)
+    const rowBgClass = item.isEven ? 'bg-white' : 'bg-[#f4f7f9]'
+
+    return (
+      <div key={index} style={style} className={`border-b border-gray-300 hover:bg-yellow-50 transition-colors flex items-center ${rowBgClass}`}>
+        <div 
+          className="grid items-center h-full"
+          style={{ 
+            gridTemplateColumns: gridTemplate,
+            width: totalWidth
+          }}
+        >
+          {columns.map((col, idx) => {
+            // Add vertical borders between columns
+            const cellStyle = "px-2 truncate text-xs " + (col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left')
+            const borderR = idx !== columns.length - 1 ? " border-r border-gray-300" : ""
+            
+            let content = null
+            switch(col.id) {
+              case 'danhBa': content = <span className="font-mono font-bold text-gray-900">{row.DanhBa}</span>; break;
+              case 'tenKH': content = <span className="font-semibold text-gray-900" title={row.TenKH}>{row.TenKH}</span>; break;
+              case 'soNha': content = <span className="text-gray-800" title={row.SoNha}>{row.SoNha}</span>; break;
+              case 'duong': content = <span className="text-gray-800" title={row.Duong}>{row.Duong}</span>; break;
+              case 'tinhTrang': 
+                content = (
+                  <span className={`px-2 py-0.5 rounded text-[11px] inline-block w-full truncate shadow-sm ${statusClass}`}>
+                    {row.TinhTrang || 'N/A'}
+                  </span>
+                )
+                break;
+              case 'tongKy': content = <span className="font-bold text-gray-900">{row.TongKy || '0'}</span>; break;
+              case 'tongNo': content = <span className="font-bold text-black">{formatCurrency(row.TongNo)}</span>; break;
+              case 'kyNam': content = <span className="text-gray-600 font-medium" title={row.KyNam}>{row.KyNam || 'N/A'}</span>; break;
+              case 'nhomKhoa': content = <span className="text-gray-700 font-medium">{row.NhomKhoa || '-'}</span>; break;
+              case 'ngayMo': content = <span className="text-gray-700">{row.NgayMo || '-'}</span>; break;
+            }
+
+            return (
+              <div key={col.id} className={cellStyle + borderR + " h-full flex items-center"} style={{ justifyContent: col.align === 'center' ? 'center' : col.align === 'right' ? 'flex-end' : 'flex-start' }}>
+                {content}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  if (flattenedData.length === 0) {
+    return (
+      <div className="text-center py-12 text-gray-500 bg-white rounded-lg border border-gray-300">
+        <p className="text-lg">Không tìm thấy dữ liệu</p>
+        {searchTerm && <p className="text-sm mt-2">Thử tìm kiếm với từ khóa khác</p>}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Scrollable Container Wrapper */}
+      <div className="border border-gray-300 rounded-lg overflow-hidden bg-white shadow flex flex-col">
+        
+        {/* Header */}
+        <div className="overflow-x-hidden bg-gray-100 border-b border-gray-300" ref={(el) => {
+            if (el && containerRef.current) {
+                el.scrollLeft = containerRef.current.scrollLeft
+            }
+        }}>
+          <div 
+            className="grid h-10 select-none relative" 
+            style={{ 
+              gridTemplateColumns: gridTemplate,
+              width: totalWidth
+            }}
+          >
+            {columns.map((col, idx) => (
+              <div 
+                key={col.id}
+                className={`flex items-center px-2 text-[11px] font-extrabold text-gray-800 uppercase tracking-tight relative group h-full ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'} ${idx !== columns.length - 1 ? 'border-r border-gray-300' : ''}`}
+              >
+                {col.label}
+                {/* Resizer Handle */}
+                <div
+                  className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 group-hover:bg-blue-300 z-20"
+                  onMouseDown={(e) => startResizing(e, idx)}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div 
+          ref={containerRef}
+          className="overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 relative"
+          style={{ height: containerHeight }}
+          onScroll={(e) => {
+            handleScroll(e)
+            // Sync header scroll
+            const header = e.currentTarget.previousElementSibling
+            if (header) {
+                header.scrollLeft = e.currentTarget.scrollLeft
+            }
+          }}
+        >
+          <div style={{ height: totalHeight, width: totalWidth, position: 'relative' }}>
+            {visibleItems.map(item => renderRow(item, item.index))}
+          </div>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 shadow-sm flex justify-between items-center text-sm">
+         <div className="flex gap-6">
+            <div>
+              <span className="text-gray-600 font-medium mr-2">Tổng KH:</span>
+              <span className="font-bold text-blue-800 text-lg">{data.length.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="text-gray-600 font-medium mr-2">Ngày khóa:</span>
+              <span className="font-bold text-blue-800 text-lg">{sortedDates.length}</span>
+            </div>
+         </div>
+         <div className="flex items-baseline">
+            <span className="text-gray-600 font-medium mr-2">Tổng nợ:</span>
+            <span className="font-bold text-gray-900 text-xl">
+              {formatCurrency(data.reduce((sum, d) => {
+                const val = parseFloat(String(d.TongNo || '0').replace(/[.,]/g, ''))
+                return sum + (isNaN(val) ? 0 : val)
+              }, 0))} VNĐ
+            </span>
+         </div>
+      </div>
+    </div>
+  )
+}
