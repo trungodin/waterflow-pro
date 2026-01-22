@@ -7,6 +7,7 @@ import AgentCollectionAnalysis from '@/components/AgentCollectionAnalysis'
 import CollectionSummaryAnalysis from '@/components/CollectionSummaryAnalysis'
 import GroupStatisticsAnalysis from '@/components/GroupStatisticsAnalysis'
 import VirtualDMNTable from '@/components/VirtualDMNTable'
+import LocDuLieuTon from '@/components/LocDuLieuTon'
 import { getOnOffData } from '@/lib/googlesheets'
 
 // Format currency
@@ -48,7 +49,7 @@ export default function PaymentsPage() {
 
   // Initial fetch when tab is active
   useEffect(() => {
-    if (activeTab === 'tra_cuu_dmn' && dmnData.length === 0) {
+    if ((activeTab === 'tra_cuu_dmn' || activeTab === 'dong_mo_nuoc') && dmnData.length === 0) {
       fetchData()
     }
   }, [activeTab])
@@ -226,9 +227,23 @@ export default function PaymentsPage() {
                   </button>
                 ))}
               </div>
-              <div className="p-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                <p className="text-xl">Chức năng <b>{subTabDMN}</b> đang được phát triển.</p>
-              </div>
+              
+              {subTabDMN === 'loc_du_lieu_ton' ? (
+                  <div className="h-full">
+                     {loading ? (
+                        <div className="flex flex-col items-center justify-center p-12 border border-gray-200 rounded-lg bg-gray-50">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                            <p className="text-gray-500">Đang tải dữ liệu...</p>
+                        </div>
+                     ) : (
+                        <LocDuLieuTon data={dmnData} formatCurrency={formatCurrency} />
+                     )}
+                  </div>
+              ) : (
+                  <div className="p-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                    <p className="text-xl">Chức năng <b>{subTabDMN}</b> đang được phát triển.</p>
+                  </div>
+              )}
             </div>
           )}
 
