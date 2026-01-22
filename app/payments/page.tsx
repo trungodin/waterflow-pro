@@ -168,7 +168,7 @@ export default function PaymentsPage() {
               <div className="flex gap-4 border-b border-gray-200 pb-4 mb-6 overflow-x-auto">
                 {[
                   { id: 'phan_tich_doanh_thu', label: 'Phân tích Doanh thu' },
-                  { id: 'phan_tich_thu_ho', label: 'Phân tích Đăng ngân Thu hộ' },
+                  { id: 'phan_tich_thu_ho', label: 'Đăng ngân ngày' },
                   { id: 'tong_hop_thu_ho', label: 'Tổng hợp Ngân hàng Thu hộ' },
                   { id: 'thong_ke_nhom', label: 'Thống kê theo Nhóm' }
                 ].map(tab => (
