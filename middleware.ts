@@ -5,6 +5,15 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // TEMPORARILY DISABLED: Authentication is bypassed
+  // User requested to disable login functionality
+  return NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
+  
+  /* ORIGINAL AUTH CODE (DISABLED)
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -17,7 +26,6 @@ export async function middleware(request: NextRequest) {
 
       if (!supabaseUrl || !supabaseAnonKey) {
           console.error('Middleware: Missing Supabase environment variables');
-          // Allow request to proceed but Auth checks will likely fail or be skipped safely later
       }
 
       const supabase = createServerClient(
@@ -66,20 +74,16 @@ export async function middleware(request: NextRequest) {
         }
       )
 
-      // Validate session
       const { data: { user }, error } = await supabase.auth.getUser()
       if (error) {
-          // console.error('Middleware: Auth error', error); 
-          // Auth error is expected if no session, so maybe just ignore or debug log
+          // Auth error is expected if no session
       }
 
-      // Protected routes
       const protectedRoutes = ['/dashboard', '/customers', '/invoices', '/payments']
       const isProtectedRoute = protectedRoutes.some(route => 
         request.nextUrl.pathname.startsWith(route)
       )
 
-      // Redirect to login if accessing protected route without session
       if (isProtectedRoute && !user) {
         const redirectUrl = request.nextUrl.clone()
         redirectUrl.pathname = '/login'
@@ -87,7 +91,6 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(redirectUrl)
       }
 
-      // Redirect to dashboard if accessing login with active session
       if (request.nextUrl.pathname === '/login' && user) {
         const redirectUrl = request.nextUrl.clone()
         redirectUrl.pathname = '/dashboard'
@@ -98,11 +101,9 @@ export async function middleware(request: NextRequest) {
 
   } catch (e) {
       console.error('Middleware Error:', e);
-      // In case of middleware failure, we might want to let the request pass strictly for static assets, 
-      // but for protected routes, it's safer to redirect to login or show an error.
-      // For now, let's return the original response to avoid 500 loop, but user might see broken page.
       return response;
   }
+  */
 }
 
 export const config = {

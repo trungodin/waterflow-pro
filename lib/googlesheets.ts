@@ -147,7 +147,9 @@ async function getOnOffDataInternal() {
       ngayMo: findIndex(['ngay_mo', 'ngày_mở']),
       kyNam: findIndex(['ky_nam', 'kỳ_năm']),
       nhomKhoa: findIndex(['nhom_khoa', 'nhóm_khóa']),
-      kieuKhoa: findIndex(['kieu_khoa', 'kiểu_khóa'])
+      kieuKhoa: findIndex(['kieu_khoa', 'kiểu_khóa']),
+      codeMoi: findIndex(['code_moi', 'code_mới', 'codemoi']),
+      dot: findIndex(['dot', 'đợt'])
     }
 
     const data = rows.slice(1).map((row: any[]) => ({
@@ -163,6 +165,8 @@ async function getOnOffDataInternal() {
       KyNam: colIndices.kyNam !== -1 ? row[colIndices.kyNam] : '',
       NhomKhoa: colIndices.nhomKhoa !== -1 ? row[colIndices.nhomKhoa] : '',
       KieuKhoa: colIndices.kieuKhoa !== -1 ? row[colIndices.kieuKhoa] : '',
+      CodeMoi: colIndices.codeMoi !== -1 ? row[colIndices.codeMoi] : '',
+      Dot: colIndices.dot !== -1 ? row[colIndices.dot] : '',
     }))
     
     return data
@@ -173,9 +177,5 @@ async function getOnOffDataInternal() {
   }
 }
 
-// Cache for 1 hour (3600 seconds) - ON_OFF data doesn't change frequently
-export const getOnOffData = unstable_cache(
-  async () => getOnOffDataInternal(),
-  ['on_off_data'],
-  { revalidate: 3600, tags: ['on_off_data'] }
-)
+// Disable cache to avoid "items over 2MB" error
+export const getOnOffData = getOnOffDataInternal

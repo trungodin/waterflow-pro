@@ -1,0 +1,1 @@
+Vui lòng copy file mẫu thong_bao_template.docx vào thư mục này để tính năng tạo thông báo hoạt động.

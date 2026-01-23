@@ -6,6 +6,10 @@ interface VirtualTableProps {
   data: any[]
   searchTerm: string
   formatCurrency: (val: string | number) => string | number
+  isFlatMode?: boolean
+  customColumns?: any[]
+  selectedIds?: Set<string>
+  onSelectionChange?: (id: string, checked: boolean) => void
 }
 
 // Default columns configuration - Generous widths to fit content automatically
@@ -14,6 +18,8 @@ const DEFAULT_COLUMNS = [
   { id: 'tenKH', label: 'Tên Khách Hàng', width: 350 },
   { id: 'soNha', label: 'Số Nhà', width: 100 },
   { id: 'duong', label: 'Đường', width: 250 },
+  { id: 'dot', label: 'Đợt', width: 50, align: 'center' },
+  { id: 'codeMoi', label: 'Code Mới', width: 80, align: 'center' },
   { id: 'tinhTrang', label: 'Tình Trạng', width: 110, align: 'center' },
   { id: 'tongKy', label: 'Kỳ', width: 50, align: 'center' },
   { id: 'tongNo', label: 'Tổng Nợ', width: 110, align: 'right' },
@@ -22,9 +28,24 @@ const DEFAULT_COLUMNS = [
   { id: 'ngayMo', label: 'Ngày Mở', width: 110, align: 'right' },
 ]
 
-export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: VirtualTableProps) {
+export default function VirtualDMNTable({ 
+  data, 
+  searchTerm, 
+  formatCurrency, 
+  isFlatMode = false, 
+  customColumns,
+  selectedIds,
+  onSelectionChange
+}: VirtualTableProps) {
   // --- Column Resizing Logic ---
-  const [columns, setColumns] = useState(DEFAULT_COLUMNS)
+  // Use custom columns if provided
+  const [columns, setColumns] = useState(customColumns || DEFAULT_COLUMNS)
+  
+  // Ensure default columns are updated if customColumns prop changes (unlikely but safe)
+  useEffect(() => {
+     if (customColumns) setColumns(customColumns)
+  }, [customColumns])
+
   const [isResizing, setIsResizing] = useState<string | null>(null)
   const resizingRef = useRef<{ startX: number, startWidth: number, colIndex: number } | null>(null)
 
@@ -66,6 +87,8 @@ export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: Vi
 
   // --- Data Grouping ---
   const groupedData = useMemo(() => {
+    if (isFlatMode) return {} // Skip if flat mode
+    
     return data.reduce((acc: Record<string, any[]>, item: any) => {
       let dateKey = item.NgayKhoa || 'Chưa xác định'
       if (dateKey.includes(' ')) dateKey = dateKey.split(' ')[0]
@@ -74,9 +97,10 @@ export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: Vi
       acc[dateKey].push(item)
       return acc
     }, {} as Record<string, any[]>)
-  }, [data])
+  }, [data, isFlatMode])
 
   const sortedDates = useMemo(() => {
+    if (isFlatMode) return []
     return Object.keys(groupedData).sort((a, b) => {
       const parseDate = (d: string) => {
         if (d === 'Chưa xác định') return 0
@@ -86,9 +110,20 @@ export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: Vi
       }
       return parseDate(b) - parseDate(a)
     })
-  }, [groupedData])
+  }, [groupedData, isFlatMode])
 
   const flattenedData = useMemo(() => {
+    if (isFlatMode) {
+        // Flat list without headers
+        return data.map((item, idx) => ({
+            type: 'row' as const,
+            data: item,
+            date: '',
+            isEven: idx % 2 === 0
+        }))
+    }
+    
+    // Grouped list with headers
     const result: Array<{ type: 'header' | 'row', data: any, date?: string, isEven?: boolean }> = []
     
     sortedDates.forEach(date => {
@@ -97,15 +132,17 @@ export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: Vi
         result.push({ type: 'row', data: item, date, isEven: idx % 2 === 0 })
       })
     })
-    
+
     return result
-  }, [sortedDates, groupedData])
+  }, [sortedDates, groupedData, isFlatMode, data])
 
   // --- Virtualization ---
   const containerRef = useRef<HTMLDivElement>(null)
   const [scrollTop, setScrollTop] = useState(0)
 
-  const itemHeight = 40
+  const totalWidth = useMemo(() => columns.reduce((acc, col) => acc + col.width, 0), [columns])
+  const gridTemplate = useMemo(() => columns.map(col => `${col.width}px`).join(' '), [columns])
+  const itemHeight = 36 // Row height
   const containerHeight = 600
   const totalHeight = flattenedData.length * itemHeight
 
@@ -128,12 +165,11 @@ export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: Vi
   }
 
   // --- Rendering ---
-  const gridTemplate = columns.map(c => `${c.width}px`).join(' ')
-  const totalWidth = columns.reduce((sum, c) => sum + c.width, 0) + 20
-
   const renderRow = (item: any, index: number) => {
     const style: React.CSSProperties = {
       position: 'absolute',
+      // If flat mode, index is correct. If grouped, index includes headers.
+      // Since virtual list provides linear index, top is correct.
       top: index * itemHeight,
       left: 0,
       width: totalWidth,
@@ -162,6 +198,7 @@ export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: Vi
 
     const row = item.data
     
+    // Status Logic
     const statusLower = (row.TinhTrang || '').toLowerCase()
     const isKhoa = statusLower.includes('khóa') || statusLower.includes('khoá') || statusLower.includes('đóng')
     const isMo = statusLower.includes('mở') || statusLower.includes('mo') || statusLower.includes('bình thường')
@@ -188,11 +225,30 @@ export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: Vi
             const borderR = idx !== columns.length - 1 ? " border-r border-gray-300" : ""
             
             let content = null
+            
+            // Handle Special Columns based on ID
             switch(col.id) {
+              case 'stt': content = <span className="text-gray-500 font-medium">{index + 1}</span>; break;
+              case 'select': 
+                content = (
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds?.has(row.DanhBa) || false}
+                    onChange={(e) => onSelectionChange?.(row.DanhBa, e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer" 
+                  />
+                ); 
+                break;
+              
               case 'danhBa': content = <span className="font-mono font-bold text-gray-900">{row.DanhBa}</span>; break;
               case 'tenKH': content = <span className="font-semibold text-gray-900" title={row.TenKH}>{row.TenKH}</span>; break;
               case 'soNha': content = <span className="text-gray-800" title={row.SoNha}>{row.SoNha}</span>; break;
               case 'duong': content = <span className="text-gray-800" title={row.Duong}>{row.Duong}</span>; break;
+              case 'dot': content = <span className="text-gray-800 font-mono text-center block">{row.Dot}</span>; break;
+              case 'gb': content = <span className="text-center block font-bold text-gray-700">{row.GB}</span>; break;
+              
+              case 'codeMoi': content = <span className="text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded text-xs uppercase font-bold block w-fit mx-auto">{row.CodeMoi}</span>; break;
+              
               case 'tinhTrang': 
                 content = (
                   <span className={`px-2 py-0.5 rounded text-[11px] inline-block w-full truncate shadow-sm ${statusClass}`}>
@@ -200,11 +256,20 @@ export default function VirtualDMNTable({ data, searchTerm, formatCurrency }: Vi
                   </span>
                 )
                 break;
+                
               case 'tongKy': content = <span className="font-bold text-gray-900">{row.TongKy || '0'}</span>; break;
               case 'tongNo': content = <span className="font-bold text-black">{formatCurrency(row.TongNo)}</span>; break;
-              case 'kyNam': content = <span className="text-gray-600 font-medium" title={row.KyNam}>{row.KyNam || 'N/A'}</span>; break;
+              case 'kyNam': content = <span className="text-gray-600 font-medium text-xs" title={row.KyNam}>{row.KyNam || 'N/A'}</span>; break;
+              
+              // New Columns for Report
+              case 'mlt2': content = <span className="font-mono text-gray-700">{row.MLT2}</span>; break;
+              case 'soMoi': content = <span className="text-gray-600 italic">{row.SoMoi}</span>; break;
+              case 'soThan': content = <span className="text-gray-600 text-xs">{row.SoThan}</span>; break;
+              
               case 'nhomKhoa': content = <span className="text-gray-700 font-medium">{row.NhomKhoa || '-'}</span>; break;
               case 'ngayMo': content = <span className="text-gray-700">{row.NgayMo || '-'}</span>; break;
+              
+              default: content = <span className="text-gray-700">{row[col.id] || ''}</span>
             }
 
             return (
