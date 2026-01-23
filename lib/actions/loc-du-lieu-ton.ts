@@ -212,24 +212,38 @@ export async function getDebtData(params: DebtFilterParams) {
         if (uniqueCandidateInvoices.length > 0) {
             try {
                 // Prepare BGW chunks
-                const chunkSize = 500
-                console.log(`[DEBT FILTER] ⚡ Processing BGW sequentially for stability...`)
+                // Reduced chunk size to 100 to prevent server overload/timeout
+                const chunkSize = 100 
+                console.log(`[DEBT FILTER] ⚡ Processing BGW sequentially with retries (Chunk size: ${chunkSize})...`)
                 
                 for (let i = 0; i < uniqueCandidateInvoices.length; i += chunkSize) {
                     const chunk = uniqueCandidateInvoices.slice(i, i + chunkSize)
                     const soHoaDonList = chunk.map(s => `'${s}'`).join(',')
                     
-                    try {
-                        const sqlBGW = `SELECT SHDon FROM BGW_HD WHERE SHDon IN (${soHoaDonList})`
-                        const bgwData = await fetchSql('f_Select_SQL_Nganhang', sqlBGW)
-                        
-                        if (bgwData && bgwData.length > 0) {
-                            bgwData.forEach((b: any) => {
-                                if (b.SHDon) bgwPaidInvoices.add(b.SHDon.trim())
-                            })
+                    let attempt = 0
+                    let success = false
+                    
+                    while (attempt < 3 && !success) {
+                        try {
+                            const sqlBGW = `SELECT SHDon FROM BGW_HD WHERE SHDon IN (${soHoaDonList})`
+                            const bgwData = await fetchSql('f_Select_SQL_Nganhang', sqlBGW)
+                            
+                            if (bgwData && bgwData.length > 0) {
+                                bgwData.forEach((b: any) => {
+                                    if (b.SHDon) bgwPaidInvoices.add(b.SHDon.trim())
+                                })
+                            }
+                            success = true // Mark as success if no error thrown
+                        } catch (err: any) {
+                            attempt++
+                            console.warn(`[DEBT FILTER] BGW chunk failed (Attempt ${attempt}/3): ${err.message}`)
+                            if (attempt >= 3) {
+                                console.error(`[DEBT FILTER] CRITICAL: Skipping chunk after 3 failed attempts.`)
+                            } else {
+                                // Wait 1s before retrying
+                                await new Promise(res => setTimeout(res, 1000))
+                            }
                         }
-                    } catch (err: any) {
-                        console.log(`[DEBT FILTER] BGW chunk failed: ${err.message}`)
                     }
                 }
 
