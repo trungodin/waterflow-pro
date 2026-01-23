@@ -100,28 +100,46 @@ export async function getDebtData(params: DebtFilterParams) {
     
     console.log(`[DEBT FILTER] After merge: ${mergedRows.length} rows`)
 
-    // === BƯỚC 3: Lọc danh bạ từ file Excel (mode "Loại trừ") ===
+    // === BƯỚC 3: Lọc danh bạ từ file Excel (mode "Loại trừ" & "Thêm") ===
     let filteredRows = mergedRows
-    if (fileDbList.length > 0 && fileFilterMode === 'exclude') {
+    let allowedDbSet = new Set<string>()
+
+    if (fileDbList.length > 0) {
         const fileDbSet = new Set(fileDbList.map(d => d.trim()))
-        filteredRows = filteredRows.filter(row => !fileDbSet.has(row.DANHBA))
-        console.log(`[DEBT FILTER] File exclude: ${mergedRows.length} → ${filteredRows.length}`)
+        
+        if (fileFilterMode === 'exclude') {
+            filteredRows = filteredRows.filter(row => !fileDbSet.has(row.DANHBA))
+            console.log(`[DEBT FILTER] File exclude: ${mergedRows.length} → ${filteredRows.length}`)
+        } else if (fileFilterMode === 'include') {
+            // Mode "Thêm": Các danh bạ này sẽ được đánh dấu để BYPASS các bộ lọc khác
+            allowedDbSet = fileDbSet
+            console.log(`[DEBT FILTER] File include mode: ${allowedDbSet.size} allowed customers will bypass filters`)
+        }
     }
 
-    // === BƯỚC 4, 5, 6: Các bộ lọc cơ bản ===
+    // === BƯỚC 4, 5, 6: Các bộ lọc cơ bản (Có whitelist cho mode Include) ===
     // CodeMoi Empty
-    filteredRows = filteredRows.filter(row => row.CodeMoi && row.CodeMoi !== '')
+    filteredRows = filteredRows.filter(row => {
+        if (allowedDbSet.has(row.DANHBA)) return true // Bypass if allowed
+        return row.CodeMoi && row.CodeMoi !== ''
+    })
     
     // CodeMoi exclude list
     if (excludeCodeMoi.length > 0) {
         const excludeSet = new Set(excludeCodeMoi.map(c => c.toUpperCase()))
-        filteredRows = filteredRows.filter(row => !excludeSet.has(row.CodeMoi))
+        filteredRows = filteredRows.filter(row => {
+            if (allowedDbSet.has(row.DANHBA)) return true // Bypass if allowed
+            return !excludeSet.has(row.CodeMoi)
+        })
     }
     
     // GB Filter
     if (gbFilter.length > 0) {
         const gbSet = new Set(gbFilter.map(g => g.trim()))
-        filteredRows = filteredRows.filter(row => gbSet.has(row.GB))
+        filteredRows = filteredRows.filter(row => {
+            if (allowedDbSet.has(row.DANHBA)) return true // Bypass if allowed
+            return gbSet.has(row.GB)
+        })
         console.log(`[DEBT FILTER] After GB filter: ${filteredRows.length} rows`)
     }
 
@@ -142,9 +160,6 @@ export async function getDebtData(params: DebtFilterParams) {
                 DIACHI: `${row.SO || ''} ${row.DUONG || ''}`.trim(), // Fixed: Combine SO + DUONG
                 MLT2: row.MLT2, // Fixed: LOLOT -> MLT2
                 DOT: row.DOT,
-                // QUAN: row.QUAN, // Removed non-existent
-                // PHUONG: row.PHUONG, // Removed non-existent
-                // CUM: row.CUM, // Removed non-existent
                 TONGCONG: 0,
                 TONGKY: 0,
                 KY_LIST: [], // Just for debug
@@ -159,7 +174,8 @@ export async function getDebtData(params: DebtFilterParams) {
                 CodeMoi: row.CodeMoi,
                 CoCu: row.CoCu,
                 HopBaoVe: row.HopBaoVe,
-                SDT: row.SDT
+                SDT: row.SDT,
+                GB_COL: row.GB // Add GB to customer object for Step 8 bypass check consistency
             })
             invoicesByCustomer.set(db, [])
         }
@@ -175,12 +191,17 @@ export async function getDebtData(params: DebtFilterParams) {
 
     console.log(`[DEBT FILTER] Unique customers (Pre-Filter): ${aggregatedDebt.size}`)
 
-    // === BƯỚC 8: PRE-FILTER CANDIDATES ===
-    // Chọn ra khách hàng tiềm năng thỏa mãn điều kiện Min
-    // (Ta chưa trừ BGW, nên nếu thỏa mãn ở đây thì mới có cơ hội thỏa mãn sau khi trừ BGW)
+    // === BƯỚC 8: PRE-FILTER CANDIDATES (Có whitelist) ===
+    // Chọn ra khách hàng tiềm năng thỏa mãn điều kiện Min HOẶC nằm trong allowed list
     let preCandidates: any[] = []
     
     aggregatedDebt.forEach(cust => {
+        // Nếu nằm trong allowed list (Mode Include) -> Luôn PASS
+        if (allowedDbSet.has(cust.DANHBA)) {
+            preCandidates.push(cust)
+            return
+        }
+
         let pass = true
         if (minTongKy !== undefined && cust.TONGKY < minTongKy) pass = false
         if (minTongCong !== undefined && cust.TONGCONG < minTongCong) pass = false
@@ -282,11 +303,18 @@ export async function getDebtData(params: DebtFilterParams) {
             invoicesByCustomer.set(db, validInvoices)
 
             // Final Filter Check
-            let pass = true
-            if (minTongKy !== undefined && cust.TONGKY < minTongKy) pass = false
-            if (minTongCong !== undefined && cust.TONGCONG < minTongCong) pass = false
-            
-            if (pass) finalCandidates.push(cust)
+            if (allowedDbSet.has(db)) {
+                 // Bypass Min check for allowed customers, BUT they must have debt
+                 if (cust.TONGCONG > 0) {
+                     finalCandidates.push(cust)
+                 }
+            } else {
+                let pass = true
+                if (minTongKy !== undefined && cust.TONGKY < minTongKy) pass = false
+                if (minTongCong !== undefined && cust.TONGCONG < minTongCong) pass = false
+                
+                if (pass) finalCandidates.push(cust)
+            }
         }
     } else {
         finalCandidates = []
@@ -329,7 +357,10 @@ export async function getDebtData(params: DebtFilterParams) {
         
         let shouldExclude = false
         
-        if (onOff) {
+        // Bypass Shutoff check for allowed list (Mode Include)
+        if (allowedDbSet.has(db)) {
+            shouldExclude = false
+        } else if (onOff) {
             const status = (onOff.TinhTrang || '').toLowerCase().trim()
             const lockedStatuses = ['đang khóa', 'đang khoá', 'đã hủy', 'dang khoa', 'da huy']
             const isLocked = lockedStatuses.includes(status)
