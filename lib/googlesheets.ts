@@ -9,13 +9,120 @@ const getGoogleSheetsClient = () => {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'], // Read/Write Access
   })
 
   return google.sheets({ version: 'v4', auth })
 }
 
+// ... existing code ...
+
+export async function appendData_ToSheet(sheetName: string, values: any[][]) {
+  try {
+    const sheets = getGoogleSheetsClient()
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID
+    
+    if (!spreadsheetId) {
+      throw new Error('GOOGLE_SHEET_ID not configured')
+    }
+
+    // 1. Fetch spreadsheet metadata to get sheetId and current dimensions
+    // OPTIMIZATION: Do NOT use includeGridData: true. It fetches giant payloads.
+    const metaRes = await sheets.spreadsheets.get({
+        spreadsheetId,
+        ranges: [sheetName],             
+        fields: 'sheets.properties' // Only fetch properties
+    })
+    
+    const sheet = metaRes.data.sheets?.[0]
+    if (!sheet || !sheet.properties) {
+        throw new Error(`Sheet '${sheetName}' not found`)
+    }
+
+    const sheetId = sheet.properties.sheetId
+    // If sheetId can be 0 (first sheet), checking if (!sheetId) is risky if it's undefined vs 0.
+    // Properties.sheetId is number.
+    if (sheetId === undefined || sheetId === null) {
+         throw new Error(`Could not retrieve sheetId for '${sheetName}'`)
+    }
+
+    const currentMaxRows = sheet.properties.gridProperties?.rowCount || 0
+    
+    // Find the actual last row with data using the grid data included
+    // Note: includeGridData returns data.rowData. 
+    // This is more expensive but safer for finding the true visual last row if we want to be precise, 
+    // but strictly we can use the same logic as before if we trust 'get values'
+    
+    // Be careful with includeGridData on large sheets, it might be heavy.
+    // Let's stick to 'values.get' for data content to be safe on bandwidth, 
+    // but use 'metaRes' for properties.
+    
+    // Re-fetch only values for finding last row (lighter)
+    const getRes = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: sheetName, 
+    })
+
+    const rows = getRes.data.values || []
+    let lastRowWithData = 0
+    if (rows.length > 0) {
+        for (let i = rows.length - 1; i >= 0; i--) {
+            const row = rows[i]
+            if (row.some((cell: any) => cell && String(cell).trim() !== '')) {
+                lastRowWithData = i + 1
+                break
+            }
+        }
+    }
+
+    const startRow = lastRowWithData + 1
+    const neededRows = startRow + values.length - 1 // 1-based index of the last new row
+
+    console.log(`[appendData] Current Max: ${currentMaxRows}, Needed: ${neededRows}, Start: ${startRow}`)
+
+    // 2. Resize if necessary
+    if (neededRows > currentMaxRows) {
+        const rowsToAdd = neededRows - currentMaxRows + 10 // Add a buffer of 10 rows
+        console.log(`[appendData] expanding sheet by ${rowsToAdd} rows...`)
+        
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+                requests: [
+                    {
+                        appendDimension: {
+                            sheetId: sheetId,
+                            dimension: 'ROWS',
+                            length: rowsToAdd
+                        }
+                    }
+                ]
+            }
+        })
+    }
+
+    // 3. Write data
+    const range = `${sheetName}!A${startRow}`
+    const response = await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: range,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: values,
+      },
+    })
+    
+    return { success: true, updates: response.data }
+
+  } catch (error: any) {
+    console.error('[appendData_ToSheet] Error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
 export async function getCustomerStatus(danhba: string) {
+// ... existing code ...
+
   try {
     const sheets = getGoogleSheetsClient()
     const spreadsheetId = process.env.GOOGLE_SHEET_ID

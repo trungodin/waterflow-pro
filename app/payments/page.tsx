@@ -8,6 +8,7 @@ import CollectionSummaryAnalysis from '@/components/CollectionSummaryAnalysis'
 import GroupStatisticsAnalysis from '@/components/GroupStatisticsAnalysis'
 import VirtualDMNTable from '@/components/VirtualDMNTable'
 import LocDuLieuTon from '@/components/LocDuLieuTon'
+import ThongKeDongMoNuoc from '@/components/ThongKeDongMoNuoc'
 import { getOnOffData } from '@/lib/googlesheets'
 
 // Format currency
@@ -231,6 +232,10 @@ export default function PaymentsPage() {
               {subTabDMN === 'loc_du_lieu_ton' ? (
                   <div className="h-full">
                      <LocDuLieuTon formatCurrency={formatCurrency} />
+                  </div>
+              ) : subTabDMN === 'thong_ke_dmn' ? (
+                  <div className="h-full">
+                     <ThongKeDongMoNuoc formatCurrency={formatCurrency} />
                   </div>
               ) : (
                   <div className="p-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">

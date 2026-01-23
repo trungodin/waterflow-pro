@@ -419,7 +419,10 @@ export async function getDebtData(params: DebtFilterParams) {
                 SoThan: cust.SoThan,
                 SoMoi: cust.SoMoi,
                 CoCu: cust.CoCu,
-                GB: cust.GB
+                GB: cust.GB,
+                HopBaoVe: cust.HopBaoVe,
+                Hieu: cust.Hieu,
+                SDT: cust.SDT
             })
         }
     }

@@ -14,6 +14,7 @@
     "@types/file-saver": "^2.0.7",
     "@types/react-window": "^1.8.8",
     "@xmldom/xmldom": "^0.8.11",
+    "date-fns": "^4.1.0",
     "docxtemplater": "^3.67.6",
     "fast-xml-parser": "^5.3.3",
     "file-saver": "^2.0.5",

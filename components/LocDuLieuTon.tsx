@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import VirtualDMNTable from './VirtualDMNTable'
 import { getDebtData } from '../lib/actions/loc-du-lieu-ton'
+import { sendToListSheet, sendToNhacNoSheet } from '../lib/actions/send-data'
 import { generateWordNotice } from '../lib/client-utils'
 
 interface LocDuLieuTonProps {
@@ -13,6 +14,8 @@ interface LocDuLieuTonProps {
 const now = new Date()
 const DEFAULT_YEAR = now.getFullYear()
 const DEFAULT_PERIOD = now.getMonth() + 1 // 1-12
+
+const GROUP_OPTIONS = ["Sang Sơn", "Thi Náo"]
 
 // Custom Columns for Debt Report (Similar to Legacy App)
 const REPORT_COLUMNS = [
@@ -31,6 +34,11 @@ const REPORT_COLUMNS = [
   { id: 'dot', label: 'DOT', width: 50, align: 'center' },
   { id: 'codeMoi', label: 'CodeMoi', width: 70, align: 'center' },
   { id: 'soThan', label: 'SoThan', width: 120, align: 'left' },
+  // Hidden by default columns
+  { id: 'hieu', label: 'Hieu', width: 80, align: 'left' },
+  { id: 'coCu', label: 'CoCu', width: 60, align: 'center' },
+  { id: 'hopBaoVe', label: 'HopBaoVe', width: 80, align: 'center' },
+  { id: 'sdt', label: 'SDT', width: 100, align: 'left' },
 ]
 
 export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
@@ -47,6 +55,27 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
   const [fileDbList, setFileDbList] = useState<string[] | null>(null) // List from file
   const [fileFilterMode, setFileFilterMode] = useState<'include' | 'exclude'>('include') // Mode: include or exclude
   const [fileName, setFileName] = useState<string>('')
+
+  // Column Visibility State
+  const [visibleColumnIds, setVisibleColumnIds] = useState<Set<string>>(new Set([
+    'stt', 'select', 'danhBa', 'gb', 'tongNo', 'tongKy', 'kyNam', 'tenKH', 'soNha', 'duong', 'mlt2', 'soMoi', 'dot', 'codeMoi', 'soThan'
+  ]))
+
+  // Toggle Column Visibility
+  const toggleColumnVisibility = (colId: string) => {
+    setVisibleColumnIds(prev => {
+        const next = new Set(prev)
+        if (next.has(colId)) next.delete(colId)
+        else next.add(colId)
+        return next
+    })
+  }
+
+  const COMPACT_TOGGLE_COLS = ['hieu', 'coCu', 'hopBaoVe', 'sdt']
+
+  // Send Process States
+  const [assignGroup, setAssignGroup] = useState(GROUP_OPTIONS[0])
+  const [assignDate, setAssignDate] = useState(new Date().toISOString().split('T')[0])
   
   const [searchTerm, setSearchTerm] = useState('')
   
@@ -59,6 +88,20 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
   const [noticeDate, setNoticeDate] = useState(new Date().toISOString().split('T')[0])
   const [deadline1Ky, setDeadline1Ky] = useState(2)
   const [deadline2Ky, setDeadline2Ky] = useState(5)
+
+  // Client-side visual filtering (Moved up for dependencies)
+  const filteredData = useMemo(() => {
+      if (!searchTerm) return data
+      const term = searchTerm.toLowerCase()
+      return data.filter(item => {
+         const text = `${item.DanhBa} ${item.TenKH} ${item.SoNha} ${item.Duong}`.toLowerCase()
+         return text.includes(term)
+      })
+  }, [data, searchTerm])
+
+  const totalDebt = useMemo(() => {
+    return filteredData.reduce((sum, item) => sum + (item.TongNo || 0), 0)
+  }, [filteredData])
 
   // Selection Logic
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -83,6 +126,51 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
     } else {
         // Select all visible
         setSelectedIds(new Set(filteredData.map(d => d.DanhBa)))
+    }
+  }
+
+  // --- Handlers for Send Process ---
+  const handleSendToList = async () => {
+    if (selectedIds.size === 0) return alert("Chưa chọn khách hàng nào!")
+    setLoading(true)
+    try {
+        const selectedRows = filteredData.filter(r => selectedIds.has(r.DanhBa))
+        const [y, m, d] = assignDate.split('-')
+        const formattedDate = `${d}/${m}/${y}`
+        
+        const res = await sendToListSheet(selectedRows, assignGroup, formattedDate)
+        if (res.success) {
+            alert(res.message)
+            setSelectedIds(new Set())
+        } else {
+            alert(`Lỗi: ${res.message}`)
+        }
+    } catch (err: any) {
+        alert("Lỗi không xác định: " + err.message)
+    } finally {
+        setLoading(false)
+    }
+  }
+
+  const handleSendToNhacNo = async () => {
+    if (selectedIds.size === 0) return alert("Chưa chọn khách hàng nào!")
+    setLoading(true)
+    try {
+        const selectedRows = filteredData.filter(r => selectedIds.has(r.DanhBa))
+        const [y, m, d] = assignDate.split('-')
+        const formattedDate = `${d}/${m}/${y}`
+        
+        const res = await sendToNhacNoSheet(selectedRows, formattedDate)
+        if (res.success) {
+            alert(res.message)
+            setSelectedIds(new Set())
+        } else {
+            alert(`Lỗi: ${res.message}`)
+        }
+    } catch (err: any) {
+         alert("Lỗi không xác định: " + err.message)
+    } finally {
+        setLoading(false)
     }
   }
 
@@ -217,19 +305,7 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
     }
   }
 
-  // Client-side visual filtering
-  const filteredData = useMemo(() => {
-      if (!searchTerm) return data
-      const term = searchTerm.toLowerCase()
-      return data.filter(item => {
-         const text = `${item.DanhBa} ${item.TenKH} ${item.SoNha} ${item.Duong}`.toLowerCase()
-         return text.includes(term)
-      })
-  }, [data, searchTerm])
 
-  const totalDebt = useMemo(() => {
-    return filteredData.reduce((sum, item) => sum + (item.TongNo || 0), 0)
-  }, [filteredData])
 
 
   return (
@@ -237,11 +313,53 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
       {/* Filters Toolbar */}
       <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow-md">
         
-        <div className="flex justify-between items-center mb-4">
+         <div className="flex justify-between items-center mb-4">
              <h3 className="text-sm font-bold text-gray-800 uppercase flex items-center gap-2">
                 <span className="text-blue-600 bg-blue-50 p-1.5 rounded-lg">⚙️</span> 
                 Bộ Lọc Dữ Liệu Tồn (Phân tích chuyên sâu)
             </h3>
+            
+            {/* Column Visibility Toggle */}
+            <div className="relative group">
+                <button className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-bold text-gray-700 transition-colors">
+                    <span>👁️</span> Cột hiển thị
+                </button>
+                
+                <div className="absolute right-0 top-full mt-2 w-48 bg-gray-800 rounded-lg shadow-xl p-3 grid gap-2 z-50 hidden group-hover:block border border-gray-700">
+                    <div className="text-xs font-bold text-gray-400 uppercase mb-1">Cột phụ</div>
+                    {COMPACT_TOGGLE_COLS.map(colId => {
+                        const colDef = REPORT_COLUMNS.find(c => c.id === colId)
+                        return (
+                            <label key={colId} className="flex items-center gap-2 text-gray-200 text-xs font-bold cursor-pointer hover:bg-gray-700 p-1 rounded">
+                                <input 
+                                    type="checkbox" 
+                                    checked={visibleColumnIds.has(colId)}
+                                    onChange={() => toggleColumnVisibility(colId)}
+                                    className="rounded border-gray-500 bg-gray-700 text-blue-500 focus:ring-offset-gray-800"
+                                />
+                                {colDef?.label || colId}
+                            </label>
+                        )
+                    })}
+                    <div className="h-px bg-gray-700 my-1"></div>
+                    <div className="text-xs font-bold text-gray-400 uppercase mb-1">Cột chính</div>
+                     {/* Allow toggling specific main headers if needed, sticking to user request for now */}
+                     {['mlt2', 'soMoi', 'dot', 'codeMoi', 'soThan'].map(colId => {
+                        const colDef = REPORT_COLUMNS.find(c => c.id === colId)
+                        return (
+                            <label key={colId} className="flex items-center gap-2 text-gray-200 text-xs font-bold cursor-pointer hover:bg-gray-700 p-1 rounded">
+                                <input 
+                                    type="checkbox" 
+                                    checked={visibleColumnIds.has(colId)}
+                                    onChange={() => toggleColumnVisibility(colId)}
+                                    className="rounded border-gray-500 bg-gray-700 text-blue-500 focus:ring-offset-gray-800"
+                                />
+                                {colDef?.label || colId}
+                            </label>
+                        )
+                    })}
+                </div>
+            </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
@@ -427,66 +545,129 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
             searchTerm={''} 
             formatCurrency={formatCurrency} 
             isFlatMode={true}
-            customColumns={REPORT_COLUMNS}
+            customColumns={REPORT_COLUMNS.filter(c => visibleColumnIds.has(c.id))}
             selectedIds={selectedIds}
             onSelectionChange={handleSelectionChange}
          />
       </div>
 
-       {/* Word Generation Panel */}
-      <div className="bg-white p-4 rounded-xl border border-blue-200 shadow-sm flex flex-col md:flex-row items-center gap-4 bg-blue-50/50">
-        <h3 className="text-sm font-bold text-blue-800 uppercase flex items-center gap-2 min-w-max">
-            <span className="text-blue-600 bg-white p-1 rounded border border-blue-100">📄</span> 
-            Tạo Thông Báo
-        </h3>
-        
-        <div className="h-8 w-px bg-blue-200 hidden md:block"></div>
+      {/* Action Panel: Send Process & Create Notice */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          
+          {/* Send Process Panel */}
+          <div className="bg-white p-4 rounded-xl border border-indigo-200 shadow-sm flex flex-col gap-4 bg-indigo-50/50">
+             <div className="flex justify-between items-center">
+                 <h3 className="text-sm font-bold text-indigo-800 uppercase flex items-center gap-2">
+                    <span className="text-indigo-600 bg-white p-1 rounded border border-indigo-100">🚀</span> 
+                    Gửi Danh sách đi xử lý
+                </h3>
+             </div>
+             
+             <div className="flex flex-wrap items-end gap-3">
+                 <div className="flex-1 min-w-[150px]">
+                    <label className="text-xs font-bold text-gray-700 block mb-1">Giao cho Nhóm</label>
+                    <select 
+                        value={assignGroup}
+                        onChange={(e) => setAssignGroup(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    >
+                        {GROUP_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                 </div>
+                 
+                 <div className="flex-1 min-w-[130px]">
+                    <label className="text-xs font-bold text-gray-700 block mb-1">Ngày giao</label>
+                    <input 
+                        type="date" 
+                        value={assignDate} 
+                        onChange={e => setAssignDate(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                 </div>
+             </div>
 
-        <div className="flex flex-wrap gap-4 items-center flex-1">
-             <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-gray-700">Ngày in:</label>
-                <input 
-                    type="date" 
-                    value={noticeDate} 
-                    onChange={e => setNoticeDate(e.target.value)}
-                    className="px-2 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" 
-                />
+             <div className="flex flex-wrap gap-2 mt-auto">
+                 <button 
+                    onClick={handleSendToList}
+                    disabled={loading || selectedIds.size === 0}
+                    className="flex-1 px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition-all shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                 >
+                    <span>📤</span> Gửi DS ({selectedIds.size})
+                 </button>
+                 
+                 <button 
+                    onClick={handleSendToNhacNo}
+                    disabled={loading || selectedIds.size === 0}
+                    className="flex-1 px-3 py-2 bg-pink-600 text-white rounded-lg text-sm font-bold hover:bg-pink-700 transition-all shadow-sm disabled:bg-gray-400 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                 >
+                    <span>📢</span> Nhắc nợ ({selectedIds.size})
+                 </button>
+
+                 <button 
+                    onClick={handleExportExcel}
+                    className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-all shadow-sm flex items-center gap-2"
+                 >
+                    <span>📥</span> Excel
+                 </button>
              </div>
-             
-             <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-gray-700">Hạn 1 kỳ:</label>
-                <div className="relative w-24">
+          </div>
+
+          {/* Word Generation Panel */}
+          <div className="bg-white p-4 rounded-xl border border-blue-200 shadow-sm flex flex-col gap-4 bg-blue-50/50">
+            <div className="flex justify-between items-center">
+                <h3 className="text-sm font-bold text-blue-800 uppercase flex items-center gap-2">
+                    <span className="text-blue-600 bg-white p-1 rounded border border-blue-100">📄</span> 
+                    Tạo Thông Báo & In Ấn
+                </h3>
+            </div>
+            
+            <div className="flex flex-wrap items-end gap-3 flex-1">
+                 <div className="flex-1 min-w-[130px]">
+                    <label className="text-xs font-bold text-gray-700 block mb-1">Ngày in trên TB</label>
                     <input 
-                        type="number" 
-                        value={deadline1Ky} 
-                        onChange={e => setDeadline1Ky(parseInt(e.target.value))}
-                        className="w-full pl-2 pr-8 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" 
+                        type="date" 
+                        value={noticeDate} 
+                        onChange={e => setNoticeDate(e.target.value)}
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" 
                     />
-                    <span className="absolute right-2 top-1.5 text-xs font-bold text-gray-500 pointer-events-none">ngày</span>
-                </div>
-             </div>
-             
-             <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-gray-700">Hạn ≥2 kỳ:</label>
-                 <div className="relative w-24">
-                    <input 
-                        type="number" 
-                        value={deadline2Ky} 
-                        onChange={e => setDeadline2Ky(parseInt(e.target.value))}
-                        className="w-full pl-2 pr-8 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" 
-                    />
-                     <span className="absolute right-2 top-1.5 text-xs font-bold text-gray-500 pointer-events-none">ngày</span>
-                </div>
-             </div>
-        </div>
-        
-        <button 
-            onClick={handleCreateWord}
-            disabled={loading}
-            className="px-5 py-2 bg-blue-600 text-white border border-blue-600 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap"
-        >
-            <span>📝</span> Tạo {selectedIds.size > 0 ? selectedIds.size : filteredData.length} Thông Báo
-        </button>
+                 </div>
+                 
+                 <div className="w-24">
+                    <label className="text-xs font-bold text-gray-700 block mb-1">Hạn 1 kỳ</label>
+                    <div className="relative">
+                        <input 
+                            type="number" 
+                            value={deadline1Ky} 
+                            onChange={e => setDeadline1Ky(parseInt(e.target.value))}
+                            className="w-full pl-2 pr-8 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" 
+                        />
+                        <span className="absolute right-2 top-2 text-xs font-bold text-gray-500 pointer-events-none">ngày</span>
+                    </div>
+                 </div>
+                 
+                 <div className="w-24">
+                    <label className="text-xs font-bold text-gray-700 block mb-1">Hạn ≥2 kỳ</label>
+                     <div className="relative">
+                        <input 
+                            type="number" 
+                            value={deadline2Ky} 
+                            onChange={e => setDeadline2Ky(parseInt(e.target.value))}
+                            className="w-full pl-2 pr-8 py-2 bg-white border border-gray-300 rounded-lg text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-blue-500 outline-none" 
+                        />
+                         <span className="absolute right-2 top-2 text-xs font-bold text-gray-500 pointer-events-none">ngày</span>
+                    </div>
+                 </div>
+            </div>
+            
+            <button 
+                onClick={handleCreateWord}
+                disabled={loading || filteredData.length === 0}
+                className="w-full px-5 py-2 bg-blue-600 text-white border border-blue-600 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm flex justify-center items-center gap-2 mt-auto disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed"
+            >
+                <span>📝</span> Tạo {selectedIds.size > 0 ? selectedIds.size : filteredData.length} Thông Báo Word
+            </button>
+          </div>
+
       </div>
     </div>
   )
