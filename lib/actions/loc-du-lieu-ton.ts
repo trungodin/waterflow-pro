@@ -212,40 +212,41 @@ export async function getDebtData(params: DebtFilterParams) {
         if (uniqueCandidateInvoices.length > 0) {
             try {
                 // Prepare BGW chunks
-                // Reduced chunk size to 100 to prevent server overload/timeout
-                const chunkSize = 100 
-                console.log(`[DEBT FILTER] ⚡ Processing BGW sequentially with retries (Chunk size: ${chunkSize})...`)
+                const chunkSize = 500
+                const chunkPromises: Promise<any>[] = []
                 
                 for (let i = 0; i < uniqueCandidateInvoices.length; i += chunkSize) {
                     const chunk = uniqueCandidateInvoices.slice(i, i + chunkSize)
                     const soHoaDonList = chunk.map(s => `'${s}'`).join(',')
+                    const sqlBGW = `SELECT SHDon FROM BGW_HD WHERE SHDon IN (${soHoaDonList})`
                     
-                    let attempt = 0
-                    let success = false
-                    
-                    while (attempt < 3 && !success) {
-                        try {
-                            const sqlBGW = `SELECT SHDon FROM BGW_HD WHERE SHDon IN (${soHoaDonList})`
-                            const bgwData = await fetchSql('f_Select_SQL_Nganhang', sqlBGW)
-                            
-                            if (bgwData && bgwData.length > 0) {
-                                bgwData.forEach((b: any) => {
-                                    if (b.SHDon) bgwPaidInvoices.add(b.SHDon.trim())
-                                })
-                            }
-                            success = true // Mark as success if no error thrown
-                        } catch (err: any) {
-                            attempt++
-                            console.warn(`[DEBT FILTER] BGW chunk failed (Attempt ${attempt}/3): ${err.message}`)
-                            if (attempt >= 3) {
-                                console.error(`[DEBT FILTER] CRITICAL: Skipping chunk after 3 failed attempts.`)
-                            } else {
-                                // Wait 1s before retrying
-                                await new Promise(res => setTimeout(res, 1000))
-                            }
-                        }
-                    }
+                    // Push promise to array (Parallel execution)
+                    chunkPromises.push(fetchSql('f_Select_SQL_Nganhang', sqlBGW).then(data => ({
+                        status: 'fulfilled',
+                        data: data,
+                        chunkIndex: i
+                    })).catch(err => ({
+                        status: 'rejected',
+                        error: err,
+                        chunkIndex: i
+                    })))
                 }
+
+                console.log(`[DEBT FILTER] ⚡ firing ${chunkPromises.length} BGW queries in parallel...`)
+                
+                // Wait for all queries to complete
+                const results = await Promise.all(chunkPromises)
+                
+                // Process results
+                results.forEach((res: any) => {
+                    if (res.status === 'fulfilled' && res.data && res.data.length > 0) {
+                        res.data.forEach((b: any) => {
+                            if (b.SHDon) bgwPaidInvoices.add(b.SHDon.trim())
+                        })
+                    } else if (res.status === 'rejected') {
+                        console.log(`[DEBT FILTER] BGW chunk failed: ${res.error.message}`)
+                    }
+                })
 
                 console.log(`[DEBT FILTER] Found ${bgwPaidInvoices.size} paid invoices via BGW in active set`)
             } catch (error) {
@@ -375,8 +376,6 @@ export async function getDebtData(params: DebtFilterParams) {
                 TenKH: cust.TENKH,
                 SoNha: cust.SO,
                 Duong: cust.DUONG,
-                GB: cust.GB, // Added GB
-                gb: cust.GB, // Added lowercase gb just in case
                 TinhTrang: onOff?.TinhTrang || 'Bình thường',
                 TongKy: cust.TONGKY,
                 TongNo: cust.TONGCONG,
@@ -388,7 +387,8 @@ export async function getDebtData(params: DebtFilterParams) {
                 MLT2: cust.MLT2,
                 SoThan: cust.SoThan,
                 SoMoi: cust.SoMoi,
-                CoCu: cust.CoCu
+                CoCu: cust.CoCu,
+                GB: cust.GB
             })
         }
     }

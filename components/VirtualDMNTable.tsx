@@ -247,7 +247,7 @@ export default function VirtualDMNTable({
               case 'dot': content = <span className="text-gray-800 font-mono text-center block">{row.Dot}</span>; break;
               case 'gb': content = <span className="text-center block font-bold text-gray-700">{row.GB}</span>; break;
               
-              case 'codeMoi': content = <span className="text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded text-xs uppercase font-bold block w-fit mx-auto">{row.CodeMoi}</span>; break;
+              case 'codeMoi': content = <span className="text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded text-sm uppercase font-bold block w-fit mx-auto">{row.CodeMoi}</span>; break;
               
               case 'tinhTrang': 
                 content = (
@@ -259,12 +259,12 @@ export default function VirtualDMNTable({
                 
               case 'tongKy': content = <span className="font-bold text-gray-900">{row.TongKy || '0'}</span>; break;
               case 'tongNo': content = <span className="font-bold text-black">{formatCurrency(row.TongNo)}</span>; break;
-              case 'kyNam': content = <span className="text-gray-600 font-medium text-xs" title={row.KyNam}>{row.KyNam || 'N/A'}</span>; break;
+              case 'kyNam': content = <span className="text-gray-600 font-medium text-[11px]" title={row.KyNam}>{row.KyNam || 'N/A'}</span>; break;
               
               // New Columns for Report
               case 'mlt2': content = <span className="font-mono text-gray-700">{row.MLT2}</span>; break;
               case 'soMoi': content = <span className="text-gray-600 italic">{row.SoMoi}</span>; break;
-              case 'soThan': content = <span className="text-gray-600 text-xs">{row.SoThan}</span>; break;
+              case 'soThan': content = <span className="text-gray-600 font-medium text-[13px]">{row.SoThan}</span>; break;
               
               case 'nhomKhoa': content = <span className="text-gray-700 font-medium">{row.NhomKhoa || '-'}</span>; break;
               case 'ngayMo': content = <span className="text-gray-700">{row.NgayMo || '-'}</span>; break;
