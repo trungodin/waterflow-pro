@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  BarChart, LineChart
+import {
+    ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+    BarChart, LineChart
 } from 'recharts'
 import { getYearlyRevenue, getMonthlyRevenue, getDailyRevenue, YearlyRevenue, MonthlyRevenue, DailyRevenue } from '@/app/actions/revenue'
 
@@ -12,22 +12,22 @@ const formatCurrency = (val: number) => new Intl.NumberFormat('vi-VN').format(va
 
 export default function RevenueAnalysis() {
     const currentYear = new Date().getFullYear()
-    
+
     // Filters
     const [startYear, setStartYear] = useState(currentYear - 4)
     const [endYear, setEndYear] = useState(currentYear)
     const [dateUntil, setDateUntil] = useState(new Date().toISOString().split('T')[0])
-    
+
     // Data States
     const [yearlyData, setYearlyData] = useState<YearlyRevenue[]>([])
     const [monthlyData, setMonthlyData] = useState<MonthlyRevenue[]>([])
     const [dailyData, setDailyData] = useState<DailyRevenue[]>([])
-    
+
     // Loading States
     const [loadingYearly, setLoadingYearly] = useState(false)
     const [loadingMonthly, setLoadingMonthly] = useState(false)
     const [loadingDaily, setLoadingDaily] = useState(false)
-    
+
     // Selection States for Drill-down
     const [selectedYear, setSelectedYear] = useState<number | null>(null)
     const [selectedKy, setSelectedKy] = useState<number | null>(null)
@@ -90,17 +90,28 @@ export default function RevenueAnalysis() {
     }
 
     // --- RENDER HELPERS ---
-    
+
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-white p-3 border border-gray-200 shadow-lg rounded text-sm">
-                    <p className="font-bold mb-2">{label}</p>
-                    {payload.map((entry: any, index: number) => (
-                        <p key={index} style={{ color: entry.color }}>
-                            {entry.name}: {formatCurrency(entry.value)}
-                        </p>
-                    ))}
+                <div className="bg-white p-3 border-2 border-gray-700 shadow-lg rounded text-sm font-semibold text-gray-900">
+                    <p className="font-bold mb-2 border-b border-gray-200 pb-1">{label}</p>
+                    {payload.map((entry: any, index: number) => {
+                        const val = entry.value;
+                        let formattedVal = new Intl.NumberFormat('vi-VN').format(val)
+                        if (val >= 1000000000) {
+                            formattedVal = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(val / 1000000000) + ' Tỷ'
+                        } else if (val >= 1000000) {
+                            formattedVal = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(val / 1000000) + ' Triệu'
+                        }
+
+                        return (
+                            <p key={index} style={{ color: entry.color }} className="flex justify-between gap-4">
+                                <span>{entry.name}:</span>
+                                <span>{formattedVal}</span>
+                            </p>
+                        )
+                    })}
                 </div>
             )
         }
@@ -113,32 +124,32 @@ export default function RevenueAnalysis() {
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-wrap gap-4 items-end">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Từ năm</label>
-                    <input 
-                        type="number" 
-                        value={startYear} 
+                    <input
+                        type="number"
+                        value={startYear}
                         onChange={(e) => setStartYear(Number(e.target.value))}
                         className="w-24 px-3 py-2 border rounded-md text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Đến năm</label>
-                    <input 
-                        type="number" 
-                        value={endYear} 
+                    <input
+                        type="number"
+                        value={endYear}
                         onChange={(e) => setEndYear(Number(e.target.value))}
                         className="w-24 px-3 py-2 border rounded-md text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Ngày giải ngân đến</label>
-                    <input 
-                        type="date" 
-                        value={dateUntil} 
+                    <input
+                        type="date"
+                        value={dateUntil}
                         onChange={(e) => setDateUntil(e.target.value)}
                         className="px-3 py-2 border rounded-md text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
-                <button 
+                <button
                     onClick={handleRunAnalysis}
                     disabled={loadingYearly}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
@@ -152,31 +163,28 @@ export default function RevenueAnalysis() {
                 <nav className="-mb-px flex space-x-8">
                     <button
                         onClick={() => setActiveTab('year')}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === 'year' 
-                            ? 'border-blue-500 text-blue-600' 
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                        }`}
+                        className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'year'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
                     >
                         📊 Theo Năm
                     </button>
                     <button
                         onClick={() => setActiveTab('month')}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === 'month' 
-                            ? 'border-blue-500 text-blue-600' 
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                        }`}
+                        className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'month'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
                     >
                         📅 Theo Kỳ {selectedYear ? `(${selectedYear})` : ''}
                     </button>
                     <button
                         onClick={() => setActiveTab('day')}
-                        className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                            activeTab === 'day' 
-                            ? 'border-blue-500 text-blue-600' 
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                        }`}
+                        className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'day'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
                     >
                         🗓️ Theo Ngày {selectedKy && selectedYearForDaily ? `(Kỳ ${selectedKy}/${selectedYearForDaily})` : ''}
                     </button>
@@ -211,7 +219,7 @@ export default function RevenueAnalysis() {
                                             <td className="px-4 py-3 text-right text-red-500 font-bold">{formatCurrency(row.TonThu)}</td>
                                             <td className="px-4 py-3 text-right font-bold text-gray-900">{row.PhanTramDat.toFixed(2)}%</td>
                                             <td className="px-4 py-3 text-center">
-                                                <button 
+                                                <button
                                                     onClick={() => handleSelectYear(row.Nam)}
                                                     className="text-blue-600 hover:text-blue-800 text-xs font-semibold uppercase"
                                                 >
@@ -227,7 +235,7 @@ export default function RevenueAnalysis() {
 
                     {/* Chart */}
                     <div className="bg-white p-4 border border-gray-200 rounded-lg h-[400px]">
-                         <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%">
                             <ComposedChart data={yearlyData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                 <CartesianGrid stroke="#f5f5f5" />
                                 <XAxis dataKey="Nam" />
@@ -247,10 +255,10 @@ export default function RevenueAnalysis() {
             {activeTab === 'month' && (
                 <div className="space-y-4">
                     {!selectedYear ? (
-                         <div className="text-center py-10 text-gray-500">Vui lòng chọn Năm ở tab trước để xem chi tiết.</div>
+                        <div className="text-center py-10 text-gray-500">Vui lòng chọn Năm ở tab trước để xem chi tiết.</div>
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                             {/* Table */}
+                            {/* Table */}
                             <div className="overflow-x-auto border border-gray-200 rounded-lg">
                                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                                     <thead className="bg-gray-100">
@@ -275,7 +283,7 @@ export default function RevenueAnalysis() {
                                                     <td className="px-4 py-3 text-right text-red-500 font-bold">{formatCurrency(row.TonThu)}</td>
                                                     <td className="px-4 py-3 text-right font-bold text-gray-900">{row.PhanTramDat.toFixed(2)}%</td>
                                                     <td className="px-4 py-3 text-center">
-                                                        <button 
+                                                        <button
                                                             onClick={() => handleSelectKy(row.Ky)}
                                                             className="text-blue-600 hover:text-blue-800 text-xs font-semibold uppercase"
                                                         >
@@ -289,7 +297,7 @@ export default function RevenueAnalysis() {
                                 </table>
                             </div>
 
-                             {/* Chart - Side by Side Bar for Months */}
+                            {/* Chart - Side by Side Bar for Months */}
                             <div className="bg-white p-4 border border-gray-200 rounded-lg h-[400px]">
                                 <h4 className="text-center font-bold mb-2">Biểu đồ Kỳ - Năm {selectedYear}</h4>
                                 <ResponsiveContainer width="100%" height="100%">
@@ -312,8 +320,8 @@ export default function RevenueAnalysis() {
             {/* Content: Day Tab */}
             {activeTab === 'day' && (
                 <div className="space-y-4">
-                     {(!selectedKy || !selectedYearForDaily) ? (
-                         <div className="text-center py-10 text-gray-500">Vui lòng chọn Kỳ ở tab trước để xem chi tiết.</div>
+                    {(!selectedKy || !selectedYearForDaily) ? (
+                        <div className="text-center py-10 text-gray-500">Vui lòng chọn Kỳ ở tab trước để xem chi tiết.</div>
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Table */}
@@ -344,15 +352,15 @@ export default function RevenueAnalysis() {
                                 </table>
                             </div>
 
-                             {/* Chart - Line Chart for Daily Revenue */}
-                             <div className="bg-white p-4 border border-gray-200 rounded-lg h-[400px]">
+                            {/* Chart - Line Chart for Daily Revenue */}
+                            <div className="bg-white p-4 border border-gray-200 rounded-lg h-[400px]">
                                 <h4 className="text-center font-bold mb-2">Thay đổi theo Ngày - Kỳ {selectedKy}/{selectedYearForDaily}</h4>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <LineChart data={dailyData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                                         <CartesianGrid stroke="#f5f5f5" />
-                                        <XAxis 
-                                            dataKey="NgayGiaiNgan" 
-                                            tickFormatter={(dateStr) => new Date(dateStr).getDate().toString()} 
+                                        <XAxis
+                                            dataKey="NgayGiaiNgan"
+                                            tickFormatter={(dateStr) => new Date(dateStr).getDate().toString()}
                                             label={{ value: 'Ngày', position: 'insideBottom', offset: -5 }}
                                         />
                                         <YAxis tickFormatter={(val) => new Intl.NumberFormat('en', { notation: "compact" }).format(val)} />

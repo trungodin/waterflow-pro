@@ -35,16 +35,18 @@ export default function CustomersPage() {
   }
 
   // Filter customers based on search
-  const filteredCustomers = customers.filter(customer => 
+  const filteredCustomers = customers.filter(customer =>
     (customer.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (customer.customer_code?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     (customer.phone && customer.phone.includes(searchTerm))
   )
 
+
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <Navbar />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header Section */}
         <div className="md:flex md:items-center md:justify-between mb-8">
@@ -80,12 +82,12 @@ export default function CustomersPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <div className="bg-white overflow-hidden shadow rounded-lg px-4 py-2 md:col-span-1">
             <dt className="text-sm font-medium text-gray-500 truncate">Tổng số khách hàng</dt>
             <dd className="mt-1 text-2xl font-semibold text-gray-900">{customers.length}</dd>
           </div>
-           <div className="bg-white overflow-hidden shadow rounded-lg px-4 py-2 md:col-span-1">
+          <div className="bg-white overflow-hidden shadow rounded-lg px-4 py-2 md:col-span-1">
             <dt className="text-sm font-medium text-gray-500 truncate">Đang hoạt động</dt>
             <dd className="mt-1 text-2xl font-semibold text-green-600">
               {customers.filter(c => c.status === 'active').length}
@@ -108,7 +110,7 @@ export default function CustomersPage() {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Thông tin Khách hàng
                     </th>
-                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Mã Đồng hồ
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -142,7 +144,7 @@ export default function CustomersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                         <div className="text-sm text-gray-900">{customer.meter_number || 'Chưa cập nhật'}</div>
+                        <div className="text-sm text-gray-900">{customer.meter_number || 'Chưa cập nhật'}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900 max-w-xs truncate" title={customer.address || ''}>
@@ -153,13 +155,12 @@ export default function CustomersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          customer.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : customer.status === 'suspended'
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${customer.status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : customer.status === 'suspended'
                             ? 'bg-yellow-100 text-yellow-800'
                             : 'bg-red-100 text-red-800'
-                        }`}>
+                          }`}>
                           {customer.status === 'active' ? 'Hoạt động' : customer.status === 'suspended' ? 'Tạm ngưng' : 'Ngừng hoạt động'}
                         </span>
                       </td>
@@ -173,17 +174,17 @@ export default function CustomersPage() {
               </table>
             </div>
           ) : (
-             <div className="text-center py-10">
-                <p className="text-gray-500 text-sm">
-                  {searchTerm ? 'Không tìm thấy khách hàng nào phù hợp.' : 'Chưa có khách hàng nào. Hãy thêm mới ngay!'}
-                </p>
-             </div>
+            <div className="text-center py-10">
+              <p className="text-gray-500 text-sm">
+                {searchTerm ? 'Không tìm thấy khách hàng nào phù hợp.' : 'Chưa có khách hàng nào. Hãy thêm mới ngay!'}
+              </p>
+            </div>
           )}
         </div>
 
         {/* Add Customer Modal */}
-        <AddCustomerModal 
-          isOpen={isModalOpen} 
+        <AddCustomerModal
+          isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSuccess={fetchCustomers}
         />

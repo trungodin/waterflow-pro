@@ -188,7 +188,17 @@ export default function LatenessSummary({ data, selectedGroup, onSelectGroup }: 
                                         />
                                     ))}
                                 </Pie>
-                                <Tooltip />
+                                <Tooltip
+                                    formatter={(value: any) => [new Intl.NumberFormat('vi-VN').format(Number(value)), 'Số khách hàng']}
+                                    contentStyle={{
+                                        borderRadius: '8px',
+                                        border: '2px solid #374151',
+                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                        color: '#111827',
+                                        fontWeight: '600'
+                                    }}
+                                />
                                 <Legend layout="horizontal" verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: '10px' }} />
                             </PieChart>
                         </ResponsiveContainer>

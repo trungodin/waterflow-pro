@@ -11,6 +11,10 @@ import LocDuLieuTon from '@/components/LocDuLieuTon'
 import ThongKeDongMoNuoc from '@/components/ThongKeDongMoNuoc'
 import { getOnOffData } from '@/lib/googlesheets'
 import LatenessAnalysisMain from '@/components/lateness-analysis/LatenessAnalysisMain'
+import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
+
+import Modal from '@/components/ui/Modal'
+
 
 // Format currency
 const formatCurrency = (val: string | number) => {
@@ -20,8 +24,11 @@ const formatCurrency = (val: string | number) => {
   return new Intl.NumberFormat('vi-VN').format(num)
 }
 
+
+
 export default function PaymentsPage() {
-  const [activeTab, setActiveTab] = useState('doanh_thu') // Default to Doanh Thu
+
+  const [activeTab, setActiveTab] = useState('doanh_thu')
   const [subTabDoanhThu, setSubTabDoanhThu] = useState('phan_tich_doanh_thu')
   const [subTabDMN, setSubTabDMN] = useState('loc_du_lieu_ton')
 
@@ -233,6 +240,8 @@ export default function PaymentsPage() {
                 <div className="h-full">
                   <ThongKeDongMoNuoc formatCurrency={formatCurrency} />
                 </div>
+              ) : subTabDMN === 'phan_tich_hd_no' ? (
+                <DebtAnalysisMain />
               ) : subTabDMN === 'phan_tich_thanh_toan' ? (
                 <LatenessAnalysisMain />
               ) : (
