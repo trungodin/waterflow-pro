@@ -74,11 +74,11 @@ export default function Dashboard() {
       const { revenueData, collectionData, consumptionData } = await getComparisonData(selectedYear, comparisonYear)
 
       // Helper to process data for a specific year
-      const processYearData = (year: number, data: any[], valueKey: string) => {
+      const processYearData = (year: number, data: any[], valueKey: string, scale: number = 1) => {
         const result = Array(12).fill(0)
         data.filter((d: any) => d.Nam === year).forEach((d: any) => {
           if (d.Ky >= 1 && d.Ky <= 12) {
-            result[d.Ky - 1] = Number(d[valueKey]) || 0
+            result[d.Ky - 1] = (Number(d[valueKey]) || 0) / scale
           }
         })
         return result
@@ -87,8 +87,9 @@ export default function Dashboard() {
       const months = Array.from({ length: 12 }, (_, i) => i + 1)
 
       // --- 1. Revenue Chart Data (Line) ---
-      const revCurr = processYearData(selectedYear, revenueData, 'DoanhThu')
-      const revComp = processYearData(comparisonYear, revenueData, 'DoanhThu')
+      // Scale: Billion (Tỷ VNĐ)
+      const revCurr = processYearData(selectedYear, revenueData, 'DoanhThu', 1_000_000_000)
+      const revComp = processYearData(comparisonYear, revenueData, 'DoanhThu', 1_000_000_000)
 
       setRevenueChartData([
         {
@@ -113,9 +114,10 @@ export default function Dashboard() {
 
 
       // --- 2. Consumption Chart Data (Line) ---
-      // FIX: Use consumptionData (SanLuong) instead of revenueData
-      const consCurr = processYearData(selectedYear, consumptionData, 'SanLuong')
-      const consComp = processYearData(comparisonYear, consumptionData, 'SanLuong')
+      // Scale: Can use direct value or scale if needed. User asked for "Tỷ/Triệu" formatting.
+      // 3,000,000 -> 3 (Million). Let's scale to Million (Triệu m3)
+      const consCurr = processYearData(selectedYear, consumptionData, 'SanLuong', 1_000_000)
+      const consComp = processYearData(comparisonYear, consumptionData, 'SanLuong', 1_000_000)
 
       setConsumptionChartData([
         {
@@ -140,6 +142,16 @@ export default function Dashboard() {
 
       // --- 3. Collection Rate Chart Data (Bar) ---
       // (ThucThu / DoanhThu) * 100
+      // Note: Use raw data for calculation to avoid double scaling issues or precision loss, 
+      // but since we scaled both by same factor (if we did), ratio matches.
+      // However, best to recalculate rate from raw or just use the scaled values since ratio is same.
+      // Let's use the processYearData with scale=1 for Rate calculation to be safe.
+
+      const revCurrRaw = processYearData(selectedYear, revenueData, 'DoanhThu', 1)
+      const revCompRaw = processYearData(comparisonYear, revenueData, 'DoanhThu', 1)
+      const colCurrRaw = processYearData(selectedYear, collectionData, 'ThucThu', 1)
+      const colCompRaw = processYearData(comparisonYear, collectionData, 'ThucThu', 1)
+
       const calcRate = (thucThu: number[], doanhThu: number[]) => {
         return thucThu.map((tt, i) => {
           const dt = doanhThu[i]
@@ -147,11 +159,8 @@ export default function Dashboard() {
         })
       }
 
-      const colCurr = processYearData(selectedYear, collectionData, 'ThucThu')
-      const colComp = processYearData(comparisonYear, collectionData, 'ThucThu')
-
-      const rateCurr = calcRate(colCurr, revCurr)
-      const rateComp = calcRate(colComp, revComp)
+      const rateCurr = calcRate(colCurrRaw, revCurrRaw)
+      const rateComp = calcRate(colCompRaw, revCompRaw)
 
       setCollectionRateChartData([
         {
@@ -455,13 +464,13 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* 1. Revenue Comparison Chart (Line) */}
           <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">Doanh thu (VNĐ)</h3>
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Doanh thu (Tỷ VNĐ)</h3>
             <div className="w-full h-[350px]">
               <Plot
                 data={revenueChartData}
                 layout={{
-                  xaxis: { title: 'Kỳ' },
-                  yaxis: { title: 'Doanh thu (VNĐ)', tickformat: ',d' },
+                  xaxis: { title: 'Kỳ', dtick: 1 },
+                  yaxis: { title: 'Doanh thu (Tỷ)', tickformat: '.2f' },
                   legend: { orientation: 'h', y: 1.1 },
                   margin: { t: 20, b: 40, l: 60, r: 20 },
                   height: 350,
@@ -476,13 +485,13 @@ export default function Dashboard() {
 
           {/* 2. Consumption Comparison Chart (Line) */}
           <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">Sản lượng (m³)</h3>
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Sản lượng (Triệu m³)</h3>
             <div className="w-full h-[350px]">
               <Plot
                 data={consumptionChartData}
                 layout={{
-                  xaxis: { title: 'Kỳ' },
-                  yaxis: { title: 'Sản lượng (m³)', tickformat: ',d' },
+                  xaxis: { title: 'Kỳ', dtick: 1 },
+                  yaxis: { title: 'Sản lượng (Triệu m³)', tickformat: '.2f' },
                   legend: { orientation: 'h', y: 1.1 },
                   margin: { t: 20, b: 40, l: 60, r: 20 },
                   height: 350,
