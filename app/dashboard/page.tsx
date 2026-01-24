@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
+import dynamic from 'next/dynamic'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar
 } from 'recharts'
 // @ts-ignore
-import Plot from 'react-plotly.js';
+const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
 import { getDashboardData, getComparisonData } from '@/app/actions/dashboard'
 
 export default function Dashboard() {
