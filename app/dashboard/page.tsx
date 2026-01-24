@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
-import { 
+import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, Bar
 } from 'recharts'
+// @ts-ignore
+import Plot from 'react-plotly.js';
 import { getDashboardData, getComparisonData } from '@/app/actions/dashboard'
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     totalCustomers: 0,
-    activeCustomers: 0, 
+    activeCustomers: 0,
     monthlyConsumption: 0,
     monthlyConsumptionPrev: 0,
     yearlyConsumption: 0,
@@ -28,7 +30,7 @@ export default function Dashboard() {
     yearlyOutstandingGB: 0,
   })
   const [chartData, setChartData] = useState<any[]>([])
-  
+
   // Filters
   const currentYear = new Date().getFullYear()
   const currentMonth = new Date().getMonth() + 1
@@ -44,10 +46,10 @@ export default function Dashboard() {
     try {
       // 1. Fetch KPI Data (Server Action)
       const kpiData = await getDashboardData(selectedMonth, selectedYear, selectedYear)
-      
+
       setStats({
         totalCustomers: Number(kpiData.TongDHN_Current) || 0,
-        activeCustomers: Number(kpiData.TongDHN_Current) || 0, 
+        activeCustomers: Number(kpiData.TongDHN_Current) || 0,
         monthlyConsumption: Number(kpiData.SanLuong_Current) || 0,
         monthlyConsumptionPrev: Number(kpiData.SanLuong_Prev) || 0,
         yearlyConsumption: Number(kpiData.SanLuong_Year) || 0,
@@ -66,13 +68,13 @@ export default function Dashboard() {
       // 2. Fetch Chart Comparison Data (Current Year vs Prev Year)
       const prevYear = selectedYear - 1
       const { revenueData, collectionData } = await getComparisonData(selectedYear, prevYear)
-      
+
       // Process Data for Recharts
       const months = Array.from({ length: 12 }, (_, i) => i + 1)
       const processed = months.map(m => {
         const revCurr = revenueData.find((d: any) => d.Ky == m && d.Nam == selectedYear)
         const colCurr = collectionData.find((d: any) => d.Ky == m && d.Nam == selectedYear)
-        
+
         return {
           name: `T${m}`,
           DoanhThu: Number(revCurr?.DoanhThu) || 0,
@@ -101,7 +103,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
       <Navbar />
-      
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header & Filters */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-10 gap-6">
@@ -109,239 +111,273 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Dashboard</h1>
             <p className="text-gray-500 mt-1">Tổng quan tình hình sản xuất & kinh doanh</p>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
-             <div className="relative group">
-               <span className="absolute -top-2.5 left-3 px-1 bg-white text-xs font-bold text-blue-600 z-10 group-hover:text-blue-700 transition-colors">Tháng</span>
-               <select 
-                 value={selectedMonth}
-                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                 className="block w-36 pl-4 pr-10 py-2.5 text-base font-bold text-gray-800 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-0 sm:text-sm cursor-pointer hover:border-blue-400 transition-colors appearance-none"
-               >
-                 {Array.from({length: 12}, (_, i) => i + 1).map(m => (
-                   <option key={m} value={m}>Tháng {m}</option>
-                 ))}
-               </select>
-               <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-               </div>
-             </div>
-             
-             <div className="relative group">
-               <span className="absolute -top-2.5 left-3 px-1 bg-white text-xs font-bold text-blue-600 z-10 group-hover:text-blue-700 transition-colors">Năm</span>
-               <select
-                 value={selectedYear}
-                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                 className="block w-36 pl-4 pr-10 py-2.5 text-base font-bold text-gray-800 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-0 sm:text-sm cursor-pointer hover:border-blue-400 transition-colors appearance-none"
-               >
-                 {[currentYear, currentYear - 1, currentYear - 2].map(y => (
-                   <option key={y} value={y}>Năm {y}</option>
-                 ))}
-               </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-               </div>
-             </div>
-             
-             <button 
-                onClick={fetchData}
-                className="inline-flex items-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md hover:shadow-lg transform transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-             >
-               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-               Làm mới
-             </button>
+            <div className="relative group">
+              <span className="absolute -top-2.5 left-3 px-1 bg-white text-xs font-bold text-blue-600 z-10 group-hover:text-blue-700 transition-colors">Tháng</span>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                className="block w-36 pl-4 pr-10 py-2.5 text-base font-bold text-gray-800 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-0 sm:text-sm cursor-pointer hover:border-blue-400 transition-colors appearance-none"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                  <option key={m} value={m}>Tháng {m}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+
+            <div className="relative group">
+              <span className="absolute -top-2.5 left-3 px-1 bg-white text-xs font-bold text-blue-600 z-10 group-hover:text-blue-700 transition-colors">Năm</span>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="block w-36 pl-4 pr-10 py-2.5 text-base font-bold text-gray-800 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-600 focus:ring-0 sm:text-sm cursor-pointer hover:border-blue-400 transition-colors appearance-none"
+              >
+                {[currentYear, currentYear - 1, currentYear - 2].map(y => (
+                  <option key={y} value={y}>Năm {y}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+
+            <button
+              onClick={fetchData}
+              className="inline-flex items-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md hover:shadow-lg transform transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              Làm mới
+            </button>
           </div>
         </div>
 
         {/* 1. KHỐI SẢN XUẤT (KPI SẢN LƯỢNG) */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
-             <div className="p-2 bg-blue-100 rounded-lg">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-             </div>
-             <h3 className="text-xl font-bold text-gray-800">Sản Xuất <span className="text-sm font-normal text-gray-500 ml-2">(Tháng {selectedMonth}/{selectedYear})</span></h3>
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800">Sản Xuất <span className="text-sm font-normal text-gray-500 ml-2">(Tháng {selectedMonth}/{selectedYear})</span></h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-             {/* Card: Tổng ĐHN */}
-             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-               <div className="relative z-10">
-                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Tổng ĐHN</p>
-                 <div className="mt-2 flex items-baseline">
-                   <span className="text-3xl font-extrabold text-gray-900">{formatNumber(stats.totalCustomers)}</span>
-                 </div>
-               </div>
-               {/* Icon Background */}
-               <div className="absolute right-0 bottom-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <svg className="w-24 h-24 text-blue-600 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-               </div>
-             </div>
+            {/* Card: Tổng ĐHN */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div className="relative z-10">
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Tổng ĐHN</p>
+                <div className="mt-2 flex items-baseline">
+                  <span className="text-3xl font-extrabold text-gray-900">{formatNumber(stats.totalCustomers)}</span>
+                </div>
+              </div>
+              {/* Icon Background */}
+              <div className="absolute right-0 bottom-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg className="w-24 h-24 text-blue-600 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+              </div>
+            </div>
 
-             {/* Card: Sản lượng Tháng */}
-             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-               <div className="relative z-10">
-                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Sản lượng (Tháng)</p>
-                 <div className="mt-2 flex items-end gap-2">
-                   <span className="text-3xl font-extrabold text-blue-600">{formatNumber(stats.monthlyConsumption)}</span>
-                   <span className="text-sm font-bold text-gray-400 mb-1">m³</span>
-                 </div>
-                 <div className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stats.monthlyConsumption >= stats.monthlyConsumptionPrev ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {stats.monthlyConsumption >= stats.monthlyConsumptionPrev ? '▲' : '▼'} 
-                    <span className="ml-1">{formatNumber(Math.abs(stats.monthlyConsumption - stats.monthlyConsumptionPrev))} m³</span>
-                 </div>
-               </div>
-               <div className="absolute right-0 bottom-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <svg className="w-24 h-24 text-blue-600 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
-               </div>
-             </div>
+            {/* Card: Sản lượng Tháng */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div className="relative z-10">
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Sản lượng (Tháng)</p>
+                <div className="mt-2 flex items-end gap-2">
+                  <span className="text-3xl font-extrabold text-blue-600">{formatNumber(stats.monthlyConsumption)}</span>
+                  <span className="text-sm font-bold text-gray-400 mb-1">m³</span>
+                </div>
+                <div className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stats.monthlyConsumption >= stats.monthlyConsumptionPrev ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {stats.monthlyConsumption >= stats.monthlyConsumptionPrev ? '▲' : '▼'}
+                  <span className="ml-1">{formatNumber(Math.abs(stats.monthlyConsumption - stats.monthlyConsumptionPrev))} m³</span>
+                </div>
+              </div>
+              <div className="absolute right-0 bottom-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg className="w-24 h-24 text-blue-600 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+              </div>
+            </div>
 
-             {/* Card: Sản lượng Năm */}
-             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-               <div className="relative z-10">
-                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Sản lượng (Năm {selectedYear})</p>
-                 <div className="mt-2 flex items-end gap-2">
-                   <span className="text-3xl font-extrabold text-indigo-600">{formatNumber(stats.yearlyConsumption)}</span>
-                   <span className="text-sm font-bold text-gray-400 mb-1">m³</span>
-                 </div>
-                 {stats.yearlyConsumptionPrev > 0 && (
-                   <div className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stats.yearlyConsumption >= stats.yearlyConsumptionPrev ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                     {stats.yearlyConsumption >= stats.yearlyConsumptionPrev ? '▲' : '▼'} 
-                     <span className="ml-1">{formatNumber(Math.abs(stats.yearlyConsumption - stats.yearlyConsumptionPrev))} m³</span>
-                   </div>
-                 )}
-               </div>
-               <div className="absolute right-0 bottom-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <svg className="w-24 h-24 text-indigo-600 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-               </div>
-             </div>
+            {/* Card: Sản lượng Năm */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div className="relative z-10">
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Sản lượng (Năm {selectedYear})</p>
+                <div className="mt-2 flex items-end gap-2">
+                  <span className="text-3xl font-extrabold text-indigo-600">{formatNumber(stats.yearlyConsumption)}</span>
+                  <span className="text-sm font-bold text-gray-400 mb-1">m³</span>
+                </div>
+                {stats.yearlyConsumptionPrev > 0 && (
+                  <div className={`mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stats.yearlyConsumption >= stats.yearlyConsumptionPrev ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {stats.yearlyConsumption >= stats.yearlyConsumptionPrev ? '▲' : '▼'}
+                    <span className="ml-1">{formatNumber(Math.abs(stats.yearlyConsumption - stats.yearlyConsumptionPrev))} m³</span>
+                  </div>
+                )}
+              </div>
+              <div className="absolute right-0 bottom-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg className="w-24 h-24 text-indigo-600 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              </div>
+            </div>
 
-             {/* Card: ĐHN = 0 */}
-             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden group">
-               <div className="relative z-10">
-                 <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">ĐHN 0 m³</p>
-                 <div className="mt-2">
-                   <span className="text-3xl font-extrabold text-orange-500">{formatNumber(stats.zeroConsumptionCount)}</span>
-                 </div>
-                 <p className="mt-1 text-xs text-orange-400 font-medium">Cần kiểm tra lại</p>
-               </div>
-               <div className="absolute right-0 bottom-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <svg className="w-24 h-24 text-orange-500 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-               </div>
-             </div>
+            {/* Card: ĐHN = 0 */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative overflow-hidden group">
+              <div className="relative z-10">
+                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">ĐHN 0 m³</p>
+                <div className="mt-2">
+                  <span className="text-3xl font-extrabold text-orange-500">{formatNumber(stats.zeroConsumptionCount)}</span>
+                </div>
+                <p className="mt-1 text-xs text-orange-400 font-medium">Cần kiểm tra lại</p>
+              </div>
+              <div className="absolute right-0 bottom-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg className="w-24 h-24 text-orange-500 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* 2. KHỐI KINH DOANH (KPI DOANH THU) */}
         <section>
           <div className="flex items-center gap-2 mb-4">
-             <div className="p-2 bg-green-100 rounded-lg">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-             </div>
-             <h3 className="text-xl font-bold text-gray-800">Kinh Doanh <span className="text-sm font-normal text-gray-500 ml-2">(Năm {selectedYear})</span></h3>
+            <div className="p-2 bg-green-100 rounded-lg">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800">Kinh Doanh <span className="text-sm font-normal text-gray-500 ml-2">(Năm {selectedYear})</span></h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-             {/* Doanh thu */}
-             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between relative overflow-hidden group">
-               <div className="relative z-10">
-                  <dt className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Doanh thu</dt>
-                  <dd className="mt-2 flex items-center gap-2 flex-wrap">
-                      <span className="text-2xl font-extrabold text-green-600">
-                          {formatCurrency(stats.yearlyRevenue)}
-                      </span>
-                  </dd>
-                  {stats.yearlyRevenuePrev > 0 && (
-                    <div className={`mt-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${stats.yearlyRevenue >= stats.yearlyRevenuePrev ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {stats.yearlyRevenue >= stats.yearlyRevenuePrev ? '▲' : '▼'}
-                        <span className="ml-1">{formatCurrency(Math.abs(stats.yearlyRevenue - stats.yearlyRevenuePrev))}</span>
-                    </div>
-                  )}
-               </div>
-               <div className="mt-5 pt-4 border-t border-gray-100 relative z-10">
-                 <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg">
-                    <span className="text-xs font-semibold text-gray-500">Tiền nước</span>
-                    <span className="text-sm font-bold text-green-700">{formatCurrency(stats.yearlyRevenueGB)}</span>
-                 </div>
-               </div>
-               <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <svg className="w-32 h-32 text-green-600 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-               </div>
-             </div>
-
-             {/* Thực thu */}
-             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between relative overflow-hidden group">
-               <div className="relative z-10">
-                  <dt className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Thực thu</dt>
-                  <dd className="mt-2 text-2xl font-extrabold text-green-600">
-                      {formatCurrency(stats.yearlyCollected)}
-                  </dd>
-               </div>
-               <div className="mt-5 pt-4 border-t border-gray-100 relative z-10">
-                 <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg">
-                    <span className="text-xs font-semibold text-gray-500">Tiền nước</span>
-                    <span className="text-sm font-bold text-green-700">{formatCurrency(stats.yearlyCollectedGB)}</span>
-                 </div>
-               </div>
-               <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <svg className="w-32 h-32 text-green-600 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-               </div>
-             </div>
-
-             {/* Tồn thu */}
-             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between relative overflow-hidden group">
-               <div className="relative z-10">
-                  <dt className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Tồn thu</dt>
-                  <dd className="mt-2 text-2xl font-extrabold text-red-500">
-                      {formatCurrency(stats.yearlyOutstanding)}
-                  </dd>
-               </div>
-               <div className="mt-5 pt-4 border-t border-gray-100 relative z-10">
-                 <div className="flex justify-between items-center bg-red-50 p-2 rounded-lg">
-                    <span className="text-xs font-semibold text-red-500">Tiền nước</span>
-                    <span className="text-sm font-bold text-red-600">{formatCurrency(stats.yearlyOutstandingGB)}</span>
-                 </div>
-               </div>
-               <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                   <svg className="w-32 h-32 text-red-500 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-               </div>
-             </div>
-
-             {/* % Đạt */}
-             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between relative overflow-hidden group">
-               <div className="relative z-10 w-full">
-                  <dt className="text-sm font-semibold text-gray-500 uppercase tracking-wider">% Hoàn thành (Thu tiền)</dt>
-                  
-                  {/* Progress Tổng */}
-                  <div className="mt-4">
-                    <div className="flex justify-between items-end mb-1">
-                        <span className="text-xs font-bold text-blue-800">Tổng doanh thu</span>
-                        <span className="text-xl font-bold text-blue-600">
-                         {stats.yearlyRevenue > 0 ? ((stats.yearlyCollected / stats.yearlyRevenue) * 100).toFixed(2) : 0}%
-                        </span>
-                    </div>
-                    <div className="w-full bg-blue-100 rounded-full h-2">
-                        <div className="bg-blue-600 h-2 rounded-full transition-all duration-500" style={{ width: `${stats.yearlyRevenue > 0 ? Math.min((stats.yearlyCollected / stats.yearlyRevenue) * 100, 100) : 0}%` }}></div>
-                    </div>
+            {/* Doanh thu */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between relative overflow-hidden group">
+              <div className="relative z-10">
+                <dt className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Doanh thu</dt>
+                <dd className="mt-2 flex items-center gap-2 flex-wrap">
+                  <span className="text-2xl font-extrabold text-green-600">
+                    {formatCurrency(stats.yearlyRevenue)}
+                  </span>
+                </dd>
+                {stats.yearlyRevenuePrev > 0 && (
+                  <div className={`mt-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold ${stats.yearlyRevenue >= stats.yearlyRevenuePrev ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {stats.yearlyRevenue >= stats.yearlyRevenuePrev ? '▲' : '▼'}
+                    <span className="ml-1">{formatCurrency(Math.abs(stats.yearlyRevenue - stats.yearlyRevenuePrev))}</span>
                   </div>
+                )}
+              </div>
+              <div className="mt-5 pt-4 border-t border-gray-100 relative z-10">
+                <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg">
+                  <span className="text-xs font-semibold text-gray-500">Tiền nước</span>
+                  <span className="text-sm font-bold text-green-700">{formatCurrency(stats.yearlyRevenueGB)}</span>
+                </div>
+              </div>
+              <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <svg className="w-32 h-32 text-green-600 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+            </div>
 
-                  {/* Progress Tiền nước */}
-                  <div className="mt-4">
-                     <div className="flex justify-between items-end mb-1">
-                        <span className="text-xs font-bold text-cyan-800">Tiền nước</span>
-                        <span className="text-lg font-bold text-cyan-600">
-                           {stats.yearlyRevenueGB > 0 ? ((stats.yearlyCollectedGB / stats.yearlyRevenueGB) * 100).toFixed(2) : 0}%
-                        </span>
-                     </div>
-                     <div className="w-full bg-cyan-100 rounded-full h-2">
-                        <div className="bg-cyan-500 h-2 rounded-full transition-all duration-500" style={{ width: `${stats.yearlyRevenueGB > 0 ? Math.min((stats.yearlyCollectedGB / stats.yearlyRevenueGB) * 100, 100) : 0}%` }}></div>
-                     </div>
+            {/* Thực thu */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between relative overflow-hidden group">
+              <div className="relative z-10">
+                <dt className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Thực thu</dt>
+                <dd className="mt-2 text-2xl font-extrabold text-green-600">
+                  {formatCurrency(stats.yearlyCollected)}
+                </dd>
+              </div>
+              <div className="mt-5 pt-4 border-t border-gray-100 relative z-10">
+                <div className="flex justify-between items-center bg-gray-50 p-2 rounded-lg">
+                  <span className="text-xs font-semibold text-gray-500">Tiền nước</span>
+                  <span className="text-sm font-bold text-green-700">{formatCurrency(stats.yearlyCollectedGB)}</span>
+                </div>
+              </div>
+              <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <svg className="w-32 h-32 text-green-600 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+            </div>
+
+            {/* Tồn thu */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between relative overflow-hidden group">
+              <div className="relative z-10">
+                <dt className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Tồn thu</dt>
+                <dd className="mt-2 text-2xl font-extrabold text-red-500">
+                  {formatCurrency(stats.yearlyOutstanding)}
+                </dd>
+              </div>
+              <div className="mt-5 pt-4 border-t border-gray-100 relative z-10">
+                <div className="flex justify-between items-center bg-red-50 p-2 rounded-lg">
+                  <span className="text-xs font-semibold text-red-500">Tiền nước</span>
+                  <span className="text-sm font-bold text-red-600">{formatCurrency(stats.yearlyOutstandingGB)}</span>
+                </div>
+              </div>
+              <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <svg className="w-32 h-32 text-red-500 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+            </div>
+
+            {/* % Đạt */}
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col justify-between relative overflow-hidden group">
+              <div className="relative z-10 w-full">
+                <dt className="text-sm font-semibold text-gray-500 uppercase tracking-wider">% Hoàn thành (Thu tiền)</dt>
+
+                {/* Progress Tổng */}
+                <div className="mt-4">
+                  <div className="flex justify-between items-end mb-1">
+                    <span className="text-xs font-bold text-blue-800">Tổng doanh thu</span>
+                    <span className="text-xl font-bold text-blue-600">
+                      {stats.yearlyRevenue > 0 ? ((stats.yearlyCollected / stats.yearlyRevenue) * 100).toFixed(2) : 0}%
+                    </span>
                   </div>
-               </div>
-               <div className="absolute right-0 bottom-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <svg className="w-32 h-32 text-blue-600 transform translate-x-6 translate-y-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-               </div>
-             </div>
+                  <div className="w-full bg-blue-100 rounded-full h-2">
+                    <div className="bg-blue-600 h-2 rounded-full transition-all duration-500" style={{ width: `${stats.yearlyRevenue > 0 ? Math.min((stats.yearlyCollected / stats.yearlyRevenue) * 100, 100) : 0}%` }}></div>
+                  </div>
+                </div>
+
+                {/* Progress Tiền nước */}
+                <div className="mt-4">
+                  <div className="flex justify-between items-end mb-1">
+                    <span className="text-xs font-bold text-cyan-800">Tiền nước</span>
+                    <span className="text-lg font-bold text-cyan-600">
+                      {stats.yearlyRevenueGB > 0 ? ((stats.yearlyCollectedGB / stats.yearlyRevenueGB) * 100).toFixed(2) : 0}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-cyan-100 rounded-full h-2">
+                    <div className="bg-cyan-500 h-2 rounded-full transition-all duration-500" style={{ width: `${stats.yearlyRevenueGB > 0 ? Math.min((stats.yearlyCollectedGB / stats.yearlyRevenueGB) * 100, 100) : 0}%` }}></div>
+                  </div>
+                </div>
+              </div>
+              <div className="absolute right-0 bottom-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <svg className="w-32 h-32 text-blue-600 transform translate-x-6 translate-y-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+              </div>
+            </div>
           </div>
+        </section>
+
+        {/* 3. Production Volume Comparison Chart */}
+        <section>
+          <h3 className="text-xl font-bold mb-4">Sản lượng (m³) - So sánh năm</h3>
+          <Plot
+            data={[
+              {
+                x: chartData.map(d => d.name),
+                y: chartData.map(d => d.DoanhThu),
+                type: 'bar',
+                name: `${selectedYear}`,
+                marker: { color: '#3b82f6' },
+              },
+              {
+                x: chartData.map(d => d.name),
+                y: chartData.map(d => d.ThucThu),
+                type: 'bar',
+                name: `${selectedYear - 1}`,
+                marker: { color: '#ef4444' },
+              },
+            ]}
+            layout={{
+              barmode: 'group',
+              xaxis: { title: 'Tháng' },
+              yaxis: { title: 'Sản lượng (m³)', tickformat: ',d' },
+              legend: { orientation: 'h' },
+              margin: { t: 20, b: 40, l: 40, r: 20 },
+              height: 300,
+              responsive: true,
+            }}
+            config={{ displayModeBar: false }}
+            style={{ width: '100%' }}
+          />
         </section>
 
       </main>
