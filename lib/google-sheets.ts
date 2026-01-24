@@ -48,14 +48,17 @@ async function getSheetsClient() {
   // Handle private key newlines
   const privateKey = googleSheetsConfig.privateKey.replace(/\\n/g, '\n')
 
-  const auth = new google.auth.JWT(
-    googleSheetsConfig.serviceAccountEmail,
-    undefined,
-    privateKey,
-    ['https://www.googleapis.com/auth/spreadsheets.readonly']
-  )
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: googleSheetsConfig.serviceAccountEmail,
+      private_key: privateKey,
+    },
+    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+  })
 
-  return google.sheets({ version: 'v4', auth })
+  const client = await auth.getClient()
+
+  return google.sheets({ version: 'v4', auth: client as any })
 }
 
 /**
@@ -87,7 +90,7 @@ export async function getAssignedCustomers(): Promise<AssignedCustomer[]> {
         const key = normalizeHeader(header)
         item[key] = row[index] || ''
       })
-      
+
       // Auto-map common fields
       return {
         ID: item['id'] || '',
@@ -136,9 +139,9 @@ export async function getWaterLockStatus(): Promise<WaterLockStatus[]> {
     const data = rows.slice(1)
 
     return data.map((row) => {
-       const item: any = {}
+      const item: any = {}
       headers.forEach((header, index) => {
-         const key = normalizeHeader(header)
+        const key = normalizeHeader(header)
         item[key] = row[index] || ''
       })
 
