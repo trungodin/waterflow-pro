@@ -4,6 +4,11 @@
  * Environment Variables Validation
  * Validates and exports typed environment configuration
  */
+console.log('Loading Env Config:', {
+  hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+  hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  hasSoapUrl: !!process.env.SOAP_API_URL
+})
 
 // Supabase Configuration
 export const supabaseConfig = {

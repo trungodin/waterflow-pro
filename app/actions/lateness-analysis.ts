@@ -28,9 +28,14 @@ export async function runLatenessAnalysis(
 
     // Demo Mode check
     if (isDemoMode) {
+        const debugInfo = [
+            !process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Missing URL' : '',
+            !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Missing Key' : ''
+        ].filter(Boolean).join(', ')
+
         return {
             inputs: rawInputs,
-            error: 'Chức năng này không khả dụng ở chế độ Demo (thiếu kết nối Database).',
+            error: `Chức năng này không khả dụng ở chế độ Demo (thiếu kết nối Database). Debug: ${debugInfo}`,
             lastUpdated: Date.now()
         }
     }
