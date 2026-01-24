@@ -43,6 +43,7 @@ declare module 'react-plotly.js' {
         onAfterUnhover?: (event: any) => void;
         onLayout?: (event: any) => void;
         onResize?: (event: any) => void;
+        useResizeHandler?: boolean;
         // ... other Plotly.js event handlers as needed
     }
     const Plot: React.FC<PlotProps>;

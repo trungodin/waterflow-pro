@@ -37,10 +37,14 @@ export default function Dashboard() {
   const currentMonth = new Date().getMonth() + 1
   const [selectedYear, setSelectedYear] = useState(currentYear)
   const [selectedMonth, setSelectedMonth] = useState(currentMonth)
+  const [comparisonYear, setComparisonYear] = useState(currentYear - 1)
+  const [revenueChartData, setRevenueChartData] = useState<any[]>([])
+  const [consumptionChartData, setConsumptionChartData] = useState<any[]>([])
+  const [collectionRateChartData, setCollectionRateChartData] = useState<any[]>([])
 
   useEffect(() => {
     fetchData()
-  }, [selectedYear, selectedMonth])
+  }, [selectedYear, selectedMonth, comparisonYear])
 
   const fetchData = async () => {
     setLoading(true)
@@ -66,25 +70,109 @@ export default function Dashboard() {
         yearlyOutstandingGB: (Number(kpiData.DoanhThu_GB) || 0) - (Number(kpiData.ThucThu_GB) || 0)
       })
 
-      // 2. Fetch Chart Comparison Data (Current Year vs Prev Year)
-      const prevYear = selectedYear - 1
-      const { revenueData, collectionData } = await getComparisonData(selectedYear, prevYear)
+      // 2. Fetch Chart Comparison Data (Current Year vs Comparison Year)
+      const { revenueData, collectionData, consumptionData } = await getComparisonData(selectedYear, comparisonYear)
 
-      // Process Data for Recharts
+      // Helper to process data for a specific year
+      const processYearData = (year: number, data: any[], valueKey: string) => {
+        const result = Array(12).fill(0)
+        data.filter((d: any) => d.Nam === year).forEach((d: any) => {
+          if (d.Ky >= 1 && d.Ky <= 12) {
+            result[d.Ky - 1] = Number(d[valueKey]) || 0
+          }
+        })
+        return result
+      }
+
       const months = Array.from({ length: 12 }, (_, i) => i + 1)
-      const processed = months.map(m => {
-        const revCurr = revenueData.find((d: any) => d.Ky == m && d.Nam == selectedYear)
-        const colCurr = collectionData.find((d: any) => d.Ky == m && d.Nam == selectedYear)
 
-        return {
-          name: `T${m}`,
-          DoanhThu: Number(revCurr?.DoanhThu) || 0,
-          ThucThu: Number(colCurr?.ThucThu) || 0,
-          TonThu: (Number(revCurr?.DoanhThu) || 0) - (Number(colCurr?.ThucThu) || 0)
+      // --- 1. Revenue Chart Data (Line) ---
+      const revCurr = processYearData(selectedYear, revenueData, 'DoanhThu')
+      const revComp = processYearData(comparisonYear, revenueData, 'DoanhThu')
+
+      setRevenueChartData([
+        {
+          x: months,
+          y: revComp,
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: `${comparisonYear}`,
+          line: { color: '#3b82f6', width: 3 }, // Blue
+          marker: { size: 6 }
+        },
+        {
+          x: months,
+          y: revCurr,
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: `${selectedYear}`,
+          line: { color: '#ef4444', width: 3 }, // Red
+          marker: { size: 6 }
         }
-      })
+      ])
 
-      setChartData(processed)
+
+      // --- 2. Consumption Chart Data (Line) ---
+      // FIX: Use consumptionData (SanLuong) instead of revenueData
+      const consCurr = processYearData(selectedYear, consumptionData, 'SanLuong')
+      const consComp = processYearData(comparisonYear, consumptionData, 'SanLuong')
+
+      setConsumptionChartData([
+        {
+          x: months,
+          y: consComp,
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: `${comparisonYear}`,
+          line: { color: '#06b6d4', width: 3 }, // Cyan
+          marker: { size: 6 }
+        },
+        {
+          x: months,
+          y: consCurr,
+          type: 'scatter',
+          mode: 'lines+markers',
+          name: `${selectedYear}`,
+          line: { color: '#f97316', width: 3 }, // Orange
+          marker: { size: 6 }
+        }
+      ])
+
+      // --- 3. Collection Rate Chart Data (Bar) ---
+      // (ThucThu / DoanhThu) * 100
+      const calcRate = (thucThu: number[], doanhThu: number[]) => {
+        return thucThu.map((tt, i) => {
+          const dt = doanhThu[i]
+          return dt > 0 ? (tt / dt) * 100 : 0
+        })
+      }
+
+      const colCurr = processYearData(selectedYear, collectionData, 'ThucThu')
+      const colComp = processYearData(comparisonYear, collectionData, 'ThucThu')
+
+      const rateCurr = calcRate(colCurr, revCurr)
+      const rateComp = calcRate(colComp, revComp)
+
+      setCollectionRateChartData([
+        {
+          x: months,
+          y: rateComp,
+          type: 'bar',
+          name: `${comparisonYear}`,
+          marker: { color: '#3b82f6' },
+          text: rateComp.map(v => v.toFixed(1) + '%'),
+          textposition: 'auto'
+        },
+        {
+          x: months,
+          y: rateCurr,
+          type: 'bar',
+          name: `${selectedYear}`,
+          marker: { color: '#ef4444' },
+          text: rateCurr.map(v => v.toFixed(1) + '%'),
+          textposition: 'auto'
+        }
+      ])
 
     } catch (error) {
       console.error('Error loading dashboard:', error)
@@ -139,6 +227,22 @@ export default function Dashboard() {
               >
                 {[currentYear, currentYear - 1, currentYear - 2].map(y => (
                   <option key={y} value={y}>Năm {y}</option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+
+            <div className="relative group">
+              <span className="absolute -top-2.5 left-3 px-1 bg-white text-xs font-bold text-gray-500 z-10">So sánh với</span>
+              <select
+                value={comparisonYear}
+                onChange={(e) => setComparisonYear(Number(e.target.value))}
+                className="block w-36 pl-4 pr-10 py-2.5 text-base font-bold text-gray-500 bg-white border-2 border-gray-200 rounded-lg focus:outline-none focus:border-gray-400 focus:ring-0 sm:text-sm cursor-pointer hover:border-gray-400 transition-colors appearance-none"
+              >
+                {[currentYear, currentYear - 1, currentYear - 2].map(y => (
+                  <option key={y} value={y}>{y}</option>
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500">
@@ -347,38 +451,71 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* 3. Production Volume Comparison Chart */}
-        <section>
-          <h3 className="text-xl font-bold mb-4">Sản lượng (m³) - So sánh năm</h3>
-          <Plot
-            data={[
-              {
-                x: chartData.map(d => d.name),
-                y: chartData.map(d => d.DoanhThu),
-                type: 'bar',
-                name: `${selectedYear}`,
-                marker: { color: '#3b82f6' },
-              },
-              {
-                x: chartData.map(d => d.name),
-                y: chartData.map(d => d.ThucThu),
-                type: 'bar',
-                name: `${selectedYear - 1}`,
-                marker: { color: '#ef4444' },
-              },
-            ]}
-            layout={{
-              barmode: 'group',
-              xaxis: { title: 'Tháng' },
-              yaxis: { title: 'Sản lượng (m³)', tickformat: ',d' },
-              legend: { orientation: 'h' },
-              margin: { t: 20, b: 40, l: 40, r: 20 },
-              height: 300,
-              responsive: true,
-            }}
-            config={{ displayModeBar: false }}
-            style={{ width: '100%' }}
-          />
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* 1. Revenue Comparison Chart (Line) */}
+          <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Doanh thu (VNĐ)</h3>
+            <div className="w-full h-[350px]">
+              <Plot
+                data={revenueChartData}
+                layout={{
+                  xaxis: { title: 'Kỳ' },
+                  yaxis: { title: 'Doanh thu (VNĐ)', tickformat: ',d' },
+                  legend: { orientation: 'h', y: 1.1 },
+                  margin: { t: 20, b: 40, l: 60, r: 20 },
+                  height: 350,
+                  autosize: true,
+                }}
+                config={{ displayModeBar: false, responsive: true }}
+                style={{ width: '100%', height: '100%' }}
+                useResizeHandler={true}
+              />
+            </div>
+          </section>
+
+          {/* 2. Consumption Comparison Chart (Line) */}
+          <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="text-xl font-bold mb-4 text-gray-800">Sản lượng (m³)</h3>
+            <div className="w-full h-[350px]">
+              <Plot
+                data={consumptionChartData}
+                layout={{
+                  xaxis: { title: 'Kỳ' },
+                  yaxis: { title: 'Sản lượng (m³)', tickformat: ',d' },
+                  legend: { orientation: 'h', y: 1.1 },
+                  margin: { t: 20, b: 40, l: 60, r: 20 },
+                  height: 350,
+                  autosize: true,
+                }}
+                config={{ displayModeBar: false, responsive: true }}
+                style={{ width: '100%', height: '100%' }}
+                useResizeHandler={true}
+              />
+            </div>
+          </section>
+        </div>
+
+        {/* 3. Collection Rate Comparison Chart (Bar) */}
+        <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+          <h3 className="text-xl font-bold mb-4 text-gray-800">Tỷ lệ thực thu (%)</h3>
+          <div className="w-full h-[350px]">
+            <Plot
+              data={collectionRateChartData}
+              layout={{
+                barmode: 'group',
+                xaxis: { title: 'Kỳ', dtick: 1 },
+                yaxis: { title: 'Tỷ lệ (%)', tickformat: '.1f', range: [0, 105] },
+                legend: { orientation: 'h', y: 1.1 },
+                margin: { t: 20, b: 40, l: 60, r: 20 },
+                height: 350,
+                autosize: true,
+              }}
+              config={{ displayModeBar: false, responsive: true }}
+              style={{ width: '100%', height: '100%' }}
+              useResizeHandler={true}
+            />
+          </div>
         </section>
 
       </main>
