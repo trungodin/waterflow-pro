@@ -10,13 +10,14 @@ import VirtualDMNTable from '@/components/VirtualDMNTable'
 import LocDuLieuTon from '@/components/LocDuLieuTon'
 import ThongKeDongMoNuoc from '@/components/ThongKeDongMoNuoc'
 import { getOnOffData } from '@/lib/googlesheets'
+import LatenessAnalysisMain from '@/components/lateness-analysis/LatenessAnalysisMain'
 
 // Format currency
 const formatCurrency = (val: string | number) => {
-    if (!val) return '0'
-    const num = typeof val === 'string' ? parseFloat(val.replace(/[.,]/g, '')) : val
-    if (isNaN(num)) return val
-    return new Intl.NumberFormat('vi-VN').format(num)
+  if (!val) return '0'
+  const num = typeof val === 'string' ? parseFloat(val.replace(/[.,]/g, '')) : val
+  if (isNaN(num)) return val
+  return new Intl.NumberFormat('vi-VN').format(num)
 }
 
 export default function PaymentsPage() {
@@ -75,7 +76,7 @@ export default function PaymentsPage() {
     const filtered = dmnData.filter(item => {
       // Support combined search: "156 hai" -> matches "156" (SoNha) + "HAI BA TRUNG" (Duong)
       const fullAddress = `${item.SoNha} ${item.Duong}`.toLowerCase()
-      
+
       return (
         (item.DanhBa && item.DanhBa.toLowerCase().includes(lowerTerm)) ||
         (item.TenKH && item.TenKH.toLowerCase().includes(lowerTerm)) ||
@@ -92,7 +93,7 @@ export default function PaymentsPage() {
     // Normalizing date for grouping (take first part if contains space)
     let dateKey = item.NgayKhoa || 'Chưa xác định'
     if (dateKey.includes(' ')) dateKey = dateKey.split(' ')[0]
-    
+
     if (!acc[dateKey]) acc[dateKey] = []
     acc[dateKey].push(item)
     return acc
@@ -100,25 +101,25 @@ export default function PaymentsPage() {
 
   // Sort dates desc
   const sortedDates = Object.keys(groupedData).sort((a, b) => {
-     const parseDate = (d: string) => {
-         if (d === 'Chưa xác định') return 0
-         const parts = d.split('/')
-         if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime()
-         return 0
-     }
-     return parseDate(b) - parseDate(a)
+    const parseDate = (d: string) => {
+      if (d === 'Chưa xác định') return 0
+      const parts = d.split('/')
+      if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime()
+      return 0
+    }
+    return parseDate(b) - parseDate(a)
   })
 
   // Calculate total debt for filtered list
   const totalDebtFiltered = filteredDmnData.reduce((sum, item) => {
-      const val = parseFloat(String(item.TongNo).replace(/[.,]/g, ''))
-      return sum + (isNaN(val) ? 0 : val)
+    const val = parseFloat(String(item.TongNo).replace(/[.,]/g, ''))
+    return sum + (isNaN(val) ? 0 : val)
   }, 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <main className="w-full px-4 sm:px-6 lg:px-8 py-24">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">💳 Thu Tiền</h1>
@@ -127,41 +128,38 @@ export default function PaymentsPage() {
 
         {/* Main Tab Navigation */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 mb-6 inline-flex flex-wrap gap-2">
-            <button
+          <button
             onClick={() => setActiveTab('doanh_thu')}
-            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-                activeTab === 'doanh_thu'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-            >
+            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'doanh_thu'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
+          >
             💰 Doanh Thu
-            </button>
-            <button
+          </button>
+          <button
             onClick={() => setActiveTab('dong_mo_nuoc')}
-            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-                activeTab === 'dong_mo_nuoc'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-            >
+            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'dong_mo_nuoc'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
+          >
             💧 Đóng Mở Nước
-            </button>
-            <button
+          </button>
+          <button
             onClick={() => setActiveTab('tra_cuu_dmn')}
-            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${
-                activeTab === 'tra_cuu_dmn'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-            >
+            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'tra_cuu_dmn'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-gray-600 hover:bg-gray-100'
+              }`}
+          >
             🔍 Tra Cứu ĐMN
-            </button>
+          </button>
         </div>
 
         {/* Content Area */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[500px] p-6">
-          
+
 
 
           {/* TAB: DOANH THU */}
@@ -177,29 +175,28 @@ export default function PaymentsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setSubTabDoanhThu(tab.id)}
-                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      subTabDoanhThu === tab.id
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors ${subTabDoanhThu === tab.id
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     {tab.label}
                   </button>
                 ))}
               </div>
-              
+
               {subTabDoanhThu === 'phan_tich_doanh_thu' ? (
-                  <RevenueAnalysis />
+                <RevenueAnalysis />
               ) : subTabDoanhThu === 'phan_tich_thu_ho' ? (
-                  <AgentCollectionAnalysis />
+                <AgentCollectionAnalysis />
               ) : subTabDoanhThu === 'tong_hop_thu_ho' ? (
-                  <CollectionSummaryAnalysis />
+                <CollectionSummaryAnalysis />
               ) : subTabDoanhThu === 'thong_ke_nhom' ? (
-                  <GroupStatisticsAnalysis />
+                <GroupStatisticsAnalysis />
               ) : (
-                  <div className="p-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                    <p className="text-xl">Chức năng <b>{subTabDoanhThu}</b> đang được phát triển.</p>
-                  </div>
+                <div className="p-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                  <p className="text-xl">Chức năng <b>{subTabDoanhThu}</b> đang được phát triển.</p>
+                </div>
               )}
             </div>
           )}
@@ -218,29 +215,30 @@ export default function PaymentsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setSubTabDMN(tab.id)}
-                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      subTabDMN === tab.id
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
+                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors ${subTabDMN === tab.id
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      }`}
                   >
                     {tab.label}
                   </button>
                 ))}
               </div>
-              
+
               {subTabDMN === 'loc_du_lieu_ton' ? (
-                  <div className="h-full">
-                     <LocDuLieuTon formatCurrency={formatCurrency} />
-                  </div>
+                <div className="h-full">
+                  <LocDuLieuTon formatCurrency={formatCurrency} />
+                </div>
               ) : subTabDMN === 'thong_ke_dmn' ? (
-                  <div className="h-full">
-                     <ThongKeDongMoNuoc formatCurrency={formatCurrency} />
-                  </div>
+                <div className="h-full">
+                  <ThongKeDongMoNuoc formatCurrency={formatCurrency} />
+                </div>
+              ) : subTabDMN === 'phan_tich_thanh_toan' ? (
+                <LatenessAnalysisMain />
               ) : (
-                  <div className="p-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-                    <p className="text-xl">Chức năng <b>{subTabDMN}</b> đang được phát triển.</p>
-                  </div>
+                <div className="p-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                  <p className="text-xl">Chức năng <b>{subTabDMN}</b> đang được phát triển.</p>
+                </div>
               )}
             </div>
           )}
@@ -249,63 +247,63 @@ export default function PaymentsPage() {
           {activeTab === 'tra_cuu_dmn' && (
             <div>
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                 <div className="w-full md:w-2/3 flex gap-2">
-                    <div className="relative w-full">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span className="text-gray-500">🔍</span>
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Tìm kiếm danh bạ, tên, địa chỉ..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 font-medium"
-                        />
-                         {searchTerm && (
-                            <button 
-                                onClick={() => setSearchTerm('')}
-                                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                            >
-                                ✕
-                            </button>
-                        )}
+                <div className="w-full md:w-2/3 flex gap-2">
+                  <div className="relative w-full">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-gray-500">🔍</span>
                     </div>
-                    <button
-                        onClick={fetchData}
-                        disabled={loading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium whitespace-nowrap disabled:opacity-70 flex items-center gap-2"
-                    >
-                        {loading ? 'Đang tải...' : '🔄 Làm mới'}
-                    </button>
-                 </div>
-                 <div className="text-sm text-gray-500 text-right">
-                    {lastRefreshed && <span>Cập nhật: {lastRefreshed.toLocaleTimeString()}</span>}
-                 </div>
+                    <input
+                      type="text"
+                      placeholder="Tìm kiếm danh bạ, tên, địa chỉ..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 font-medium"
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm('')}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    onClick={fetchData}
+                    disabled={loading}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium whitespace-nowrap disabled:opacity-70 flex items-center gap-2"
+                  >
+                    {loading ? 'Đang tải...' : '🔄 Làm mới'}
+                  </button>
+                </div>
+                <div className="text-sm text-gray-500 text-right">
+                  {lastRefreshed && <span>Cập nhật: {lastRefreshed.toLocaleTimeString()}</span>}
+                </div>
               </div>
-              
+
               {/* Summary Stats */}
               {filteredDmnData.length > 0 && (
-                 <div className="mb-4 bg-blue-50 p-3 rounded-lg flex flex-wrap gap-6 text-sm border border-blue-100">
-                    <div className="text-blue-800">
-                        <span className="font-semibold">Tổng số:</span> {filteredDmnData.length} KH
-                    </div>
-                    <div className="text-blue-800">
-                        <span className="font-semibold">Tổng nợ:</span> {new Intl.NumberFormat('vi-VN').format(totalDebtFiltered)} VNĐ
-                    </div>
-                 </div>
+                <div className="mb-4 bg-blue-50 p-3 rounded-lg flex flex-wrap gap-6 text-sm border border-blue-100">
+                  <div className="text-blue-800">
+                    <span className="font-semibold">Tổng số:</span> {filteredDmnData.length} KH
+                  </div>
+                  <div className="text-blue-800">
+                    <span className="font-semibold">Tổng nợ:</span> {new Intl.NumberFormat('vi-VN').format(totalDebtFiltered)} VNĐ
+                  </div>
+                </div>
               )}
 
               {/* Data Table */}
               {loading ? (
                 <div className="flex flex-col items-center justify-center p-12 border border-gray-200 rounded-lg bg-gray-50">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
-                    <p className="text-gray-500">Đang tải dữ liệu...</p>
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+                  <p className="text-gray-500">Đang tải dữ liệu...</p>
                 </div>
               ) : (
-                <VirtualDMNTable 
-                  data={filteredDmnData} 
-                  searchTerm={searchTerm} 
-                  formatCurrency={formatCurrency} 
+                <VirtualDMNTable
+                  data={filteredDmnData}
+                  searchTerm={searchTerm}
+                  formatCurrency={formatCurrency}
                 />
               )}
             </div>
