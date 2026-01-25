@@ -12,6 +12,7 @@ import ThongKeDongMoNuoc from '@/components/ThongKeDongMoNuoc'
 import { getOnOffData } from '@/lib/googlesheets'
 import LatenessAnalysisMain from '@/components/lateness-analysis/LatenessAnalysisMain'
 import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
+import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
 
 import Modal from '@/components/ui/Modal'
 
@@ -236,6 +237,8 @@ export default function PaymentsPage() {
                 <div className="h-full">
                   <LocDuLieuTon formatCurrency={formatCurrency} />
                 </div>
+              ) : subTabDMN === 'bao_cao_tuan' ? (
+                <WeeklyReportMain />
               ) : subTabDMN === 'thong_ke_dmn' ? (
                 <div className="h-full">
                   <ThongKeDongMoNuoc formatCurrency={formatCurrency} />

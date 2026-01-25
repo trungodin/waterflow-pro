@@ -21,7 +21,7 @@ export async function appendData_ToSheet(sheetName: string, values: any[][]) {
   try {
     const sheets = getGoogleSheetsClient()
     const spreadsheetId = process.env.GOOGLE_SHEET_ID
-    
+
     if (!spreadsheetId) {
       throw new Error('GOOGLE_SHEET_ID not configured')
     }
@@ -29,50 +29,50 @@ export async function appendData_ToSheet(sheetName: string, values: any[][]) {
     // 1. Fetch spreadsheet metadata to get sheetId and current dimensions
     // OPTIMIZATION: Do NOT use includeGridData: true. It fetches giant payloads.
     const metaRes = await sheets.spreadsheets.get({
-        spreadsheetId,
-        ranges: [sheetName],             
-        fields: 'sheets.properties' // Only fetch properties
+      spreadsheetId,
+      ranges: [sheetName],
+      fields: 'sheets.properties' // Only fetch properties
     })
-    
+
     const sheet = metaRes.data.sheets?.[0]
     if (!sheet || !sheet.properties) {
-        throw new Error(`Sheet '${sheetName}' not found`)
+      throw new Error(`Sheet '${sheetName}' not found`)
     }
 
     const sheetId = sheet.properties.sheetId
     // If sheetId can be 0 (first sheet), checking if (!sheetId) is risky if it's undefined vs 0.
     // Properties.sheetId is number.
     if (sheetId === undefined || sheetId === null) {
-         throw new Error(`Could not retrieve sheetId for '${sheetName}'`)
+      throw new Error(`Could not retrieve sheetId for '${sheetName}'`)
     }
 
     const currentMaxRows = sheet.properties.gridProperties?.rowCount || 0
-    
+
     // Find the actual last row with data using the grid data included
     // Note: includeGridData returns data.rowData. 
     // This is more expensive but safer for finding the true visual last row if we want to be precise, 
     // but strictly we can use the same logic as before if we trust 'get values'
-    
+
     // Be careful with includeGridData on large sheets, it might be heavy.
     // Let's stick to 'values.get' for data content to be safe on bandwidth, 
     // but use 'metaRes' for properties.
-    
+
     // Re-fetch only values for finding last row (lighter)
     const getRes = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: sheetName, 
+      spreadsheetId,
+      range: sheetName,
     })
 
     const rows = getRes.data.values || []
     let lastRowWithData = 0
     if (rows.length > 0) {
-        for (let i = rows.length - 1; i >= 0; i--) {
-            const row = rows[i]
-            if (row.some((cell: any) => cell && String(cell).trim() !== '')) {
-                lastRowWithData = i + 1
-                break
-            }
+      for (let i = rows.length - 1; i >= 0; i--) {
+        const row = rows[i]
+        if (row.some((cell: any) => cell && String(cell).trim() !== '')) {
+          lastRowWithData = i + 1
+          break
         }
+      }
     }
 
     const startRow = lastRowWithData + 1
@@ -82,23 +82,23 @@ export async function appendData_ToSheet(sheetName: string, values: any[][]) {
 
     // 2. Resize if necessary
     if (neededRows > currentMaxRows) {
-        const rowsToAdd = neededRows - currentMaxRows + 10 // Add a buffer of 10 rows
-        console.log(`[appendData] expanding sheet by ${rowsToAdd} rows...`)
-        
-        await sheets.spreadsheets.batchUpdate({
-            spreadsheetId,
-            requestBody: {
-                requests: [
-                    {
-                        appendDimension: {
-                            sheetId: sheetId,
-                            dimension: 'ROWS',
-                            length: rowsToAdd
-                        }
-                    }
-                ]
+      const rowsToAdd = neededRows - currentMaxRows + 10 // Add a buffer of 10 rows
+      console.log(`[appendData] expanding sheet by ${rowsToAdd} rows...`)
+
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          requests: [
+            {
+              appendDimension: {
+                sheetId: sheetId,
+                dimension: 'ROWS',
+                length: rowsToAdd
+              }
             }
-        })
+          ]
+        }
+      })
     }
 
     // 3. Write data
@@ -111,7 +111,7 @@ export async function appendData_ToSheet(sheetName: string, values: any[][]) {
         values: values,
       },
     })
-    
+
     return { success: true, updates: response.data }
 
   } catch (error: any) {
@@ -121,12 +121,12 @@ export async function appendData_ToSheet(sheetName: string, values: any[][]) {
 }
 
 export async function getCustomerStatus(danhba: string) {
-// ... existing code ...
+  // ... existing code ...
 
   try {
     const sheets = getGoogleSheetsClient()
     const spreadsheetId = process.env.GOOGLE_SHEET_ID
-    
+
     if (!spreadsheetId) {
       console.error('[getCustomerStatus] GOOGLE_SHEET_ID not configured')
       return { tinhTrang: 'Bình thường', ngayKhoa: '', ngayMo: '' }
@@ -146,7 +146,7 @@ export async function getCustomerStatus(danhba: string) {
     // Find header row
     const headers = rows[0]
     console.log('[getCustomerStatus] Headers:', headers)
-    
+
     // Match column names from app cũ: danh_ba, tinh_trang, ngay_khoa, ngay_mo
     const danhBaIndex = headers.findIndex((h: string) => {
       const lower = h.toLowerCase().replace(/\s/g, '_')
@@ -194,14 +194,14 @@ export async function getCustomerStatus(danhba: string) {
     // Get the latest row
     const latestRow = matchingRows[matchingRows.length - 1]
     console.log('[getCustomerStatus] Latest row:', latestRow)
-    
+
     const result = {
       tinhTrang: latestRow[tinhTrangIndex] || 'Bình thường',
       ngayKhoa: ngayKhoaIndex !== -1 ? (latestRow[ngayKhoaIndex] || '') : '',
       ngayMo: ngayMoIndex !== -1 ? (latestRow[ngayMoIndex] || '') : ''
     }
     console.log('[getCustomerStatus] Returning:', result)
-    
+
     return result
 
   } catch (error) {
@@ -216,7 +216,7 @@ async function getOnOffDataInternal() {
   try {
     const sheets = getGoogleSheetsClient()
     const spreadsheetId = process.env.GOOGLE_SHEET_ID
-    
+
     if (!spreadsheetId) {
       console.error('[getOnOffData] GOOGLE_SHEET_ID not configured')
       return []
@@ -233,7 +233,7 @@ async function getOnOffDataInternal() {
     }
 
     const headers = rows[0]
-    
+
     // Helper to find index
     const findIndex = (keywords: string[]) => {
       return headers.findIndex((h: string) => {
@@ -244,6 +244,7 @@ async function getOnOffDataInternal() {
 
     const colIndices = {
       tinhTrang: findIndex(['tinh_trang', 'tình_trạng']),
+      idTB: findIndex(['id_tb']),  // CRITICAL: Must match EXACTLY 'id_tb', NOT 'id' (which has K prefix)
       danhBa: findIndex(['danh_ba', 'danh_bạ']),
       tenKH: findIndex(['ten_kh', 'tên_kh', 'tên_khách_hàng']),
       soNha: findIndex(['so_nha', 'số_nhà']),
@@ -261,6 +262,7 @@ async function getOnOffDataInternal() {
 
     const data = rows.slice(1).map((row: any[]) => ({
       TinhTrang: colIndices.tinhTrang !== -1 ? row[colIndices.tinhTrang] : '',
+      IdTB: colIndices.idTB !== -1 ? row[colIndices.idTB] : '',  // Primary ID field for ON_OFF
       DanhBa: colIndices.danhBa !== -1 ? String(row[colIndices.danhBa]).padStart(11, '0') : '',
       TenKH: colIndices.tenKH !== -1 ? row[colIndices.tenKH] : '',
       SoNha: colIndices.soNha !== -1 ? row[colIndices.soNha] : '',
@@ -275,7 +277,7 @@ async function getOnOffDataInternal() {
       CodeMoi: colIndices.codeMoi !== -1 ? row[colIndices.codeMoi] : '',
       Dot: colIndices.dot !== -1 ? row[colIndices.dot] : '',
     }))
-    
+
     return data
 
   } catch (error) {
@@ -286,3 +288,83 @@ async function getOnOffDataInternal() {
 
 // Disable cache to avoid "items over 2MB" error
 export const getOnOffData = getOnOffDataInternal
+
+export async function getDatabaseSheetData() {
+  try {
+    const sheets = getGoogleSheetsClient()
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID
+
+    if (!spreadsheetId) {
+      console.error('[getDatabaseSheetData] GOOGLE_SHEET_ID not configured')
+      return []
+    }
+
+    // Read 'database' sheet (or whatever name is configured)
+    // Note: In old config, DB_SHEET might be 'database' or 'Danh Sách Giao'
+    // We'll trust the ENV variable or default to 'database'
+    const sheetName = process.env.DB_SHEET_NAME || 'database'
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A:AZ`,
+    })
+
+    const rows = response.data.values
+    if (!rows || rows.length === 0) {
+      return []
+    }
+
+    const headers = rows[0]
+
+    // Helper to find index
+    const findIndex = (keywords: string[]) => {
+      return headers.findIndex((h: string) => {
+        const lower = h.toLowerCase().replace(/\s/g, '_')
+        return keywords.some(k => lower === k || lower.includes(k))
+      })
+    }
+
+    const colIndices = {
+      danhBa: findIndex(['danh_bo', 'danh_bạ', 'danh_ba']),  // Database uses danh_bo, ON_OFF uses danh_ba
+      tenKH: findIndex(['ten_kh', 'tên_kh']),
+      soNha: findIndex(['so_nha', 'số_nhà']),
+      duong: findIndex(['duong', 'đường']),
+      ngayGiao: findIndex(['ngay_giao', 'ngày_giao']),
+      nhom: findIndex(['nhom', 'nhóm']),
+      ghiChu: findIndex(['ghi_chu', 'ghi_chú']),
+      tinhTrang: findIndex(['tinh_trang', 'tình_trạng']),
+      dot: findIndex(['dot', 'đợt']),
+      kyNam: findIndex(['ky_nam', 'kỳ_năm']),
+      gb: findIndex(['gb']),
+      tongTien: findIndex(['tong_tien', 'tổng_tiền']),
+      tongKy: findIndex(['tong_ky', 'tổng_kỳ']),
+      hopBaoVe: findIndex(['hop_bao_ve', 'hộp_bảo_vệ', 'hop']),
+      id: findIndex(['id'])
+    }
+
+
+    const data = rows.slice(1).map((row: any[]) => ({
+      DanhBa: colIndices.danhBa !== -1 ? String(row[colIndices.danhBa]).padStart(11, '0') : '',
+      TenKH: colIndices.tenKH !== -1 ? row[colIndices.tenKH] : '',
+      SoNha: colIndices.soNha !== -1 ? row[colIndices.soNha] : '',
+      Duong: colIndices.duong !== -1 ? row[colIndices.duong] : '',
+      NgayGiao: colIndices.ngayGiao !== -1 ? row[colIndices.ngayGiao] : '',
+      Nhom: colIndices.nhom !== -1 ? row[colIndices.nhom] : '',
+      GhiChu: colIndices.ghiChu !== -1 ? row[colIndices.ghiChu] : '',
+      TinhTrang: colIndices.tinhTrang !== -1 ? row[colIndices.tinhTrang] : '',
+      Dot: colIndices.dot !== -1 ? row[colIndices.dot] : '',
+      KyNam: colIndices.kyNam !== -1 ? row[colIndices.kyNam] : '',
+      GB: colIndices.gb !== -1 ? row[colIndices.gb] : '',
+      TongTien: colIndices.tongTien !== -1 ? row[colIndices.tongTien] : '',
+      TongKy: colIndices.tongKy !== -1 ? row[colIndices.tongKy] : '',
+      HopBaoVe: colIndices.hopBaoVe !== -1 ? row[colIndices.hopBaoVe] : '',
+      ID: colIndices.id !== -1 ? row[colIndices.id] : '',
+    }))
+
+    return data
+
+  } catch (error) {
+    console.error('[getDatabaseSheetData] Error:', error)
+    return []
+  }
+}

@@ -18,8 +18,7 @@ const DEFAULT_COLUMNS = [
   { id: 'tenKH', label: 'Tên Khách Hàng', width: 350 },
   { id: 'soNha', label: 'Số Nhà', width: 100 },
   { id: 'duong', label: 'Đường', width: 250 },
-  { id: 'dot', label: 'Đợt', width: 50, align: 'center' },
-  { id: 'codeMoi', label: 'Code Mới', width: 80, align: 'center' },
+
   { id: 'tinhTrang', label: 'Tình Trạng', width: 110, align: 'center' },
   { id: 'tongKy', label: 'Kỳ', width: 50, align: 'center' },
   { id: 'tongNo', label: 'Tổng Nợ', width: 110, align: 'right' },
@@ -28,11 +27,11 @@ const DEFAULT_COLUMNS = [
   { id: 'ngayMo', label: 'Ngày Mở', width: 110, align: 'right' },
 ]
 
-export default function VirtualDMNTable({ 
-  data, 
-  searchTerm, 
-  formatCurrency, 
-  isFlatMode = false, 
+export default function VirtualDMNTable({
+  data,
+  searchTerm,
+  formatCurrency,
+  isFlatMode = false,
   customColumns,
   selectedIds,
   onSelectionChange
@@ -40,10 +39,10 @@ export default function VirtualDMNTable({
   // --- Column Resizing Logic ---
   // Use custom columns if provided
   const [columns, setColumns] = useState(customColumns || DEFAULT_COLUMNS)
-  
+
   // Ensure default columns are updated if customColumns prop changes (unlikely but safe)
   useEffect(() => {
-     if (customColumns) setColumns(customColumns)
+    if (customColumns) setColumns(customColumns)
   }, [customColumns])
 
   const [isResizing, setIsResizing] = useState<string | null>(null)
@@ -88,11 +87,11 @@ export default function VirtualDMNTable({
   // --- Data Grouping ---
   const groupedData = useMemo(() => {
     if (isFlatMode) return {} // Skip if flat mode
-    
+
     return data.reduce((acc: Record<string, any[]>, item: any) => {
       let dateKey = item.NgayKhoa || 'Chưa xác định'
       if (dateKey.includes(' ')) dateKey = dateKey.split(' ')[0]
-      
+
       if (!acc[dateKey]) acc[dateKey] = []
       acc[dateKey].push(item)
       return acc
@@ -114,18 +113,18 @@ export default function VirtualDMNTable({
 
   const flattenedData = useMemo(() => {
     if (isFlatMode) {
-        // Flat list without headers
-        return data.map((item, idx) => ({
-            type: 'row' as const,
-            data: item,
-            date: '',
-            isEven: idx % 2 === 0
-        }))
+      // Flat list without headers
+      return data.map((item, idx) => ({
+        type: 'row' as const,
+        data: item,
+        date: '',
+        isEven: idx % 2 === 0
+      }))
     }
-    
+
     // Grouped list with headers
     const result: Array<{ type: 'header' | 'row', data: any, date?: string, isEven?: boolean }> = []
-    
+
     sortedDates.forEach(date => {
       result.push({ type: 'header', data: { date }, date })
       groupedData[date].forEach((item: any, idx: number) => {
@@ -182,7 +181,7 @@ export default function VirtualDMNTable({
         const val = parseFloat(String(d.TongNo || '0').replace(/[.,]/g, ''))
         return sum + (isNaN(val) ? 0 : val)
       }, 0)
-      
+
       return (
         <div key={index} style={style} className="bg-blue-100 border-y border-blue-300 px-4 flex justify-between items-center z-10 sticky left-0 shadow-sm">
           <div className="flex items-center gap-2">
@@ -197,7 +196,7 @@ export default function VirtualDMNTable({
     }
 
     const row = item.data
-    
+
     // Status Logic
     const statusLower = (row.TinhTrang || '').toLowerCase()
     const isKhoa = statusLower.includes('khóa') || statusLower.includes('khoá') || statusLower.includes('đóng')
@@ -212,9 +211,9 @@ export default function VirtualDMNTable({
 
     return (
       <div key={index} style={style} className={`border-b border-gray-300 hover:bg-yellow-50 transition-colors flex items-center ${rowBgClass}`}>
-        <div 
+        <div
           className="grid items-center h-full"
-          style={{ 
+          style={{
             gridTemplateColumns: gridTemplate,
             width: totalWidth
           }}
@@ -223,52 +222,50 @@ export default function VirtualDMNTable({
             // Add vertical borders between columns
             const cellStyle = "px-2 truncate text-xs " + (col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left')
             const borderR = idx !== columns.length - 1 ? " border-r border-gray-300" : ""
-            
+
             let content = null
-            
+
             // Handle Special Columns based on ID
-            switch(col.id) {
+            switch (col.id) {
               case 'stt': content = <span className="text-gray-500 font-medium">{index + 1}</span>; break;
-              case 'select': 
+              case 'select':
                 content = (
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={selectedIds?.has(row.DanhBa) || false}
                     onChange={(e) => onSelectionChange?.(row.DanhBa, e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer" 
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
-                ); 
+                );
                 break;
-              
+
               case 'danhBa': content = <span className="font-mono font-bold text-gray-900">{row.DanhBa}</span>; break;
               case 'tenKH': content = <span className="font-semibold text-gray-900" title={row.TenKH}>{row.TenKH}</span>; break;
               case 'soNha': content = <span className="text-gray-800" title={row.SoNha}>{row.SoNha}</span>; break;
               case 'duong': content = <span className="text-gray-800" title={row.Duong}>{row.Duong}</span>; break;
-              case 'dot': content = <span className="text-gray-800 font-mono text-center block">{row.Dot}</span>; break;
               case 'gb': content = <span className="text-center block font-bold text-gray-700">{row.GB}</span>; break;
-              
-              case 'codeMoi': content = <span className="text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded text-sm uppercase font-bold block w-fit mx-auto">{row.CodeMoi}</span>; break;
-              
-              case 'tinhTrang': 
+
+
+              case 'tinhTrang':
                 content = (
                   <span className={`px-2 py-0.5 rounded text-[11px] inline-block w-full truncate shadow-sm ${statusClass}`}>
                     {row.TinhTrang || 'N/A'}
                   </span>
                 )
                 break;
-                
+
               case 'tongKy': content = <span className="font-bold text-gray-900">{row.TongKy || '0'}</span>; break;
               case 'tongNo': content = <span className="font-bold text-black">{formatCurrency(row.TongNo)}</span>; break;
               case 'kyNam': content = <span className="text-gray-600 font-medium text-[11px]" title={row.KyNam}>{row.KyNam || 'N/A'}</span>; break;
-              
+
               // New Columns for Report
               case 'mlt2': content = <span className="font-mono text-gray-700">{row.MLT2}</span>; break;
               case 'soMoi': content = <span className="text-gray-600 italic">{row.SoMoi}</span>; break;
               case 'soThan': content = <span className="text-gray-600 font-medium text-[13px]">{row.SoThan}</span>; break;
-              
+
               case 'nhomKhoa': content = <span className="text-gray-700 font-medium">{row.NhomKhoa || '-'}</span>; break;
               case 'ngayMo': content = <span className="text-gray-700">{row.NgayMo || '-'}</span>; break;
-              
+
               // Hidden columns by default
               case 'hieu': content = <span className="text-gray-700">{row.Hieu}</span>; break;
               case 'coCu': content = <span className="text-gray-700">{row.CoCu}</span>; break;
@@ -302,22 +299,22 @@ export default function VirtualDMNTable({
     <div className="space-y-4">
       {/* Scrollable Container Wrapper */}
       <div className="border border-gray-300 rounded-lg overflow-hidden bg-white shadow flex flex-col">
-        
+
         {/* Header */}
         <div className="overflow-x-hidden bg-gray-100 border-b border-gray-300" ref={(el) => {
-            if (el && containerRef.current) {
-                el.scrollLeft = containerRef.current.scrollLeft
-            }
+          if (el && containerRef.current) {
+            el.scrollLeft = containerRef.current.scrollLeft
+          }
         }}>
-          <div 
-            className="grid h-10 select-none relative" 
-            style={{ 
+          <div
+            className="grid h-10 select-none relative"
+            style={{
               gridTemplateColumns: gridTemplate,
               width: totalWidth
             }}
           >
             {columns.map((col, idx) => (
-              <div 
+              <div
                 key={col.id}
                 className={`flex items-center px-2 text-[11px] font-extrabold text-gray-800 uppercase tracking-tight relative group h-full ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'} ${idx !== columns.length - 1 ? 'border-r border-gray-300' : ''}`}
               >
@@ -333,7 +330,7 @@ export default function VirtualDMNTable({
         </div>
 
         {/* Body */}
-        <div 
+        <div
           ref={containerRef}
           className="overflow-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 relative"
           style={{ height: containerHeight }}
@@ -342,7 +339,7 @@ export default function VirtualDMNTable({
             // Sync header scroll
             const header = e.currentTarget.previousElementSibling
             if (header) {
-                header.scrollLeft = e.currentTarget.scrollLeft
+              header.scrollLeft = e.currentTarget.scrollLeft
             }
           }}
         >
@@ -354,25 +351,25 @@ export default function VirtualDMNTable({
 
       {/* Summary */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 shadow-sm flex justify-between items-center text-sm">
-         <div className="flex gap-6">
-            <div>
-              <span className="text-gray-600 font-medium mr-2">Tổng KH:</span>
-              <span className="font-bold text-blue-800 text-lg">{data.length.toLocaleString()}</span>
-            </div>
-            <div>
-              <span className="text-gray-600 font-medium mr-2">Ngày khóa:</span>
-              <span className="font-bold text-blue-800 text-lg">{sortedDates.length}</span>
-            </div>
-         </div>
-         <div className="flex items-baseline">
-            <span className="text-gray-600 font-medium mr-2">Tổng nợ:</span>
-            <span className="font-bold text-gray-900 text-xl">
-              {formatCurrency(data.reduce((sum, d) => {
-                const val = parseFloat(String(d.TongNo || '0').replace(/[.,]/g, ''))
-                return sum + (isNaN(val) ? 0 : val)
-              }, 0))} VNĐ
-            </span>
-         </div>
+        <div className="flex gap-6">
+          <div>
+            <span className="text-gray-600 font-medium mr-2">Tổng KH:</span>
+            <span className="font-bold text-blue-800 text-lg">{data.length.toLocaleString()}</span>
+          </div>
+          <div>
+            <span className="text-gray-600 font-medium mr-2">Ngày khóa:</span>
+            <span className="font-bold text-blue-800 text-lg">{sortedDates.length}</span>
+          </div>
+        </div>
+        <div className="flex items-baseline">
+          <span className="text-gray-600 font-medium mr-2">Tổng nợ:</span>
+          <span className="font-bold text-gray-900 text-xl">
+            {formatCurrency(data.reduce((sum, d) => {
+              const val = parseFloat(String(d.TongNo || '0').replace(/[.,]/g, ''))
+              return sum + (isNaN(val) ? 0 : val)
+            }, 0))} VNĐ
+          </span>
+        </div>
       </div>
     </div>
   )

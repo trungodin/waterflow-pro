@@ -5,7 +5,7 @@ import { executeSqlQuery } from '@/lib/soap'
 export async function getDashboardData(ky: number, nam: number, namRevenue: number) {
   const currentYearForRevenue = namRevenue
   const endOfYearStr = `${currentYearForRevenue}-12-31 23:59:59`
-  
+
   // 1. Thu Tien Query
   const kpiThuTienQuery = `
     WITH 
@@ -42,7 +42,7 @@ export async function getDashboardData(ky: number, nam: number, namRevenue: numb
   // 2. Doc So Query (Replicating Python logic: Same Month Last Year)
   // Python: prev_year = selected_date - 1 year
   const prevYear = nam - 1
-  const prevMonth = ky 
+  const prevMonth = ky
 
   const kpiDocSoQuery = `
     SELECT
@@ -70,18 +70,18 @@ export async function getDashboardData(ky: number, nam: number, namRevenue: numb
 
 export async function getComparisonData(year1: number, year2: number) {
   const currentMonth = new Date().getMonth() + 1
-  const monthFilter = (year1 === new Date().getFullYear() || year2 === new Date().getFullYear()) 
+  const monthFilter = (year1 === new Date().getFullYear() || year2 === new Date().getFullYear())
     ? `AND Ky <= ${currentMonth}` : ''
-    
+
   // Revenue
   const revenueQuery = `
-    SELECT Nam, Ky, SUM(TONGCONG_BD) AS DoanhThu
+    SELECT Nam, Ky, SUM(GIABAN_BD) AS DoanhThu
     FROM HoaDon WHERE Nam IN (${year1}, ${year2}) ${monthFilter} GROUP BY Nam, Ky
   `
-  
+
   // Collection
   const collectionQuery = `
-    SELECT Nam, Ky, SUM(TONGCONG) AS ThucThu
+    SELECT Nam, Ky, SUM(GIABAN) AS ThucThu
     FROM HoaDon WHERE Nam IN (${year1}, ${year2}) ${monthFilter} AND NGAYGIAI IS NOT NULL AND Nam = YEAR(NGAYGIAI) AND Ky = MONTH(NGAYGIAI)
     GROUP BY Nam, Ky
   `
@@ -99,4 +99,32 @@ export async function getComparisonData(year1: number, year2: number) {
   ])
 
   return { revenueData, collectionData, consumptionData }
+}
+
+export async function getRevenueByPriceList(year: number) {
+  // Breakdown by GB (Gia Bieu)
+  const query = `
+    SELECT GB, SUM(GIABAN_BD) AS DoanhThu
+    FROM HoaDon 
+    WHERE Nam = ${year} 
+    GROUP BY GB
+    ORDER BY DoanhThu DESC
+  `
+
+  const data = await executeSqlQuery('f_Select_SQL_Thutien', query)
+  return data
+}
+
+export async function getRevenueByDot(year: number) {
+  // Breakdown by Dot (Book/Route)
+  const query = `
+    SELECT Dot, SUM(GIABAN_BD) AS DoanhThu
+    FROM HoaDon 
+    WHERE Nam = ${year} 
+    GROUP BY Dot
+    ORDER BY DoanhThu DESC
+  `
+
+  const data = await executeSqlQuery('f_Select_SQL_Thutien', query)
+  return data
 }
