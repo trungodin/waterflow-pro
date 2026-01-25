@@ -8,9 +8,9 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { format } from 'date-fns'
 import { Loader2, FileText, Download } from 'lucide-react'
-import { generateWordNotices } from '@/lib/utils/word-generator'
+import { generateWordNotice } from '@/lib/client-utils'
 import { toast } from 'sonner'
-import { useColumnResize } from '@/components/ui/use-column-resize'
+
 
 interface WordNoticeGeneratorProps {
     data: any[] // Full list of filtered data
@@ -61,11 +61,7 @@ export function WordNoticeGenerator({ data, selectedIds }: WordNoticeGeneratorPr
                 SSTT: index + 1
             }))
 
-            await generateWordNotices(formattedData, {
-                deadline1Ky,
-                deadline2Ky,
-                noticeDate: new Date(noticeDate)
-            })
+            await generateWordNotice(formattedData, noticeDate, deadline1Ky, deadline2Ky)
 
             toast.success(`Đã tạo ${targetData.length} thông báo!`)
 
