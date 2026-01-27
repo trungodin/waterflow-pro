@@ -219,15 +219,64 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
     
     // Ensure danhba is properly formatted (11 digits)
     const formattedDanhba = String(danhba).padStart(11, '0')
-    console.log('[getCustomerDetails] Formatted danhba:', formattedDanhba)
+    const currentYear = new Date().getFullYear()
+
+    // Combined Query: 
+    // Set 1: Customer Info
+    // Set 2: Reader Info
+    // Set 3: Debt Info
+    const combinedQuery = `
+      -- 1. Customer Info
+      SELECT TOP 1 * FROM KhachHang WITH (NOLOCK) WHERE DanhBa = '${formattedDanhba}';
+
+      -- 2. Reader Info
+      SELECT TOP 1 mds.NhanVienID 
+      FROM DocSo AS ds WITH (NOLOCK)
+      INNER JOIN MayDS AS mds WITH (NOLOCK) ON ds.May = mds.May 
+      WHERE ds.DanhBa = '${formattedDanhba}' 
+      ORDER BY ds.Nam DESC, ds.Ky DESC;
+
+      -- 3. Debt Info
+      SELECT KY, NAM, TONGCONG 
+      FROM HoaDon WITH (NOLOCK)
+      WHERE DANHBA = '${formattedDanhba}' AND NGAYGIAI IS NULL;
+    `
+
+    console.log('[getCustomerDetails] Executing combined query...')
+    // Note: executeSqlQuery typically returns an array of result sets if multiple queries are sent
+    // However, the current soap adapter implementation might flatten or return only the first.
+    // Let's check if the soap adapter supports multiple result sets.
+    // If not, we have to stick to JOINs or separate queries.
+    // Assuming standard SQL execution, we might get a single flat array if the driver doesn't support multiple sets well.
+    // SAFETY FALLBACK: Use CTE/JOINs to get everything in ONE row if possible, or parallel execution.
+    // Parallel execution is safer given we don't know the exact SOAP driver behavior for multi-statement batches.
     
-    // 1. Get customer info
-    const khQuery = `SELECT * FROM KhachHang WHERE DanhBa = '${formattedDanhba}'`
-    console.log('[getCustomerDetails] Customer query:', khQuery)
+    // Let's use Promise.all for parallel execution instead of batch string to be 100% safe with logic preservation and adapter compatibility.
+    // This is still faster than sequential await.
+
+    const khQuery = `SELECT TOP 1 * FROM KhachHang WITH (NOLOCK) WHERE DanhBa = '${formattedDanhba}'`
     
-    const khResults = await executeSqlQuery('f_Select_SQL_Doc_so', khQuery)
-    console.log('[getCustomerDetails] Customer results:', khResults)
-    
+    const nvQuery = `
+      SELECT TOP 1 mds.NhanVienID 
+      FROM DocSo AS ds WITH (NOLOCK)
+      INNER JOIN MayDS AS mds WITH (NOLOCK) ON ds.May = mds.May 
+      WHERE ds.DanhBa = '${formattedDanhba}' 
+      ORDER BY ds.Nam DESC, ds.Ky DESC
+    `
+
+    const hdQuery = `
+      SELECT KY, NAM, TONGCONG 
+      FROM HoaDon WITH (NOLOCK)
+      WHERE DANHBA = '${formattedDanhba}' AND NGAYGIAI IS NULL
+    `
+
+    // Execute efficiently in parallel
+    const [khResults, nvResults, hdResults] = await Promise.all([
+        executeSqlQuery('f_Select_SQL_Doc_so', khQuery),
+        executeSqlQuery('f_Select_SQL_Doc_so', nvQuery),
+        executeSqlQuery('f_Select_SQL_Thutien', hdQuery)
+    ])
+
     if (!khResults || khResults.length === 0) {
       console.log('[getCustomerDetails] No customer found')
       return null
@@ -236,29 +285,10 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
     const details: any = khResults[0]
     details.DanhBa = String(details.DanhBa).padStart(11, '0')
 
-    // 2. Get latest reader name
-    const nvQuery = `
-      SELECT TOP 1 mds.NhanVienID 
-      FROM DocSo AS ds 
-      INNER JOIN MayDS AS mds ON ds.May = mds.May 
-      WHERE ds.DanhBa = '${formattedDanhba}' 
-      ORDER BY ds.Nam DESC, ds.Ky DESC
-    `
-    console.log('[getCustomerDetails] Reader query:', nvQuery)
-    const nvResults = await executeSqlQuery('f_Select_SQL_Doc_so', nvQuery)
-    console.log('[getCustomerDetails] Reader results:', nvResults)
+    // Map Reader Info
     details.TenNhanVienDoc = nvResults && nvResults.length > 0 ? nvResults[0].NhanVienID : 'N/A'
 
-    // 3. Get debt info
-    const hdQuery = `
-      SELECT KY, NAM, TONGCONG 
-      FROM HoaDon 
-      WHERE DANHBA = '${formattedDanhba}' AND NGAYGIAI IS NULL
-    `
-    console.log('[getCustomerDetails] Debt query:', hdQuery)
-    const hdResults = await executeSqlQuery('f_Select_SQL_Thutien', hdQuery)
-    console.log('[getCustomerDetails] Debt results:', hdResults)
-    
+    // Map Debt Info
     if (hdResults && hdResults.length > 0) {
       const validDebts = hdResults.filter((r: any) => parseFloat(r.TONGCONG || 0) > 0)
       if (validDebts.length > 0) {
@@ -278,7 +308,7 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
       details.KyNamNo = 'Không có'
     }
 
-    // 4. Get status from Google Sheets ON_OFF
+    // 4. Get status from Google Sheets (Kept sequential as it might depend on external latency not affecting SQL pool)
     try {
       const { getCustomerStatus } = await import('@/lib/googlesheets')
       const status = await getCustomerStatus(formattedDanhba)
@@ -292,7 +322,7 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
       details.NgayMo = ''
     }
 
-    console.log('[getCustomerDetails] Final details:', details)
+    // console.log('[getCustomerDetails] Final details:', details)
     return details as CustomerDetail
 
   } catch (error) {

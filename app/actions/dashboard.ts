@@ -69,27 +69,33 @@ export async function getDashboardData(ky: number, nam: number, namRevenue: numb
 }
 
 export async function getComparisonData(year1: number, year2: number) {
-  const currentMonth = new Date().getMonth() + 1
-  const monthFilter = (year1 === new Date().getFullYear() || year2 === new Date().getFullYear())
-    ? `AND Ky <= ${currentMonth}` : ''
+  // Removed month filter to allow full year data for comparison
 
   // Revenue
   const revenueQuery = `
     SELECT Nam, Ky, SUM(GIABAN_BD) AS DoanhThu
-    FROM HoaDon WHERE Nam IN (${year1}, ${year2}) ${monthFilter} GROUP BY Nam, Ky
+    FROM HoaDon WITH (NOLOCK) 
+    WHERE Nam IN (${year1}, ${year2})
+    GROUP BY Nam, Ky
   `
 
   // Collection
   const collectionQuery = `
     SELECT Nam, Ky, SUM(GIABAN) AS ThucThu
-    FROM HoaDon WHERE Nam IN (${year1}, ${year2}) ${monthFilter} AND NGAYGIAI IS NOT NULL AND Nam = YEAR(NGAYGIAI) AND Ky = MONTH(NGAYGIAI)
+    FROM HoaDon WITH (NOLOCK)
+    WHERE Nam IN (${year1}, ${year2})
+      AND NGAYGIAI IS NOT NULL 
+      AND Nam = YEAR(NGAYGIAI) 
+      AND Ky = MONTH(NGAYGIAI)
     GROUP BY Nam, Ky
   `
 
   // Consumption
   const consumptionQuery = `
     SELECT Nam, Ky, SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) AS SanLuong
-    FROM DocSo WHERE Nam IN (${year1}, ${year2}) ${monthFilter} GROUP BY Nam, Ky
+    FROM DocSo WITH (NOLOCK)
+    WHERE Nam IN (${year1}, ${year2})
+    GROUP BY Nam, Ky
   `
 
   const [revenueData, collectionData, consumptionData] = await Promise.all([

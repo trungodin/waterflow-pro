@@ -111,43 +111,63 @@ export default function CustomerSearchPage() {
     }
   }
 
-  const toggleCustomer = async (danhBa: string | number) => {
+  const toggleCustomer = (danhBa: string | number) => {
     const danhBaStr = String(danhBa)
-    const newSelected = new Set(selectedCustomers)
     
-    if (newSelected.has(danhBaStr)) {
-      newSelected.delete(danhBaStr)
-    } else {
-      newSelected.add(danhBaStr)
-      
-      // Load details if not already loaded
-      if (!customerDetails.has(danhBaStr)) {
-        setLoadingDetails(prev => new Set(prev).add(danhBaStr))
-        try {
-          console.log('[toggleCustomer] Loading details for:', danhBaStr)
+    // 1. Update UI Selection State Immediately (Non-blocking)
+    setSelectedCustomers(prev => {
+        const newSelected = new Set(prev)
+        if (newSelected.has(danhBaStr)) {
+            newSelected.delete(danhBaStr)
+        } else {
+            newSelected.add(danhBaStr)
+        }
+        return newSelected
+    })
+
+    // 2. Fetch Data Asynchronously (Fire and Forget or Effect-like)
+    // Only fetch if we are SELECTING (not deselecting) and data is missing
+    // We check against 'selectedCustomers' current state in a functional way, 
+    // but here we know the intent is toggling. 
+    // Better logic: Check if we are adding it.
+    
+    // Since setState is async, we can't rely on 'selectedCustomers' updated value here immediately.
+    // So we replicate the check logic locally.
+    const isCurrentlySelected = selectedCustomers.has(danhBaStr)
+    const willBeSelected = !isCurrentlySelected
+
+    if (willBeSelected && !customerDetails.has(danhBaStr)) {
+        // Trigger fetch in background
+        fetchCustomerDetails(danhBaStr)
+    }
+  }
+
+  const fetchCustomerDetails = async (danhBaStr: string) => {
+      // Prevent duplicate fetches if user clicks rapidly
+      if (loadingDetails.has(danhBaStr)) return
+
+      setLoadingDetails(prev => new Set(prev).add(danhBaStr))
+      try {
+          console.log('[fetchCustomerDetails] Loading details for:', danhBaStr)
           const details = await getCustomerDetails(danhBaStr)
-          console.log('[toggleCustomer] Details loaded:', details)
           
           if (details) {
             setCustomerDetails(prev => new Map(prev).set(danhBaStr, details))
           } else {
-            console.error('[toggleCustomer] No details returned')
+            console.error('[fetchCustomerDetails] No details returned')
             alert(`Không thể tải thông tin chi tiết cho danh bạ ${danhBaStr}`)
+            // Start rollback selection if needed, but usually keeping it selected with error is better UX than auto-deselect
           }
-        } catch (error) {
-          console.error('[toggleCustomer] Error loading details:', error)
+      } catch (error) {
+          console.error('[fetchCustomerDetails] Error loading details:', error)
           alert(`Lỗi khi tải chi tiết: ${error}`)
-        } finally {
+      } finally {
           setLoadingDetails(prev => {
             const newSet = new Set(prev)
             newSet.delete(danhBaStr)
             return newSet
           })
-        }
       }
-    }
-    
-    setSelectedCustomers(newSelected)
   }
 
   const loadPaymentHistory = async (danhBa: string) => {
