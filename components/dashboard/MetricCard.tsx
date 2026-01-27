@@ -9,7 +9,7 @@ interface MetricCardProps {
     prevValue?: number
     trendMode?: 'inverse' | 'normal' // 'normal': high is good (green), 'inverse': high is bad (red like debt)
     gradientColor: 'cyan' | 'sky' | 'blue' | 'indigo' | 'emerald' | 'orange' | 'purple'
-    iconPath: JSX.Element
+    iconPath: React.ReactNode
     description?: string // For extra text like "High Priority"
     subValueLabel?: string // e.g. "Tiền nước"
     subValue?: number
