@@ -3,7 +3,7 @@ import { formatNumber, formatCurrency } from '@/lib/utils'
 
 interface MetricCardProps {
     title: string
-    value: number
+    value: number | string
     type?: 'number' | 'currency'
     unit?: string
     prevValue?: number
@@ -38,8 +38,13 @@ export default function MetricCard({
     subValueLabel,
     subValue
 }: MetricCardProps) {
-    const formattedValue = type === 'currency' ? formatCurrency(value) : formatNumber(value)
-    const diff = value - prevValue
+    const formattedValue = (typeof value === 'number')
+        ? (type === 'currency' ? formatCurrency(value) : formatNumber(value))
+        : value
+
+    const diff = (typeof value === 'number' && typeof prevValue === 'number') 
+        ? value - prevValue 
+        : 0
     const isIncrease = diff >= 0
     
     // Trend logic

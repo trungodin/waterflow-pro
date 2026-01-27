@@ -5,7 +5,9 @@ import { ReadingFilters } from '@/app/readings/actions'
 
 interface ReadingTableProps {
   data: any[]
-  activeFilters: ReadingFilters | null
+  activeFilters?: ReadingFilters | null
+  loading?: boolean
+  hasSearched?: boolean
 }
 
 const formatNumber = (val: string | number) => {
