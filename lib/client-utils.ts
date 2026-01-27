@@ -16,6 +16,11 @@ function addDays(date: Date, days: number): Date {
     return result
 }
 
+function truncateText(text: string, maxLength: number): string {
+    if (!text || text.length <= maxLength) return text
+    return text.substring(0, maxLength).trim() + '...'
+}
+
 export const generateWordNotice = async (
     customers: any[],
     noticeDateStr: string,
@@ -155,7 +160,9 @@ export const generateWordNotice = async (
                     const cutoffIdx = (sectPrIdx !== -1) ? sectPrIdx : endBodyIdx
 
                     if (cutoffIdx !== -1) {
-                        const endLoopTag = `<w:p><w:r><w:br w:type="page"/><w:t>%%%%/c%%%%</w:t></w:r></w:p>`
+                        // Conditional Page Break Logic: Inject Raw XML variable that contains the entire Page Break Paragraph
+                        // If it's the last item, the variable will be empty, so no paragraph is rendered.
+                        const endLoopTag = `%%%%@pageBreakXML%%%%<w:p><w:r><w:t>%%%%/c%%%%</w:t></w:r></w:p>`
                         cleanedXml = cleanedXml.substring(0, cutoffIdx) + endLoopTag + cleanedXml.substring(cutoffIdx)
                     }
                 }
@@ -203,7 +210,7 @@ export const generateWordNotice = async (
                 THANG: month,
                 'NAM}': year,
 
-                TEN_KH: c.TenKH,
+                TEN_KH: truncateText(c.TenKH, 55),
                 DIA_CHI: `${c.SoNha || ''} ${c.Duong || ''}`.trim(),
                 DANH_BA: c.DanhBa,
                 MA_LO_TRINH: c.MLT2 || '',
@@ -225,7 +232,9 @@ export const generateWordNotice = async (
                 DOT: c.Dot || '',
                 CODEMOI: c.CodeMoi || '',
                 STT: index + 1,
-                SSTT: index + 1
+                SSTT: index + 1,
+                // Full Page Break Paragraph XML (Empty for last item)
+                pageBreakXML: index < customers.length - 1 ? '<w:p><w:r><w:br w:type="page"/></w:r></w:p>' : ''
             }
         })
 
