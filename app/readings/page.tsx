@@ -4,9 +4,9 @@ import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import ReadingFiltersComponent from '@/components/readings/ReadingFilters'
 import ReadingTable from '@/components/readings/ReadingTable'
-import ReadingAnalysis from '@/components/readings/ReadingAnalysis'
 import ReadingYearlyReport from '@/components/readings/ReadingYearlyReport'
 import ReadingDotAnalysis from '@/components/readings/analysis/ReadingDotAnalysis'
+import ReadingAnalysis from '@/components/readings/ReadingAnalysis'
 import { getReadingData, ReadingFilters } from '@/app/readings/actions'
 
 export default function ReadingsPage() {
@@ -14,7 +14,7 @@ export default function ReadingsPage() {
     const [activeFilters, setActiveFilters] = useState<ReadingFilters | null>(null)
     const [loading, setLoading] = useState(false)
     const [hasSearched, setHasSearched] = useState(false)
-    const [activeTab, setActiveTab] = useState<'detail' | 'analysis' | 'dot_analysis' | 'report'>('detail')
+    const [activeTab, setActiveTab] = useState<'detail' | 'team_analysis' | 'dot_analysis' | 'report'>('detail')
 
     const handleSearch = async (filters: ReadingFilters) => {
         setLoading(true)
@@ -32,8 +32,8 @@ export default function ReadingsPage() {
 
     const tabs = [
         { id: 'detail', label: '📝 Tra Cứu Chi Tiết' },
-        { id: 'analysis', label: '📊 Phân Tích Tổng Hợp' }, // Renamed
-        { id: 'dot_analysis', label: '📅 Phân Tích Theo Đợt' }, // New Tab
+        { id: 'team_analysis', label: '🏭 Phân Tích Theo Tổ Máy' },
+        { id: 'dot_analysis', label: '🌊 Phân Tích Theo Đợt' },
         { id: 'report', label: '📅 Báo Cáo Năm' },
     ]
 
@@ -75,9 +75,9 @@ export default function ReadingsPage() {
                         </>
                     )}
 
-                    {activeTab === 'analysis' && (
+                    {activeTab === 'team_analysis' && (
                         <div className="animate-in fade-in zoom-in-95 duration-300">
-                             <ReadingAnalysis />
+                            <ReadingAnalysis />
                         </div>
                     )}
 

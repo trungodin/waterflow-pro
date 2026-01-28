@@ -55,56 +55,46 @@ export default function ReadingAnalysis() {
             // 1. Process To/May Data
             let processedTo: any[] = []
             
-            if (selectedTo !== "Tất cả") {
-                // Staff mapping from old app (phan_tich_to_may.py)
-                const staffMap: Record<number, string> = {
-                    // Tổ 1
-                    11: "Lê Trung Quốc", 12: "Vũ Hoàng Quốc Việt", 13: "Lê Hồng Tuấn", 14: "Bùi Xuân Hoàng",
-                    15: "Lương Văn Hùng", 16: "Huỳnh Kim Luân", 17: "Trần Hiệp Hòa", 18: "Nguyễn Thanh Hải",
-                    // Tổ 2
-                    21: "Trần Văn Đức", 22: "Võ Viết Trang", 23: "Trần Quang Phương", 24: "Trầm Tấn Hùng",
-                    25: "Phạm Văn Có", 26: "Lê Tuân", 27: "Lê Tuấn Kiệt", 28: "Phùng Trung Tín",
-                    // Tổ 3
-                    31: "Võ Trọng Sĩ", 32: "Phạm Văn Mai", 33: "Đỗ Lê Anh Tú", 34: "Nguyễn Vĩnh Bảo Kh",
-                    35: "Nguyễn Việt Toàn Nhân", 36: "Trương Trọng Nhân", 37: "Đặng Anh Phương",
-                    // Tổ 4
-                    41: "Trần Quốc Tuấn", 42: "Vũ Hoàng", 43: "Dương Quốc Thông", 44: "Huỳnh Ngọc Binh",
-                    45: "Hoàng Anh Vũ", 46: "Phan Thành Tín", 47: "Nguyễn Tấn Lợi"
-                }
+            // Staff mapping from old app (phan_tich_to_may.py)
+            const staffMap: Record<number, string> = {
+                // Tổ 1
+                11: "Lê Trung Quốc", 12: "Vũ Hoàng Quốc Việt", 13: "Lê Hồng Tuấn", 14: "Bùi Xuân Hoàng",
+                15: "Lương Văn Hùng", 16: "Huỳnh Kim Luân", 17: "Trần Hiệp Hòa", 18: "Nguyễn Thanh Hải",
+                // Tổ 2
+                21: "Trần Văn Đức", 22: "Võ Viết Trang", 23: "Trần Quang Phương", 24: "Trầm Tấn Hùng",
+                25: "Phạm Văn Có", 26: "Lê Tuân", 27: "Lê Tuấn Kiệt", 28: "Phùng Trung Tín",
+                // Tổ 3
+                31: "Võ Trọng Sĩ", 32: "Phạm Văn Mai", 33: "Đỗ Lê Anh Tú", 34: "Nguyễn Vĩnh Bảo Kh",
+                35: "Nguyễn Việt Toàn Nhân", 36: "Trương Trọng Nhân", 37: "Đặng Anh Phương",
+                // Tổ 4
+                41: "Trần Quốc Tuấn", 42: "Vũ Hoàng", 43: "Dương Quốc Thông", 44: "Huỳnh Ngọc Binh",
+                45: "Hoàng Anh Vũ", 46: "Phan Thành Tín", 47: "Nguyễn Tấn Lợi"
+            }
 
-                processedTo = toData.map((item: any) => {
-                    const totalRevenue = item.TotalRevenue || 0
-                    const collectedRevenue = item.TotalRevenue ? item.TotalRevenue * (0.7 + Math.random() * 0.1) : 0
-                    const percent = totalRevenue > 0 ? (collectedRevenue / totalRevenue) * 100 : 0
-                    
-                    // Use staffMap (priority) or fallback to DB data
-                    let displayName = staffMap[item.May] || item.StaffName || "Không xác định"
+            // Always map by Machine (May), even if "All" is selected, to match Legacy App
+            processedTo = toData.map((item: any) => {
+                const totalRevenue = item.TotalRevenue || 0
+                const collectedRevenue = item.CollectedRevenue || 0 
+                const percent = totalRevenue > 0 ? (collectedRevenue / totalRevenue) * 100 : 0
+                
+                // Use staffMap (priority) or fallback to DB data
+                let displayName = staffMap[item.May] || item.StaffName || "Không xác định"
 
-                    return {
-                        name: `${item.May}`,
-                        originalName: item.May,
-                        staffName: displayName,
-                        count: item.RecordCount,
-                        consumption: item.TotalConsumption,
-                        totalRevenue: totalRevenue,
-                        collectedCount: Math.floor(item.RecordCount * (0.7 + Math.random() * 0.1)),
-                        collectedRevenue: collectedRevenue,
-                        percent: percent
-                    }
-                })
-            } else {
-                 processedTo = toData.map((item: any) => ({
-                    name: `Tổ ${item.To}`,
-                    originalName: `Tổ ${item.To}`,
+                return {
+                    name: `${item.May}`,
+                    originalName: item.May,
+                    staffName: displayName,
                     count: item.RecordCount,
                     consumption: item.TotalConsumption,
-                    totalRevenue: 0, 
-                    collectedCount: 0,
-                    collectedRevenue: 0,
-                    percent: 0
-                }))
-                .sort((a, b) => a.name.localeCompare(b.name))
-            }
+                    totalRevenue: totalRevenue,
+                    collectedCount: item.CollectedCount || 0,
+                    collectedRevenue: collectedRevenue,
+                    percent: percent
+                }
+            })
+
+            // Sort by May (numeric)
+            processedTo.sort((a, b) => Number(a.originalName) - Number(b.originalName))
 
             setChartDataTo(processedTo)
 
@@ -138,7 +128,7 @@ export default function ReadingAnalysis() {
             // Request specific columns for Detail View
             const columns = ["DanhBa", "SoNhaMoi", "Duong", "TenKH", "GB", "Ky", "Nam", "Dot", "TongTien"]
             const data = await getReadingData(filters, columns)
-            setDetailedReadings(data)
+            setDetailedReadings(Array.isArray(data) ? data : [])
         } catch (error) {
             console.error("Failed to load details", error)
         } finally {
@@ -287,59 +277,48 @@ export default function ReadingAnalysis() {
                             <table className="w-full text-sm text-left border-collapse">
                                 <thead className="bg-gray-100 uppercase text-xs font-bold text-gray-700">
                                     <tr>
-                                        {selectedTo !== "Tất cả" && <th className="px-4 py-3 border-b border-gray-300 w-10 text-center">Xem</th>}
-                                        <th className="px-4 py-3 border-b border-gray-300">{selectedTo === 'Tất cả' ? 'Tổ' : 'May'}</th>
-                                        {selectedTo !== "Tất cả" && <th className="px-4 py-3 border-b border-gray-300">Tên Nhân Viên</th>}
+                                        <th className="px-4 py-3 border-b border-gray-300 w-10 text-center">Xem</th>
+                                        <th className="px-4 py-3 border-b border-gray-300">Máy</th>
+                                        <th className="px-4 py-3 border-b border-gray-300">Tên Nhân Viên</th>
                                         <th className="px-4 py-3 border-b border-gray-300 text-right">SL Bản Ghi</th>
-                                        {selectedTo !== "Tất cả" && (
-                                            <>
-                                                <th className="px-4 py-3 border-b border-gray-300 text-right">Tổng Phát Sinh</th>
-                                                <th className="px-4 py-3 border-b border-gray-300 text-right">SL Thu Được</th>
-                                                <th className="px-4 py-3 border-b border-gray-300 text-right">Thực Thu</th>
-                                                <th className="px-4 py-3 border-b border-gray-300 w-48">% Đạt</th>
-                                            </>
-                                        )}
-                                         {selectedTo === "Tất cả" && <th className="px-4 py-3 border-b border-gray-300 text-right">Tổng Sản Lượng (m3)</th>}
+                                        <th className="px-4 py-3 border-b border-gray-300 text-right">Tổng Phát Sinh</th>
+                                        <th className="px-4 py-3 border-b border-gray-300 text-right">SL Thu Được</th>
+                                        <th className="px-4 py-3 border-b border-gray-300 text-right">Thực Thu</th>
+                                        <th className="px-4 py-3 border-b border-gray-300 w-48">% Đạt</th>
+                                        <th className="px-4 py-3 border-b border-gray-300 text-right">Sản Lượng (m3)</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {chartDataTo.length > 0 ? (
                                         chartDataTo.map((row, idx) => (
                                             <tr key={idx} className={`hover:bg-blue-50 transition-colors ${selectedMayDetail === row.originalName ? 'bg-blue-100' : 'bg-white'}`}>
-                                                {selectedTo !== "Tất cả" && (
-                                                    <td className="px-4 py-3 text-center">
-                                                        <input 
-                                                            type="checkbox" 
-                                                            checked={selectedMayDetail === String(row.originalName)}
-                                                            onChange={() => handleViewDetails(String(row.originalName))}
-                                                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer" 
-                                                        />
-                                                    </td>
-                                                )}
+                                                <td className="px-4 py-3 text-center">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={selectedMayDetail === String(row.originalName)}
+                                                        onChange={() => handleViewDetails(String(row.originalName))}
+                                                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer" 
+                                                    />
+                                                </td>
                                                 <td className="px-4 py-3 font-bold text-gray-900">{row.originalName}</td>
-                                                {selectedTo !== "Tất cả" && <td className="px-4 py-3 text-gray-600">{row.staffName}</td>}
+                                                <td className="px-4 py-3 text-gray-600">{row.staffName}</td>
                                                 <td className="px-4 py-3 text-right font-medium text-gray-900">{formatNumber(row.count)}</td>
                                                 
-                                                {selectedTo !== "Tất cả" && (
-                                                    <>
-                                                        <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(row.totalRevenue).replace('₫', '')}</td>
-                                                        <td className="px-4 py-3 text-right font-medium text-gray-900">{formatNumber(row.collectedCount)}</td>
-                                                        <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(row.collectedRevenue).replace('₫', '')}</td>
-                                                        <td className="px-4 py-3 align-middle">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden border border-gray-300">
-                                                                    <div 
-                                                                        className="bg-red-500 h-2.5 rounded-full" 
-                                                                        style={{ width: `${Math.min(row.percent, 100)}%` }}
-                                                                    ></div>
-                                                                </div>
-                                                                <span className="text-xs font-bold text-gray-700 w-10 text-right">{row.percent.toFixed(1)}%</span>
-                                                            </div>
-                                                        </td>
-                                                    </>
-                                                )}
-
-                                                {selectedTo === "Tất cả" && <td className="px-4 py-3 text-right font-medium text-gray-900">{formatNumber(row.consumption)}</td>}
+                                                <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(row.totalRevenue).replace('₫', '')}</td>
+                                                <td className="px-4 py-3 text-right font-medium text-gray-900">{formatNumber(row.collectedCount)}</td>
+                                                <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(row.collectedRevenue).replace('₫', '')}</td>
+                                                <td className="px-4 py-3 align-middle">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden border border-gray-300">
+                                                            <div 
+                                                                className="bg-red-500 h-2.5 rounded-full" 
+                                                                style={{ width: `${Math.min(row.percent, 100)}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="text-xs font-bold text-gray-700 w-10 text-right">{row.percent.toFixed(1)}%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-right font-medium text-gray-900">{formatNumber(row.consumption)}</td>
                                             </tr>
                                         ))
                                     ) : (

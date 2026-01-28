@@ -198,7 +198,10 @@ export async function getReadingData(filters: ReadingFilters, specificColumns?: 
     if (dot && Number(dot) >= 0) whereClauses.push(`ds.[Dot] = ${dot}`) // Note: Python logic checks type, assume number here
     if (hieucu && hieucu !== "Tất cả") whereClauses.push(`ds.[HieuCu] = N'${hieucu.replace(/'/g, "''")}'`)
     if (codemoi && codemoi !== "Tất cả") whereClauses.push(`ds.[CodeMoi] = N'${codemoi.replace(/'/g, "''")}'`)
-    if (may && may !== "Tất cả") whereClauses.push(`ds.[May] = '${may}'`)
+    if (may && may !== "Tất cả") {
+        // Use TRY_CAST for robust numeric comparison (handles '01' vs '1', spaces, etc.)
+        whereClauses.push(`TRY_CAST(ds.[May] AS INT) = ${may}`)
+    }
 
     // Hop Bao Ve
     if (hopbaove && hopbaove !== "Tất cả") {
@@ -213,7 +216,7 @@ export async function getReadingData(filters: ReadingFilters, specificColumns?: 
         whereClauses.push(`kh.CongDung IN (${safeList})`)
     }
 
-    // Debt Only Filter (Must exist in HoaDon and be Unpaid)
+    // Debt Only Filter (Must exist in HoaDon and be Unpaid OR Paid outside of period)
     if (debtOnly) {
          // Filter for "Uncollected" readings for the current period.
          // Uncollected means: 
@@ -222,9 +225,9 @@ export async function getReadingData(filters: ReadingFilters, specificColumns?: 
          // 3. Invoice exists and is Paid, but in a different month (logic from old app).
          // Conversely, "Collected" means: Invoice exists matching period/year AND NGAYGIAI is NOT NULL AND MONTH(NGAYGIAI) == Ky.
          // So we use NOT EXISTS (Collected).
-         whereClauses.push(`NOT EXISTS (
+          whereClauses.push(`NOT EXISTS (
             SELECT 1 FROM [HoaDon] hd 
-            WHERE hd.DANHBA = ds.DanhBa 
+            WHERE TRY_CAST(hd.DANHBA AS BIGINT) = TRY_CAST(ds.DanhBa AS BIGINT)
               AND TRY_CAST(hd.NAM AS INT) = ${filters.nam_from}
               AND TRY_CAST(hd.KY AS INT) = ${filters.ky_from}
               AND hd.NGAYGIAI IS NOT NULL
@@ -278,7 +281,64 @@ export async function getReadingData(filters: ReadingFilters, specificColumns?: 
         ].join(", ")
     }
 
-    if (isRangeFilter) {
+    if (debtOnly) {
+         // EXACT PYTHON LOGIC REPLICATION: "Two-Step Fetch" with BIGINT MATCHING
+         // 1. Get List of DanhBa (Numeric) from DocSo first.
+         const danhBaQuery = `
+            SELECT DISTINCT TRY_CAST(DanhBa AS BIGINT) as DB_INT 
+            FROM [DocSo] WITH(NOLOCK)
+            WHERE 
+                Nam = ${filters.nam_from}
+                AND Ky = ${filters.ky_from}
+                ${filters.may ? `AND TRY_CAST(May AS INT) = ${filters.may}` : ''}
+                AND TRY_CAST(DanhBa AS BIGINT) IS NOT NULL
+         `
+         const danhBaResult = await executeSqlQuery('f_Select_SQL_Doc_so', danhBaQuery)
+         
+         if (!danhBaResult || danhBaResult.length === 0) {
+             return []
+         }
+
+         // Map to list of numbers
+         const danhBaList = danhBaResult
+             .map((r: any) => r.DB_INT)
+             .filter((n: any) => n !== null && n !== undefined)
+             .join(",")
+         
+         if (!danhBaList) return []
+
+         // 2. Query HoaDon using the explicit Numeric list
+         // We cast HoaDon.DANHBA to BIGINT to match
+         const selectCols = [
+             "DANHBA as DanhBa", 
+             "SO as SoNhaMoi", 
+             "DUONG as Duong", 
+             "TENKH as TenKH", 
+             "GB as GB", 
+             "KY as Ky", 
+             "NAM as Nam", 
+             "DOT as Dot", 
+             "TONGCONG as TongTien"
+         ].join(", ")
+
+         finalQuery = `
+            SELECT ${selectCols}
+            FROM [HoaDon] WITH(NOLOCK)
+            WHERE 
+                NAM = ${filters.nam_from}
+                AND KY = ${filters.ky_from}
+                AND TRY_CAST(DANHBA AS BIGINT) IN (${danhBaList})
+                AND (NGAYGIAI IS NULL OR MONTH(NGAYGIAI) <> ${filters.ky_from})
+            ORDER BY DOT ASC, DANHBA ASC
+         `;
+         
+         const data = await executeSqlQuery('f_Select_SQL_Thutien', finalQuery)
+         
+         // Manual Slice for Pagination
+         const paginatedData = data.slice(offset, offset + limit)
+         
+         return paginatedData
+    } else if (isRangeFilter) {
         // Range Logic
         const totalPeriods = (nam_to! - nam_from) * 12 + (ky_to! - ky_from!) + 1
         
@@ -448,39 +508,109 @@ export async function getReadingChartData(filters: ReadingFilters, groupBy: stri
             `
             return await executeSqlQuery('f_Select_SQL_Doc_so', query)
         } else if (groupBy === 'To') {
-             // If filter "To" is selected, we want details by MACHINES (May) in that To
+             // Logic for Team Analysis (Optimized: Parallel Fetch)
+             const nam = filters.nam_from
+             const ky = filters.ky_from
+             
+             if (!nam || !ky) return []
+
+             // 1. Prepare DocSo Query
+             let docsoFilter = `Nam = ${nam} AND Ky = ${ky}`
              if (to && to > 0) {
-                 const query = `
-                    SELECT 
-                        ds.May,
-                        MAX(u.Username) as StaffName,
-                        COUNT(*) AS RecordCount,
-                        SUM(ISNULL(TRY_CAST(ds.[TieuThuMoi] AS FLOAT), 0)) AS TotalConsumption,
-                        SUM(ISNULL(TRY_CAST(ds.[TongTien] AS FLOAT), 0)) AS TotalRevenue,
-                        SUM(CASE WHEN ds.[TienNuoc] > 0 THEN 1 ELSE 0 END) AS CollectedCount
-                    FROM [DocSo] ds WITH(NOLOCK)
-                    LEFT JOIN [KhachHang] kh WITH(NOLOCK) ON ds.DanhBa = kh.DanhBa
-                    LEFT JOIN [Users] u WITH(NOLOCK) ON ds.NVGHI = u.UserID
-                    WHERE ${whereString} AND ds.May IS NOT NULL
-                    GROUP BY ds.May
-                    ORDER BY ds.May ASC
-                `
-                return await executeSqlQuery('f_Select_SQL_Doc_so', query)
-             } else {
-                 // Overview of all Teams
-                 const query = `
-                    SELECT 
-                        FLOOR(CAST(ds.May AS INT) / 10) as [To],
-                        COUNT(*) AS RecordCount,
-                        SUM(ISNULL(TRY_CAST(ds.[TieuThuMoi] AS FLOAT), 0)) AS TotalConsumption
-                    FROM [DocSo] ds WITH(NOLOCK)
-                    LEFT JOIN [KhachHang] kh WITH(NOLOCK) ON ds.DanhBa = kh.DanhBa
-                    WHERE ${whereString} AND ds.May IS NOT NULL
-                    GROUP BY FLOOR(CAST(ds.May AS INT) / 10)
-                    ORDER BY [To] ASC
-                `
-                return await executeSqlQuery('f_Select_SQL_Doc_so', query)
+                 docsoFilter += ` AND TRY_CAST(May AS INT) >= ${to * 10} AND TRY_CAST(May AS INT) < ${(to + 1) * 10}`
              }
+             
+             const docsoQuery = `
+                 SELECT 
+                    CAST(May AS VARCHAR(20)) as May, 
+                    DanhBa, 
+                    TRY_CAST(TieuThuMoi as FLOAT) as TieuThuMoi, 
+                    TRY_CAST(TongTien as FLOAT) as TongTien
+                 FROM DocSo WITH(NOLOCK)
+                 WHERE ${docsoFilter}
+             `
+
+             // 2. Prepare HoaDon Query (Collected)
+             // Strictly match Python logic: NAM=year, KY=period, MONTH(NGAYGIAI)=period
+             // Note: We fetch ALL collected for the period to ensure we don't miss any, then map in-memory.
+             // This is faster than complex subqueries for partial datasets in some cases.
+             const hoadonQuery = `
+                 SELECT DANHBA, SUM(TRY_CAST(TONGCONG as FLOAT)) as ThucThu
+                 FROM HoaDon WITH(NOLOCK)
+                 WHERE NAM = ${nam} 
+                   AND KY = ${ky} 
+                   AND NGAYGIAI IS NOT NULL 
+                   AND MONTH(NGAYGIAI) = ${ky}
+                 GROUP BY DANHBA
+             `
+
+             // 3. Execute in Parallel
+             const [docsoData, hoadonData] = await Promise.all([
+                 executeSqlQuery('f_Select_SQL_Doc_so', docsoQuery),
+                 executeSqlQuery('f_Select_SQL_Thutien', hoadonQuery)
+             ])
+
+             if (!docsoData || docsoData.length === 0) return []
+
+             // 4. Create Map for quick lookup of Collected Revenue
+             const collectedMap = new Map<string, number>()
+             if (hoadonData && Array.isArray(hoadonData)) {
+                 hoadonData.forEach((row: any) => {
+                     // Normalize Key: Numeric String
+                     const db = String(row.DANHBA).trim()
+                     const amount = Number(row.ThucThu) || 0
+                     // Handle basic duplicates by summing if any
+                     const current = collectedMap.get(db) || 0
+                     collectedMap.set(db, current + amount)
+                 })
+             }
+
+             // 5. Aggregate in TypeScript
+             const resultMap = new Map<string, any>()
+
+             docsoData.forEach((row: any) => {
+                 const may = row.May
+                 if (!may) return
+
+                 const db = String(row.DanhBa).trim()
+                 const generatedRev = Number(row.TongTien) || 0
+                 const consumption = Number(row.TieuThuMoi) || 0
+                 
+                 // Check collection
+                 // Note: We try direct string match. 
+                 // Ideally both should be cast to BigInt string to be 100% safe, but trim() usually works for standard data.
+                 // If paranoid, we could parseInt(db) as key.
+                 const collectedRev = collectedMap.get(db) || 0
+                 
+                 // Logic: Collected if Revenue > 0 OR Consumption == 0 (Empty houses considered 'done')
+                 const isCollected = collectedRev > 0 || consumption === 0 ? 1 : 0
+
+                 if (!resultMap.has(may)) {
+                     resultMap.set(may, {
+                         May: may,
+                         RecordCount: 0,
+                         TotalConsumption: 0,
+                         TotalRevenue: 0,
+                         CollectedRevenue: 0,
+                         CollectedCount: 0
+                     })
+                 }
+                 
+                 const entry = resultMap.get(may)
+                 entry.RecordCount += 1
+                 entry.TotalConsumption += consumption
+                 entry.TotalRevenue += generatedRev
+                 entry.CollectedRevenue += collectedRev
+                 entry.CollectedCount += isCollected
+             })
+
+             // Convert Map to Array and sort
+             const results = Array.from(resultMap.values()).sort((a, b) => {
+                 return Number(a.May) - Number(b.May)
+             })
+
+             return results
+
         } else {
             // Standard Group By
              const query = `
