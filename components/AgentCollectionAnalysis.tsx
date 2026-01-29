@@ -156,7 +156,7 @@ export default function AgentCollectionAnalysis() {
                             <BarChart data={agentData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                 <XAxis type="number" hide />
-                                <YAxis dataKey="NganHang" type="category" width={80} tick={{fontSize: 12}} />
+                                <YAxis dataKey="NganHang" type="category" width={120} tick={{fontSize: 12}} interval={0} />
                                 <Tooltip formatter={(val: any) => formatCurrency(val)} />
                                 <Bar dataKey="TongCong" fill="#1e90ff" radius={[0, 4, 4, 0]} barSize={20} />
                             </BarChart>

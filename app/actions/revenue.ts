@@ -38,7 +38,7 @@ export async function getYearlyRevenue(startYear: number, endYear: number, dateU
       WITH TermA_CTE AS (
           SELECT 
               hd_a.NAM AS Nam_A, 
-              SUM(hd_a.TONGCONG_BD) AS Sum_A_tongcong_bd 
+              SUM(hd_a.GIABAN_BD) AS Sum_A_giaban_bd 
           FROM HoaDon hd_a 
           WHERE hd_a.NAM >= ${startYear} AND hd_a.NAM <= ${endYear}
           AND (
@@ -46,38 +46,38 @@ export async function getYearlyRevenue(startYear: number, endYear: number, dateU
               OR YEAR(hd_a.NGAYGIAI) <> hd_a.NAM 
               OR hd_a.NGAYGIAI IS NULL
           )
-          AND hd_a.TONGCONG_BD IS NOT NULL 
+          AND hd_a.GIABAN_BD IS NOT NULL 
           GROUP BY hd_a.NAM
       ),
       TermB_CTE AS (
           SELECT 
               hd_b.NAM AS Nam_B, 
-              SUM(hd_b.TONGCONG_BD - hd_b.TONGCONG) AS Sum_B_adjustment 
+              SUM(hd_b.GIABAN_BD - hd_b.GIABAN) AS Sum_B_adjustment 
           FROM HoaDon hd_b 
           WHERE hd_b.NAM >= ${startYear} AND hd_b.NAM <= ${endYear} 
           AND YEAR(hd_b.NGAYGIAI) = hd_b.NAM 
           AND hd_b.NGAYGIAI IS NOT NULL 
           AND hd_b.NGAYGIAI <= '${endOfDayStr}' 
-          AND hd_b.TONGCONG_BD IS NOT NULL 
-          AND hd_b.TONGCONG IS NOT NULL 
+          AND hd_b.GIABAN_BD IS NOT NULL 
+          AND hd_b.GIABAN IS NOT NULL 
           GROUP BY hd_b.NAM
       ),
       ThucThu_CTE AS (
           SELECT 
               t.NAM AS Nam_TT, 
-              SUM(t.TONGCONG) AS ActualThucThu 
+              SUM(t.GIABAN) AS ActualThucThu 
           FROM HoaDon t 
           WHERE t.NAM >= ${startYear} AND t.NAM <= ${endYear} 
           AND t.NGAYGIAI IS NOT NULL 
           AND t.NGAYGIAI <= '${endOfDayStr}' 
           AND t.NAM = YEAR(t.NGAYGIAI) 
           AND (t.NV_GIAI <> 'NKD' OR t.NV_GIAI IS NULL) 
-          AND t.TONGCONG IS NOT NULL 
+          AND t.GIABAN IS NOT NULL 
           GROUP BY t.NAM
       )
       SELECT 
           a.Nam_A AS Nam, 
-          (ISNULL(a.Sum_A_tongcong_bd, 0) - ISNULL(b.Sum_B_adjustment, 0)) AS TongDoanhThu, 
+          (ISNULL(a.Sum_A_giaban_bd, 0) - ISNULL(b.Sum_B_adjustment, 0)) AS TongDoanhThu, 
           ISNULL(tt.ActualThucThu, 0) AS TongThucThu 
       FROM TermA_CTE a 
       LEFT JOIN ThucThu_CTE tt ON a.Nam_A = tt.Nam_TT 
@@ -111,18 +111,18 @@ export async function getMonthlyRevenue(year: number): Promise<MonthlyRevenue[]>
     try {
         const query = `
             WITH DoanhThuTheoKy AS (
-                SELECT KY AS KyDT, SUM(TONGCONG_BD) AS DoanhThuKyCalc 
+                SELECT KY AS KyDT, SUM(GIABAN_BD) AS DoanhThuKyCalc 
                 FROM HoaDon 
-                WHERE NAM = ${year} AND KY IS NOT NULL AND TONGCONG_BD IS NOT NULL 
+                WHERE NAM = ${year} AND KY IS NOT NULL AND GIABAN_BD IS NOT NULL 
                 GROUP BY KY
             ), 
             ThucThuTheoThang AS (
-                SELECT MONTH(NGAYGIAI) AS ThangTT, SUM(TONGCONG) AS ThucThuThangCalc 
+                SELECT MONTH(NGAYGIAI) AS ThangTT, SUM(GIABAN) AS ThucThuThangCalc 
                 FROM HoaDon 
                 WHERE NAM = YEAR(NGAYGIAI) 
                 AND KY = MONTH(NGAYGIAI) 
                 AND YEAR(NGAYGIAI) = ${year} 
-                AND TONGCONG IS NOT NULL 
+                AND GIABAN IS NOT NULL 
                 GROUP BY MONTH(NGAYGIAI)
             )
             SELECT 
@@ -170,9 +170,9 @@ export async function getDailyRevenue(year: number, ky: number): Promise<DailyRe
             DailyAggregates AS (
                 SELECT CAST(NGAYGIAI AS DATE) AS NgayGiaiAgg, 
                 COUNT(DISTINCT SOHOADON) AS TotalInvoicesForDate, 
-                SUM(TONGCONG) AS TotalCongForDate 
+                SUM(GIABAN) AS TotalCongForDate 
                 FROM HoaDon 
-                WHERE TONGCONG IS NOT NULL AND SOHOADON IS NOT NULL 
+                WHERE GIABAN IS NOT NULL AND SOHOADON IS NOT NULL 
                 GROUP BY CAST(NGAYGIAI AS DATE)
             )
             SELECT 

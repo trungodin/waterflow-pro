@@ -272,16 +272,49 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {/* KPI Cards for Revenue */}
-             <MetricCard 
-                title="Doanh Thu"
-                value={Number(stats.DoanhThu)}
-                prevValue={Number(stats.DoanhThu_Prev)}
-                type='currency'
-                gradientColor='indigo'
-                subValueLabel='Tiền nước'
-                subValue={Number(stats.DoanhThu_GB)}
-                iconPath={<svg className="w-32 h-32 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
-             />
+             {/* Custom Card for DOANH THU (With Avg Price) */}
+             <div className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-6 shadow-lg shadow-indigo-200 hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
+                 <div className="relative z-10 text-white">
+                     <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-1">Doanh Thu</p>
+                     <h3 className="text-2xl font-black mb-2 tracking-tight">
+                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(stats.DoanhThu))}
+                     </h3>
+                     
+                     {/* Trend / Prev Value */}
+                     <div className="flex items-center gap-2 mb-4">
+                        <span className={`text-xs px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm font-bold flex items-center gap-1`}>
+                            {Number(stats.DoanhThu) >= Number(stats.DoanhThu_Prev) ? '▲' : '▼'} 
+                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.abs(Number(stats.DoanhThu) - Number(stats.DoanhThu_Prev)))}
+                        </span>
+                     </div>
+
+                     <div className="grid grid-cols-1 gap-2 mt-4 pt-4 border-t border-white/20">
+                         {/* Water Money */}
+                         <div className="flex justify-between items-center">
+                             <span className="text-xs font-medium text-white/90">Tiền nước</span>
+                             <span className="text-sm font-bold text-white">
+                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(stats.DoanhThu_GB))}
+                             </span>
+                         </div>
+                         
+                         {/* Average Price */}
+                         <div className="flex justify-between items-center bg-white/10 rounded px-2 py-1 -mx-2">
+                             <span className="text-xs font-medium text-white/90">Giá bán BQ</span>
+                             {/* Formula: DoanhThu_GB / SanLuong_Year */}
+                             <span className="text-sm font-bold text-yellow-300">
+                                {stats.SanLuong_Year > 0 
+                                    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(stats.DoanhThu_GB) / Number(stats.SanLuong_Year)).replace('₫', '') + ' đ/m³'
+                                    : '0,00 đ/m³'}
+                             </span>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 {/* Icon Background */}
+                 <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity duration-500 text-white">
+                    <svg className="w-32 h-32 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                 </div>
+             </div>
              <MetricCard 
                 title="Thực thu"
                 value={Number(stats.ThucThu)}

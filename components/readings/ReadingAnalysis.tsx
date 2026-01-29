@@ -376,7 +376,7 @@ export default function ReadingAnalysis() {
                                             {detailedReadings.length > 0 ? (
                                                 detailedReadings.map((reading, idx) => (
                                                     <tr key={idx} className="hover:bg-gray-800 transition-colors">
-                                                        <td className="px-4 py-2 border border-gray-700 font-mono text-white">{reading.DanhBa}</td>
+                                                        <td className="px-4 py-2 border border-gray-700 font-mono text-white">{String(reading.DanhBa).padStart(11, '0')}</td>
                                                         <td className="px-4 py-2 border border-gray-700">{reading.SoNhaMoi}</td>
                                                         <td className="px-4 py-2 border border-gray-700">{reading.Duong}</td>
                                                         <td className="px-4 py-2 border border-gray-700 text-white font-medium">{reading.TenKH}</td>
