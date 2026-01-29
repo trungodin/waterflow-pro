@@ -58,7 +58,7 @@ export default function MetricCard({
     }
 
     return (
-        <div className={`bg-gradient-to-br ${colorMap[gradientColor]} rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden group flex flex-col justify-between h-full`}>
+        <div className={`bg-gradient-to-br ${colorMap[gradientColor]} rounded-2xl p-6 shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group flex flex-col justify-between h-full`}>
             {/* Main Content */}
             <div className="relative z-10 text-white">
                 <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-2">{title}</p>

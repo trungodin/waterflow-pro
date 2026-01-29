@@ -273,7 +273,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {/* KPI Cards for Revenue */}
              {/* Custom Card for DOANH THU (With Avg Price) */}
-             <div className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-6 shadow-lg shadow-indigo-200 hover:shadow-xl transition-all duration-300 relative overflow-hidden group">
+             <div className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-6 shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                  <div className="relative z-10 text-white">
                      <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-1">Doanh Thu</p>
                      <h3 className="text-2xl font-black mb-2 tracking-tight">
@@ -336,7 +336,7 @@ export default function Dashboard() {
              />
 
             {/* % Dat - Custom Card Logic (Complexity here warrants keeping custom initially) */}
-            <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 shadow-lg shadow-purple-200 hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
+            <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 shadow-lg shadow-purple-200 hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
                <div className="relative z-10 w-full text-white">
                  <dt className="text-xs font-bold text-white/80 uppercase tracking-wider mb-4">% Hoàn thành (Thu tiền)</dt>
                  
