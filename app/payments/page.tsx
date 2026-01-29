@@ -138,28 +138,28 @@ export default function PaymentsPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 mb-6 inline-flex flex-wrap gap-2">
           <button
             onClick={() => setActiveTab('doanh_thu')}
-            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'doanh_thu'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-gray-600 hover:bg-gray-100'
-              }`}
+            className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'doanh_thu'
+              ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+              } active:shadow-none active:translate-y-[1px]`}
           >
             💰 Doanh Thu
           </button>
           <button
             onClick={() => setActiveTab('dong_mo_nuoc')}
-            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'dong_mo_nuoc'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-gray-600 hover:bg-gray-100'
-              }`}
+            className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'dong_mo_nuoc'
+              ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+              } active:shadow-none active:translate-y-[1px]`}
           >
             💧 Đóng Mở Nước
           </button>
           <button
             onClick={() => setActiveTab('tra_cuu_dmn')}
-            className={`px-6 py-2.5 rounded-lg font-medium transition-all ${activeTab === 'tra_cuu_dmn'
-              ? 'bg-blue-600 text-white shadow-md'
-              : 'text-gray-600 hover:bg-gray-100'
-              }`}
+            className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'tra_cuu_dmn'
+              ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+              } active:shadow-none active:translate-y-[1px]`}
           >
             🔍 Tra Cứu ĐMN
           </button>
@@ -183,10 +183,10 @@ export default function PaymentsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setSubTabDoanhThu(tab.id)}
-                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors ${subTabDoanhThu === tab.id
-                      ? 'bg-blue-50 text-blue-700'
+                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all ${subTabDoanhThu === tab.id
+                      ? 'bg-blue-100 text-blue-700 shadow-[0_2px_0_rgb(191,219,254)] translate-y-[-1px]'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
+                      } active:shadow-none active:translate-y-[1px]`}
                   >
                     {tab.label}
                   </button>
@@ -223,10 +223,10 @@ export default function PaymentsPage() {
                   <button
                     key={tab.id}
                     onClick={() => setSubTabDMN(tab.id)}
-                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors ${subTabDMN === tab.id
-                      ? 'bg-blue-50 text-blue-700'
+                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all ${subTabDMN === tab.id
+                      ? 'bg-blue-100 text-blue-700 shadow-[0_2px_0_rgb(191,219,254)] translate-y-[-1px]'
                       : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
+                      } active:shadow-none active:translate-y-[1px]`}
                   >
                     {tab.label}
                   </button>
@@ -283,7 +283,7 @@ export default function PaymentsPage() {
                   <button
                     onClick={fetchData}
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium whitespace-nowrap disabled:opacity-70 flex items-center gap-2"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-bold whitespace-nowrap disabled:opacity-70 flex items-center gap-2 shadow-[0_3px_0_rgb(29,78,216)] active:shadow-none active:translate-y-[3px] transition-all"
                   >
                     {loading ? 'Đang tải...' : '🔄 Làm mới'}
                   </button>
