@@ -663,4 +663,140 @@ export async function getReadingYearlyAnalysis(): Promise<YearlyAnalysisData[]> 
         console.error("Error fetching yearly analysis:", error)
         return []
     }
+    }
+// 5. Fetch Yearly Comparison (Ky breakdown)
+export async function getReadingYearlyComparison(year1: number, year2: number) {
+    try {
+        const query = `
+            SELECT 
+                Ky,
+                SUM(CASE WHEN Nam = ${year1} THEN ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0) ELSE 0 END) as ConsumptionYear1,
+                SUM(CASE WHEN Nam = ${year2} THEN ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0) ELSE 0 END) as ConsumptionYear2
+            FROM DocSo WITH(NOLOCK)
+            WHERE Nam IN (${year1}, ${year2})
+            GROUP BY Ky
+            ORDER BY TRY_CAST(Ky AS INT) ASC
+        `
+        const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
+        if (!data || !Array.isArray(data)) return []
+        
+        return data.map((row: any) => ({
+            Ky: Number(row.Ky),
+            Year1: Number(row.ConsumptionYear1) || 0,
+            Year2: Number(row.ConsumptionYear2) || 0
+        }))
+
+    } catch (error) {
+        console.error("Error fetching yearly comparison:", error)
+        return []
+    }
+}
+
+// 6. Fetch Dot Comparison (For specific Year/Period)
+export async function getReadingDotComparison(year: number, ky: number) {
+    try {
+        const query = `
+            SELECT 
+                Dot,
+                SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) as Consumption
+            FROM DocSo WITH(NOLOCK)
+            WHERE Nam = ${year} AND Ky = ${ky}
+            GROUP BY Dot
+            ORDER BY TRY_CAST(Dot AS INT) ASC
+        `
+        const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
+        if (!data || !Array.isArray(data)) return []
+
+        return data.map((row: any) => ({
+            Dot: Number(row.Dot),
+            Consumption: Number(row.Consumption) || 0
+        }))
+    } catch (error) {
+        console.error("Error fetching dot comparison:", error)
+        return []
+    }
+}
+
+// 7. Fetch Dot Comparison (Two periods)
+export async function getReadingDotComparisonTwo(year1: number, ky1: number, year2: number, ky2: number) {
+    try {
+        const query = `
+            SELECT 
+                Dot,
+                SUM(CASE WHEN Nam = ${year1} AND Ky = ${ky1} THEN ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0) ELSE 0 END) as Val1,
+                SUM(CASE WHEN Nam = ${year2} AND Ky = ${ky2} THEN ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0) ELSE 0 END) as Val2
+            FROM DocSo WITH(NOLOCK)
+            WHERE (Nam = ${year1} AND Ky = ${ky1}) OR (Nam = ${year2} AND Ky = ${ky2})
+            GROUP BY Dot
+            ORDER BY TRY_CAST(Dot AS INT) ASC
+        `
+        const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
+        if (!data || !Array.isArray(data)) return []
+
+        return data.map((row: any) => ({
+            Dot: Number(row.Dot),
+            Val1: Number(row.Val1) || 0,
+            Val2: Number(row.Val2) || 0
+        }))
+    } catch (error) {
+        console.error("Error fetching dot comparison two:", error)
+        return []
+    }
+}
+
+
+// 8. Fetch GB Comparison (Two periods)
+export async function getReadingGBComparisonTwo(year1: number, ky1: number, year2: number, ky2: number) {
+    try {
+        const query = `
+            SELECT 
+                GB,
+                SUM(CASE WHEN Nam = ${year1} AND Ky = ${ky1} THEN ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0) ELSE 0 END) as Val1,
+                SUM(CASE WHEN Nam = ${year2} AND Ky = ${ky2} THEN ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0) ELSE 0 END) as Val2
+            FROM DocSo WITH(NOLOCK)
+            WHERE ((Nam = ${year1} AND Ky = ${ky1}) OR (Nam = ${year2} AND Ky = ${ky2}))
+              AND GB IS NOT NULL AND GB <> ''
+            GROUP BY GB
+            ORDER BY GB ASC
+        `
+        const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
+        if (!data || !Array.isArray(data)) return []
+
+        return data.map((row: any) => ({
+            GB: String(row.GB).trim(),
+            Val1: Number(row.Val1) || 0,
+            Val2: Number(row.Val2) || 0
+        }))
+    } catch (error) {
+        console.error("Error fetching GB comparison two:", error)
+        return []
+    }
+}
+
+// 9. Fetch CoCu Comparison (Two periods)
+export async function getReadingCoCuComparisonTwo(year1: number, ky1: number, year2: number, ky2: number) {
+    try {
+        const query = `
+            SELECT 
+                CoCu,
+                SUM(CASE WHEN Nam = ${year1} AND Ky = ${ky1} THEN ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0) ELSE 0 END) as Val1,
+                SUM(CASE WHEN Nam = ${year2} AND Ky = ${ky2} THEN ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0) ELSE 0 END) as Val2
+            FROM DocSo WITH(NOLOCK)
+            WHERE ((Nam = ${year1} AND Ky = ${ky1}) OR (Nam = ${year2} AND Ky = ${ky2}))
+              AND CoCu IS NOT NULL AND CoCu <> ''
+            GROUP BY CoCu
+            ORDER BY TRY_CAST(CoCu AS INT) ASC
+        `
+        const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
+        if (!data || !Array.isArray(data)) return []
+
+        return data.map((row: any) => ({
+            CoCu: String(row.CoCu).trim(),
+            Val1: Number(row.Val1) || 0,
+            Val2: Number(row.Val2) || 0
+        }))
+    } catch (error) {
+        console.error("Error fetching CoCu comparison two:", error)
+        return []
+    }
 }
