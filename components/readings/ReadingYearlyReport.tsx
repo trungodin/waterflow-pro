@@ -237,7 +237,49 @@ export default function ReadingYearlyReport() {
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                     <XAxis dataKey="Ky" label={{ value: 'Kỳ', position: 'insideBottomRight', offset: -5 }} />
                                     <YAxis tickFormatter={(val) => new Intl.NumberFormat('en-US', { notation: "compact" }).format(val)} />
-                                    <Tooltip formatter={(val: any) => formatNumber(val)} />
+                                    <Tooltip 
+                                        cursor={{fill: '#f3f4f6'}}
+                                        content={({ active, payload, label }) => {
+                                            if (active && payload && payload.length) {
+                                                const v1 = Number(payload[0]?.value || 0)
+                                                const v2 = Number(payload[1]?.value || 0)
+                                                const diff = v1 - v2
+                                                const percent = v2 > 0 ? (diff / v2) * 100 : 0
+                                                const color = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-500'
+                                                const icon = diff > 0 ? '▲' : diff < 0 ? '▼' : '−'
+
+                                                return (
+                                                    <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[200px]">
+                                                        <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Kỳ {label}</p>
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between items-center gap-2">
+                                                                <div className="flex items-center gap-1">
+                                                                    <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                                                                    <span className="text-xs text-blue-700 font-semibold">Năm {compYear1}:</span>
+                                                                </div>
+                                                                <span className="font-bold text-gray-800">{formatNumber(v1)}</span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center gap-2">
+                                                                <div className="flex items-center gap-1">
+                                                                    <div className="w-2 h-2 rounded-full bg-red-600"></div>
+                                                                    <span className="text-xs text-red-700 font-semibold">Năm {compYear2}:</span>
+                                                                </div>
+                                                                <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
+                                                            </div>
+                                                            <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
+                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="text-xs">{icon}</span>
+                                                                    <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            }
+                                            return null
+                                        }}
+                                    />
                                     <Legend />
                                     <Line type="monotone" dataKey="Year1" name={`Năm ${compYear1}`} stroke="#2563eb" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
                                     <Line type="monotone" dataKey="Year2" name={`Năm ${compYear2}`} stroke="#dc2626" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
@@ -300,8 +342,15 @@ export default function ReadingYearlyReport() {
                                         cursor={{fill: '#f3f4f6'}}
                                         content={({ active, payload, label }) => {
                                             if (active && payload && payload.length) {
+                                                const v1 = Number(payload[0]?.value || 0)
+                                                const v2 = Number(payload[1]?.value || 0)
+                                                const diff = v1 - v2
+                                                const percent = v2 > 0 ? (diff / v2) * 100 : 0
+                                                const color = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-500'
+                                                const icon = diff > 0 ? '▲' : diff < 0 ? '▼' : '−'
+
                                                 return (
-                                                    <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[150px]">
+                                                    <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[200px]">
                                                         <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Đợt {label}</p>
                                                         <div className="space-y-1">
                                                             <div className="flex justify-between items-center gap-2">
@@ -309,14 +358,21 @@ export default function ReadingYearlyReport() {
                                                                     <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
                                                                     <span className="text-xs text-indigo-700 font-semibold">Kỳ {dotPeriod1}/{dotYear1}:</span>
                                                                 </div>
-                                                                <span className="font-bold text-gray-800">{formatNumber(Number(payload[0]?.value || 0))}</span>
+                                                                <span className="font-bold text-gray-800">{formatNumber(v1)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center gap-2">
                                                                 <div className="flex items-center gap-1">
                                                                     <div className="w-2 h-2 rounded-full bg-pink-600"></div>
                                                                     <span className="text-xs text-pink-700 font-semibold">Kỳ {dotPeriod2}/{dotYear2}:</span>
                                                                 </div>
-                                                                <span className="font-bold text-gray-800">{formatNumber(Number(payload[1]?.value || 0))}</span>
+                                                                <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
+                                                            </div>
+                                                            <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
+                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="text-xs">{icon}</span>
+                                                                    <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -417,6 +473,13 @@ export default function ReadingYearlyReport() {
                                     cursor={{fill: '#f3f4f6'}}
                                     content={({ active, payload, label }) => {
                                         if (active && payload && payload.length) {
+                                            const v1 = Number(payload[0]?.value || 0)
+                                            const v2 = Number(payload[1]?.value || 0)
+                                            const diff = v1 - v2
+                                            const percent = v2 > 0 ? (diff / v2) * 100 : 0
+                                            const color = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-500'
+                                            const icon = diff > 0 ? '▲' : diff < 0 ? '▼' : '−'
+
                                             return (
                                                 <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[200px]">
                                                     <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Biểu Giá: {label}</p>
@@ -426,14 +489,21 @@ export default function ReadingYearlyReport() {
                                                                 <div className="w-2 h-2 rounded-full bg-teal-500"></div>
                                                                 <span className="text-xs text-teal-700 font-semibold">Kỳ {gbPeriod1}/{gbYear1}:</span>
                                                             </div>
-                                                            <span className="font-bold text-gray-800">{formatNumber(Number(payload[0]?.value || 0))}</span>
+                                                            <span className="font-bold text-gray-800">{formatNumber(v1)}</span>
                                                         </div>
                                                         <div className="flex justify-between items-center gap-2">
                                                             <div className="flex items-center gap-1">
                                                                 <div className="w-2 h-2 rounded-full bg-orange-500"></div>
                                                                 <span className="text-xs text-orange-700 font-semibold">Kỳ {gbPeriod2}/{gbYear2}:</span>
                                                             </div>
-                                                            <span className="font-bold text-gray-800">{formatNumber(Number(payload[1]?.value || 0))}</span>
+                                                            <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
+                                                        </div>
+                                                        <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
+                                                            <span className="text-xs">Chênh lệch:</span>
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="text-xs">{icon}</span>
+                                                                <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -500,6 +570,13 @@ export default function ReadingYearlyReport() {
                                     cursor={{fill: '#f3f4f6'}}
                                     content={({ active, payload, label }) => {
                                         if (active && payload && payload.length) {
+                                            const v1 = Number(payload[0]?.value || 0)
+                                            const v2 = Number(payload[1]?.value || 0)
+                                            const diff = v1 - v2
+                                            const percent = v2 > 0 ? (diff / v2) * 100 : 0
+                                            const color = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-500'
+                                            const icon = diff > 0 ? '▲' : diff < 0 ? '▼' : '−'
+
                                             return (
                                                 <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[200px]">
                                                     <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Cỡ ĐH: {label}</p>
@@ -509,14 +586,21 @@ export default function ReadingYearlyReport() {
                                                                 <div className="w-2 h-2 rounded-full bg-cyan-500"></div>
                                                                 <span className="text-xs text-cyan-700 font-semibold">Kỳ {cocuPeriod1}/{cocuYear1}:</span>
                                                             </div>
-                                                            <span className="font-bold text-gray-800">{formatNumber(Number(payload[0]?.value || 0))}</span>
+                                                            <span className="font-bold text-gray-800">{formatNumber(v1)}</span>
                                                         </div>
                                                         <div className="flex justify-between items-center gap-2">
                                                             <div className="flex items-center gap-1">
                                                                 <div className="w-2 h-2 rounded-full bg-amber-500"></div>
                                                                 <span className="text-xs text-amber-700 font-semibold">Kỳ {cocuPeriod2}/{cocuYear2}:</span>
                                                             </div>
-                                                            <span className="font-bold text-gray-800">{formatNumber(Number(payload[1]?.value || 0))}</span>
+                                                            <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
+                                                        </div>
+                                                        <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
+                                                            <span className="text-xs">Chênh lệch:</span>
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="text-xs">{icon}</span>
+                                                                <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>

@@ -14,7 +14,7 @@ export default function ReadingsPage() {
     const [activeFilters, setActiveFilters] = useState<ReadingFilters | null>(null)
     const [loading, setLoading] = useState(false)
     const [hasSearched, setHasSearched] = useState(false)
-    const [activeTab, setActiveTab] = useState<'detail' | 'team_analysis' | 'dot_analysis' | 'report'>('detail')
+    const [activeTab, setActiveTab] = useState<'detail' | 'team_analysis' | 'dot_analysis' | 'report'>('report')
 
     const handleSearch = async (filters: ReadingFilters) => {
         setLoading(true)
@@ -31,10 +31,10 @@ export default function ReadingsPage() {
     }
 
     const tabs = [
+        { id: 'report', label: '📊 Biểu Đồ Tổng Quan' },
         { id: 'detail', label: '📝 Tra Cứu Chi Tiết' },
         { id: 'team_analysis', label: '🏭 Phân Tích Theo Tổ Máy' },
         { id: 'dot_analysis', label: '🌊 Phân Tích Theo Đợt' },
-        { id: 'report', label: '📅 Báo Cáo Năm' },
     ]
 
     return (
