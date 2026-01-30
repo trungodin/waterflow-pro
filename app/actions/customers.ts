@@ -284,6 +284,11 @@ export async function getCustomerDetails(danhba: string): Promise<CustomerDetail
     
     const details: any = khResults[0]
     details.DanhBa = String(details.DanhBa).padStart(11, '0')
+    
+    // Normalize HopBaoVe
+    const rawHop = details.HopBaoVe
+    details.HopBaoVe = (rawHop === true || rawHop === 1 || rawHop === '1' || String(rawHop).toLowerCase() === 'true') ? 1 : 0
+    console.log('[getCustomerDetails] HopBaoVe normalized:', { raw: rawHop, normalized: details.HopBaoVe })
 
     // Map Reader Info
     details.TenNhanVienDoc = nvResults && nvResults.length > 0 ? nvResults[0].NhanVienID : 'N/A'
