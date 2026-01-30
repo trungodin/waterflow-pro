@@ -52,42 +52,42 @@ export default function DotTable({ data, ky, nam }: DotTableProps) {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left text-gray-600">
-                        <thead className="bg-gray-50 text-gray-700 font-medium border-b border-gray-200">
+                        <thead className="bg-blue-700 text-white font-bold border-b border-blue-800 shadow-md">
                             <tr>
-                                <th className="px-4 py-3 text-center w-16">Đợt</th>
-                                <th className="px-4 py-3 text-right">Số Lượng</th>
-                                <th className="px-4 py-3 text-right">Sản Lượng (m³)</th>
-                                <th className="px-4 py-3 text-right">Sản Lượng Năm Trước</th>
-                                <th className="px-4 py-3 text-right">Tăng/Giảm</th>
-                                <th className="px-4 py-3 text-right">Tiền Nước</th>
-                                <th className="px-4 py-3 text-right">Doanh Thu</th>
-                                <th className="px-4 py-3 text-center">Ngày Đọc</th>
+                                <th className="px-4 py-3 text-center w-16 text-white border-r border-blue-600">Đợt</th>
+                                <th className="px-4 py-3 text-right text-white border-r border-blue-600">Số Lượng</th>
+                                <th className="px-4 py-3 text-right text-white border-r border-blue-600">Sản Lượng (m³)</th>
+                                <th className="px-4 py-3 text-right text-white border-r border-blue-600">Sản Lượng Năm Trước</th>
+                                <th className="px-4 py-3 text-right text-white border-r border-blue-600">Tăng/Giảm</th>
+                                <th className="px-4 py-3 text-right text-white border-r border-blue-600">Tiền Nước</th>
+                                <th className="px-4 py-3 text-right text-white border-r border-blue-600">Doanh Thu</th>
+                                <th className="px-4 py-3 text-center text-white">Ngày Đọc</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100">
+                        <tbody className="divide-y divide-blue-100">
                             {data.map((row, idx) => (
-                                <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-4 py-3 text-center font-medium text-gray-900">{row.Dot}</td>
-                                    <td className="px-4 py-3 text-right">{row.SoLuong.toLocaleString()}</td>
-                                    <td className="px-4 py-3 text-right font-medium text-blue-600">
+                                <tr key={idx} className="odd:bg-white even:bg-blue-50 hover:bg-blue-100 transition-colors">
+                                    <td className="px-4 py-3 text-center font-medium text-gray-900 border-r border-blue-200">{row.Dot}</td>
+                                    <td className="px-4 py-3 text-right border-r border-blue-200">{row.SoLuong.toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right font-medium text-blue-600 border-r border-blue-200">
                                         {row.SanLuong.toLocaleString()}
                                     </td>
-                                    <td className="px-4 py-3 text-right text-gray-500">
+                                    <td className="px-4 py-3 text-right text-gray-500 border-r border-blue-200">
                                         {row.SanLuong_Prev.toLocaleString()}
                                     </td>
-                                    <td className={`px-4 py-3 text-right font-medium ${
+                                    <td className={`px-4 py-3 text-right font-medium border-r border-blue-200 ${
                                         row.TangGiam > 0 ? 'text-green-600 bg-green-50' : 
                                         row.TangGiam < 0 ? 'text-red-600 bg-red-50' : 'text-gray-500'
                                     }`}>
                                         {row.TangGiam > 0 ? '+' : ''}{row.TangGiam.toLocaleString()}
                                     </td>
-                                    <td className="px-4 py-3 text-right">{row.TienNuoc.toLocaleString()}</td>
-                                    <td className="px-4 py-3 text-right">{row.DoanhThu.toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right border-r border-blue-200">{row.TienNuoc.toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-right border-r border-blue-200">{row.DoanhThu.toLocaleString()}</td>
                                     <td className="px-4 py-3 text-center text-gray-500">{row.NgayDoc}</td>
                                 </tr>
                             ))}
                         </tbody>
-                        <tfoot className="bg-gray-50 font-semibold text-gray-900 border-t border-gray-200">
+                        <tfoot className="bg-blue-100 font-bold text-blue-900 border-t border-blue-200">
                             <tr>
                                 <td className="px-4 py-3 text-center">Tổng</td>
                                 <td className="px-4 py-3 text-right">

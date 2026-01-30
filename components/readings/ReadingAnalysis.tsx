@@ -275,24 +275,24 @@ export default function ReadingAnalysis() {
                          </h4>
                          <div className="overflow-auto">
                             <table className="w-full text-sm text-left border-collapse">
-                                <thead className="bg-gray-100 uppercase text-xs font-bold text-gray-700">
+                                <thead className="bg-blue-700 uppercase text-xs font-bold text-white shadow-md">
                                     <tr>
-                                        <th className="px-4 py-3 border-b border-gray-300 w-10 text-center">Xem</th>
-                                        <th className="px-4 py-3 border-b border-gray-300">Máy</th>
-                                        <th className="px-4 py-3 border-b border-gray-300">Tên Nhân Viên</th>
-                                        <th className="px-4 py-3 border-b border-gray-300 text-right">SL Bản Ghi</th>
-                                        <th className="px-4 py-3 border-b border-gray-300 text-right">Tổng Phát Sinh</th>
-                                        <th className="px-4 py-3 border-b border-gray-300 text-right">SL Thu Được</th>
-                                        <th className="px-4 py-3 border-b border-gray-300 text-right">Thực Thu</th>
-                                        <th className="px-4 py-3 border-b border-gray-300 w-48">% Đạt</th>
-                                        <th className="px-4 py-3 border-b border-gray-300 text-right">Sản Lượng (m3)</th>
+                                        <th className="px-4 py-3 border-b border-blue-800 w-10 text-center border-r border-blue-600">Xem</th>
+                                        <th className="px-4 py-3 border-b border-blue-800 border-r border-blue-600">Máy</th>
+                                        <th className="px-4 py-3 border-b border-blue-800 border-r border-blue-600">Tên Nhân Viên</th>
+                                        <th className="px-4 py-3 border-b border-blue-800 text-right border-r border-blue-600">SL Bản Ghi</th>
+                                        <th className="px-4 py-3 border-b border-blue-800 text-right border-r border-blue-600">Tổng Phát Sinh</th>
+                                        <th className="px-4 py-3 border-b border-blue-800 text-right border-r border-blue-600">SL Thu Được</th>
+                                        <th className="px-4 py-3 border-b border-blue-800 text-right border-r border-blue-600">Thực Thu</th>
+                                        <th className="px-4 py-3 border-b border-blue-800 w-48 border-r border-blue-600">% Đạt</th>
+                                        <th className="px-4 py-3 border-b border-blue-800 text-right">Sản Lượng (m3)</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                     {chartDataTo.length > 0 ? (
                                         chartDataTo.map((row, idx) => (
-                                            <tr key={idx} className={`hover:bg-blue-50 transition-colors ${selectedMayDetail === row.originalName ? 'bg-blue-100' : 'bg-white'}`}>
-                                                <td className="px-4 py-3 text-center">
+                                            <tr key={idx} className={`hover:bg-blue-100 transition-colors ${selectedMayDetail === row.originalName ? 'bg-blue-200' : 'even:bg-blue-50 odd:bg-white'}`}>
+                                                <td className="px-4 py-3 text-center border-r border-blue-200">
                                                     <input 
                                                         type="checkbox" 
                                                         checked={selectedMayDetail === String(row.originalName)}
@@ -300,14 +300,14 @@ export default function ReadingAnalysis() {
                                                         className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer" 
                                                     />
                                                 </td>
-                                                <td className="px-4 py-3 font-bold text-gray-900">{row.originalName}</td>
-                                                <td className="px-4 py-3 text-gray-600">{row.staffName}</td>
-                                                <td className="px-4 py-3 text-right font-medium text-gray-900">{formatNumber(row.count)}</td>
+                                                <td className="px-4 py-3 font-bold text-gray-900 border-r border-blue-200">{row.originalName}</td>
+                                                <td className="px-4 py-3 text-gray-600 border-r border-blue-200">{row.staffName}</td>
+                                                <td className="px-4 py-3 text-right font-medium text-gray-900 border-r border-blue-200">{formatNumber(row.count)}</td>
                                                 
-                                                <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(row.totalRevenue).replace('₫', '')}</td>
-                                                <td className="px-4 py-3 text-right font-medium text-gray-900">{formatNumber(row.collectedCount)}</td>
-                                                <td className="px-4 py-3 text-right font-medium text-gray-900">{formatCurrency(row.collectedRevenue).replace('₫', '')}</td>
-                                                <td className="px-4 py-3 align-middle">
+                                                <td className="px-4 py-3 text-right font-medium text-gray-900 border-r border-blue-200">{formatCurrency(row.totalRevenue).replace('₫', '')}</td>
+                                                <td className="px-4 py-3 text-right font-medium text-gray-900 border-r border-blue-200">{formatNumber(row.collectedCount)}</td>
+                                                <td className="px-4 py-3 text-right font-medium text-gray-900 border-r border-blue-200">{formatCurrency(row.collectedRevenue).replace('₫', '')}</td>
+                                                <td className="px-4 py-3 align-middle border-r border-blue-200">
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden border border-gray-300">
                                                             <div 
@@ -359,32 +359,32 @@ export default function ReadingAnalysis() {
                             ) : (
                                 <div className="overflow-auto max-h-[500px] flex flex-col">
                                     <table className="w-full text-sm text-left border-collapse border border-gray-300 mb-4">
-                                        <thead className="bg-gray-800 uppercase text-xs font-bold text-white sticky top-0 z-10">
+                                        <thead className="bg-blue-800 uppercase text-xs font-bold text-white sticky top-0 z-10 shadow-lg">
                                             <tr>
-                                                <th className="px-4 py-3 border border-gray-600">DANHBA</th>
-                                                <th className="px-4 py-3 border border-gray-600">SO</th>
-                                                <th className="px-4 py-3 border border-gray-600">DUONG</th>
-                                                <th className="px-4 py-3 border border-gray-600">TENKH</th>
-                                                <th className="px-4 py-3 border border-gray-600 text-center">GB</th>
-                                                <th className="px-4 py-3 border border-gray-600 text-center">KY</th>
-                                                <th className="px-4 py-3 border border-gray-600 text-center">NAM</th>
-                                                <th className="px-4 py-3 border border-gray-600 text-center">DOT</th>
-                                                <th className="px-4 py-3 border border-gray-600 text-right">TONGCONG</th>
+                                                <th className="px-4 py-3 border border-blue-700">DANHBA</th>
+                                                <th className="px-4 py-3 border border-blue-700">SO</th>
+                                                <th className="px-4 py-3 border border-blue-700">DUONG</th>
+                                                <th className="px-4 py-3 border border-blue-700">TENKH</th>
+                                                <th className="px-4 py-3 border border-blue-700 text-center">GB</th>
+                                                <th className="px-4 py-3 border border-blue-700 text-center">KY</th>
+                                                <th className="px-4 py-3 border border-blue-700 text-center">NAM</th>
+                                                <th className="px-4 py-3 border border-blue-700 text-center">DOT</th>
+                                                <th className="px-4 py-3 border border-blue-700 text-right">TONGCONG</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-700 bg-[#0f1016] text-gray-300">
+                                        <tbody className="divide-y divide-blue-100 bg-white text-gray-900">
                                             {detailedReadings.length > 0 ? (
                                                 detailedReadings.map((reading, idx) => (
-                                                    <tr key={idx} className="hover:bg-gray-800 transition-colors">
-                                                        <td className="px-4 py-2 border border-gray-700 font-mono text-white">{String(reading.DanhBa).padStart(11, '0')}</td>
-                                                        <td className="px-4 py-2 border border-gray-700">{reading.SoNhaMoi}</td>
-                                                        <td className="px-4 py-2 border border-gray-700">{reading.Duong}</td>
-                                                        <td className="px-4 py-2 border border-gray-700 text-white font-medium">{reading.TenKH}</td>
-                                                        <td className="px-4 py-2 border border-gray-700 text-center">{reading.GB}</td>
-                                                        <td className="px-4 py-2 border border-gray-700 text-center">{reading.Ky}</td>
-                                                        <td className="px-4 py-2 border border-gray-700 text-center">{reading.Nam}</td>
-                                                        <td className="px-4 py-2 border border-gray-700 text-center">{reading.Dot}</td>
-                                                        <td className="px-4 py-2 border border-gray-700 text-right font-bold text-white">{formatNumber(reading.TongTien)}</td>
+                                                    <tr key={idx} className="hover:bg-blue-100 transition-colors odd:bg-white even:bg-blue-50">
+                                                        <td className="px-4 py-2 border border-blue-300 font-mono text-blue-900 font-bold">{String(reading.DanhBa).padStart(11, '0')}</td>
+                                                        <td className="px-4 py-2 border border-blue-300">{reading.SoNhaMoi}</td>
+                                                        <td className="px-4 py-2 border border-blue-300">{reading.Duong}</td>
+                                                        <td className="px-4 py-2 border border-blue-300 font-bold">{reading.TenKH}</td>
+                                                        <td className="px-4 py-2 border border-blue-300 text-center">{reading.GB}</td>
+                                                        <td className="px-4 py-2 border border-blue-300 text-center">{reading.Ky}</td>
+                                                        <td className="px-4 py-2 border border-blue-300 text-center">{reading.Nam}</td>
+                                                        <td className="px-4 py-2 border border-blue-300 text-center">{reading.Dot}</td>
+                                                        <td className="px-4 py-2 border border-blue-300 text-right font-bold text-red-600">{formatNumber(reading.TongTien)}</td>
                                                     </tr>
                                                 ))
                                             ) : (
@@ -394,10 +394,10 @@ export default function ReadingAnalysis() {
                                             )}
                                         </tbody>
                                         {detailedReadings.length > 0 && (
-                                            <tfoot className="bg-gray-800 font-bold sticky bottom-0 z-10 text-white border-t border-gray-600">
+                                            <tfoot className="bg-blue-100 font-bold sticky bottom-0 z-10 text-blue-900 border-t border-blue-300">
                                                 <tr>
                                                     <td colSpan={8} className="px-4 py-3 text-right">TỔNG CỘNG ({detailedReadings.length} bản ghi)</td>
-                                                    <td className="px-4 py-3 text-right text-green-400">{formatCurrency(detailedReadings.reduce((s, r) => s + (r.TongTien || 0), 0)).replace('₫', '')}</td>
+                                                    <td className="px-4 py-3 text-right text-red-600 font-extrabold">{formatCurrency(detailedReadings.reduce((s, r) => s + (r.TongTien || 0), 0)).replace('₫', '')}</td>
                                                 </tr>
                                             </tfoot>
                                         )}

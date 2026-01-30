@@ -188,20 +188,20 @@ export default function ReadingYearlyReport() {
                     {/* Condensed Table */}
                     <div className="lg:col-span-1 border-l border-gray-100 pl-8">
                         <div className="overflow-y-auto max-h-[350px]">
-                            <table className="w-full text-sm border-collapse border border-gray-300">
-                                <thead className="bg-gray-50 sticky top-0">
+                            <table className="min-w-full divide-y divide-gray-200 text-sm">
+                                <thead className="bg-blue-700 text-white select-none sticky top-0 shadow-sm">
                                     <tr>
-                                        <th className="px-3 py-2 text-left font-bold text-gray-700 border border-gray-300">Năm</th>
-                                        <th className="px-3 py-2 text-center font-bold text-gray-700 border border-gray-300">SL KH</th>
-                                        <th className="px-3 py-2 text-right font-bold text-gray-700 border border-gray-300">Sản Lượng</th>
+                                        <th className="px-3 py-2 text-left font-bold border-r border-blue-600">Năm</th>
+                                        <th className="px-3 py-2 text-right font-bold border-r border-blue-600">SL KH</th>
+                                        <th className="px-3 py-2 text-right font-bold border-r border-blue-600">Sản Lượng</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-gray-300">
+                                <tbody className="bg-white divide-y divide-gray-200">
                                     {yearlyData.map((row) => (
-                                        <tr key={row.Nam}>
-                                            <td className="px-3 py-2 font-bold text-gray-900 border border-gray-300">{row.Nam}</td>
-                                            <td className="px-3 py-2 text-center font-medium text-gray-600 border border-gray-300">{formatNumber(row.RecordCount)}</td>
-                                            <td className="px-3 py-2 text-right font-bold text-blue-600 border border-gray-300">{formatNumber(row.TotalConsumption)}</td>
+                                        <tr key={row.Nam} className="odd:bg-white even:bg-blue-50 hover:bg-blue-100 transition-colors">
+                                            <td className="px-3 py-2 font-medium text-gray-900 border-r border-blue-200">{row.Nam}</td>
+                                            <td className="px-3 py-2 text-right font-medium text-gray-900 border-r border-blue-200 bg-orange-50">{formatNumber(row.RecordCount)}</td>
+                                            <td className="px-3 py-2 text-right font-bold text-blue-600 border-r border-blue-200 bg-blue-50">{formatNumber(row.TotalConsumption)}</td>
                                         </tr>
                                     ))}
                                 </tbody>

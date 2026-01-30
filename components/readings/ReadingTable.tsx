@@ -171,10 +171,10 @@ export default function ReadingTable({ data, activeFilters }: ReadingTableProps)
     }
 
     const isEven = index % 2 === 0
-    const rowBgClass = isEven ? 'bg-white' : 'bg-[#f4f7f9]'
+    const rowBgClass = isEven ? 'bg-white' : 'bg-blue-50'
 
     return (
-      <div key={index} style={style} className={`border-b border-gray-400 hover:bg-yellow-50 transition-colors flex items-center ${rowBgClass}`}>
+      <div key={index} style={style} className={`border-b border-blue-100 hover:bg-blue-200 transition-colors flex items-center ${rowBgClass}`}>
         <div className="grid items-center h-full" style={{ gridTemplateColumns: gridTemplate, width: totalWidth }}>
           {visibleColsWithWidths.map((col, idx) => {
             const borderR = idx !== visibleColsWithWidths.length - 1 ? " border-r border-gray-400" : ""
@@ -331,10 +331,10 @@ export default function ReadingTable({ data, activeFilters }: ReadingTableProps)
          {/* Table Header & Body Wrapper */}
         <div className="border border-gray-400 rounded-lg overflow-hidden bg-white shadow flex flex-col">
             {/* Header */}
-            <div className="overflow-x-hidden bg-gray-200 border-b border-gray-400" ref={(el) => { if (el && containerRef.current) el.scrollLeft = containerRef.current.scrollLeft }}>
+            <div className="overflow-x-hidden bg-blue-700 border-b border-blue-900" ref={(el) => { if (el && containerRef.current) el.scrollLeft = containerRef.current.scrollLeft }}>
                 <div className="grid h-10 select-none relative" style={{ gridTemplateColumns: gridTemplate, width: totalWidth }}>
                     {visibleColsWithWidths.map((col, idx) => (
-                        <div key={col.id} className={`flex items-center px-2 text-[11px] font-black text-black uppercase tracking-tight relative group h-full ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'} ${idx !== visibleColsWithWidths.length - 1 ? 'border-r border-gray-400' : ''}`}>
+                        <div key={col.id} className={`flex items-center px-2 text-[11px] font-bold text-white uppercase tracking-wider relative group h-full ${col.align === 'center' ? 'justify-center' : col.align === 'right' ? 'justify-end' : 'justify-start'} ${idx !== visibleColsWithWidths.length - 1 ? 'border-r border-blue-600' : ''}`}>
                             {col.label}
                             <div className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-600 group-hover:bg-blue-400 z-20" onMouseDown={(e) => startResizing(e, col.id)} />
                         </div>
