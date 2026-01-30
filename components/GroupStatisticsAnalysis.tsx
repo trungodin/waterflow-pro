@@ -162,37 +162,37 @@ export default function GroupStatisticsAnalysis() {
           {/* Table */}
           <div className="border border-gray-200 rounded-lg overflow-hidden">
             <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-100">
+              <thead className="bg-blue-600 text-white select-none">
                 <tr>
-                  <th className="px-4 py-3 text-center font-medium text-gray-900">{getGroupLabel()}</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-900">Số Lượng DB</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-900">Tổng Số Kỳ Nợ</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-900">Tổng Nợ</th>
-                  <th className="px-4 py-3 text-right font-medium text-gray-900">Tỷ Lệ %</th>
+                  <th className="px-3 py-3 text-center font-bold border-r border-blue-500">{getGroupLabel()}</th>
+                  <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Số Lượng DB</th>
+                  <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Tổng Số Kỳ Nợ</th>
+                  <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Tổng Nợ</th>
+                  <th className="px-3 py-3 text-right font-bold">Tỷ Lệ %</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {data.map(row => (
                   <tr 
                     key={row.group} 
-                    className="hover:bg-blue-50 cursor-pointer"
+                    className="hover:bg-blue-50 transition-colors cursor-pointer"
                     onClick={() => setSelectedGroup(row.group)}
                   >
-                    <td className="px-4 py-3 text-center font-medium text-blue-600 underline">{row.group}</td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">{row.countDB.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">{row.totalPeriods.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-right font-bold text-gray-900">{formatCurrency(row.totalDebt)}</td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">{row.percentage.toFixed(2)}%</td>
+                    <td className="px-3 py-2 text-center font-bold text-blue-600 underline border-r border-gray-100">{row.group}</td>
+                    <td className="px-3 py-2 text-right font-medium text-gray-900 border-r border-gray-100 bg-orange-50">{row.countDB.toLocaleString()}</td>
+                    <td className="px-3 py-2 text-right font-medium text-gray-900 border-r border-gray-100 bg-purple-50">{row.totalPeriods.toLocaleString()}</td>
+                    <td className="px-3 py-2 text-right font-bold text-gray-900 border-r border-gray-100 bg-green-50">{formatCurrency(row.totalDebt)}</td>
+                    <td className="px-3 py-2 text-right font-medium text-gray-900 bg-amber-50">{row.percentage.toFixed(2)}%</td>
                   </tr>
                 ))}
               </tbody>
               <tfoot className="bg-orange-400 text-white font-bold">
                 <tr>
-                  <td className="px-4 py-3 text-center">TỔNG CỘNG</td>
-                  <td className="px-4 py-3 text-right">{totalDB.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-right">{totalPeriods.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-right">{formatCurrency(totalDebt)}</td>
-                  <td className="px-4 py-3 text-right">100.00%</td>
+                  <td className="px-3 py-2 text-center border-r border-orange-300">TỔNG CỘNG</td>
+                  <td className="px-3 py-2 text-right border-r border-orange-300">{totalDB.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right border-r border-orange-300">{totalPeriods.toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right border-r border-orange-300">{formatCurrency(totalDebt)}</td>
+                  <td className="px-3 py-2 text-right">100.00%</td>
                 </tr>
               </tfoot>
             </table>
@@ -206,19 +206,19 @@ export default function GroupStatisticsAnalysis() {
               <h3 className="text-lg font-bold text-gray-900 mb-3">📊 Top 5 {getGroupLabel()} có số lượng DB nhiều nhất</h3>
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-blue-600 text-white select-none">
                     <tr>
-                      <th className="px-3 py-2 text-left font-medium text-gray-900">{groupBy === 'DOT' ? 'Đợt' : 'GB'}</th>
-                      <th className="px-3 py-2 text-right font-medium text-gray-900">Số DB</th>
-                      <th className="px-3 py-2 text-right font-medium text-gray-900">%</th>
+                      <th className="px-3 py-2 text-left font-bold border-r border-blue-500">{groupBy === 'DOT' ? 'Đợt' : 'GB'}</th>
+                      <th className="px-3 py-2 text-right font-bold border-r border-blue-500">Số DB</th>
+                      <th className="px-3 py-2 text-right font-bold">%</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {data.slice(0, 5).map(row => (
-                      <tr key={row.group} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 font-medium text-gray-900">{row.group}</td>
-                        <td className="px-3 py-2 text-right font-medium text-gray-900">{row.countDB.toLocaleString()}</td>
-                        <td className="px-3 py-2 text-right font-medium text-gray-900">{row.percentage.toFixed(2)}%</td>
+                      <tr key={row.group} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-3 py-2 font-medium text-gray-900 border-r border-gray-100">{row.group}</td>
+                        <td className="px-3 py-2 text-right font-medium text-gray-900 border-r border-gray-100 bg-orange-50">{row.countDB.toLocaleString()}</td>
+                        <td className="px-3 py-2 text-right font-medium text-gray-900 bg-amber-50">{row.percentage.toFixed(2)}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -230,19 +230,19 @@ export default function GroupStatisticsAnalysis() {
               <h3 className="text-lg font-bold text-gray-900 mb-3">💰 Top 5 {getGroupLabel()} có tổng nợ cao nhất</h3>
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-blue-600 text-white select-none">
                     <tr>
-                      <th className="px-3 py-2 text-left font-medium text-gray-900">{groupBy === 'DOT' ? 'Đợt' : 'GB'}</th>
-                      <th className="px-3 py-2 text-right font-medium text-gray-900">Tổng Nợ</th>
-                      <th className="px-3 py-2 text-right font-medium text-gray-900">%</th>
+                      <th className="px-3 py-2 text-left font-bold border-r border-blue-500">{groupBy === 'DOT' ? 'Đợt' : 'GB'}</th>
+                      <th className="px-3 py-2 text-right font-bold border-r border-blue-500">Tổng Nợ</th>
+                      <th className="px-3 py-2 text-right font-bold">%</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {[...data].sort((a, b) => b.totalDebt - a.totalDebt).slice(0, 5).map(row => (
-                      <tr key={row.group} className="hover:bg-gray-50">
-                        <td className="px-3 py-2 font-medium text-gray-900">{row.group}</td>
-                        <td className="px-3 py-2 text-right font-bold text-gray-900">{formatCurrency(row.totalDebt)}</td>
-                        <td className="px-3 py-2 text-right font-medium text-gray-900">{row.percentage.toFixed(2)}%</td>
+                      <tr key={row.group} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-3 py-2 font-medium text-gray-900 border-r border-gray-100">{row.group}</td>
+                        <td className="px-3 py-2 text-right font-bold text-gray-900 border-r border-gray-100 bg-green-50">{formatCurrency(row.totalDebt)}</td>
+                        <td className="px-3 py-2 text-right font-medium text-gray-900 bg-amber-50">{row.percentage.toFixed(2)}%</td>
                       </tr>
                     ))}
                   </tbody>

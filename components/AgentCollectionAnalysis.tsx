@@ -98,34 +98,34 @@ export default function AgentCollectionAnalysis() {
                     
                     <div className="overflow-x-auto border border-gray-200 rounded-lg">
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead className="bg-gray-100">
+                            <thead className="bg-blue-600 text-white select-none">
                                 <tr>
-                                    <th className="px-4 py-3 text-left font-medium text-gray-900">Ngân Hàng</th>
-                                    <th className="px-4 py-3 text-right font-medium text-gray-900">Tổng cộng</th>
-                                    <th className="px-4 py-3 text-right font-medium text-gray-900">Tổng hoá đơn</th>
-                                    <th className="px-4 py-3 text-right font-medium text-gray-900">Tỷ lệ (%)</th>
+                                    <th className="px-3 py-3 text-left font-bold border-r border-blue-500">Ngân Hàng</th>
+                                    <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Tổng cộng</th>
+                                    <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Tổng hoá đơn</th>
+                                    <th className="px-3 py-3 text-right font-bold">Tỷ lệ (%)</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {agentData.length === 0 ? (
-                                    <tr><td colSpan={4} className="px-4 py-4 text-center text-gray-500">Không có dữ liệu</td></tr>
+                                    <tr><td colSpan={4} className="px-3 py-4 text-center text-gray-500">Không có dữ liệu</td></tr>
                                 ) : (
                                     agentData.map((row) => (
-                                        <tr key={row.NganHang} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 font-medium text-gray-900">{row.NganHang}</td>
-                                            <td className="px-4 py-3 text-right font-bold text-gray-900">{formatCurrency(row.TongCong)}</td>
-                                            <td className="px-4 py-3 text-right font-medium text-gray-900">{formatNumber(row.TongHoaDon)}</td>
-                                            <td className="px-4 py-3 text-right font-medium text-gray-900">{row.TyLe.toFixed(2)}%</td>
+                                        <tr key={row.NganHang} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-3 py-2 font-medium text-gray-900 border-r border-gray-100">{row.NganHang}</td>
+                                            <td className="px-3 py-2 text-right font-bold text-gray-900 border-r border-gray-100 bg-green-50">{formatCurrency(row.TongCong)}</td>
+                                            <td className="px-3 py-2 text-right font-medium text-gray-900 border-r border-gray-100 bg-orange-50">{formatNumber(row.TongHoaDon)}</td>
+                                            <td className="px-3 py-2 text-right font-medium text-gray-900 bg-amber-50">{row.TyLe.toFixed(2)}%</td>
                                         </tr>
                                     ))
                                 )}
                                 {/* Total Row */}
                                 {agentData.length > 0 && (
                                     <tr className="bg-orange-400 text-white font-bold">
-                                         <td className="px-4 py-3">Tổng cộng</td>
-                                         <td className="px-4 py-3 text-right">{formatCurrency(totalAmount)}</td>
-                                         <td className="px-4 py-3 text-right">{formatNumber(totalCount)}</td>
-                                         <td className="px-4 py-3 text-right">100.00%</td>
+                                         <td className="px-3 py-2 border-r border-orange-300">Tổng cộng</td>
+                                         <td className="px-3 py-2 text-right border-r border-orange-300">{formatCurrency(totalAmount)}</td>
+                                         <td className="px-3 py-2 text-right border-r border-orange-300">{formatNumber(totalCount)}</td>
+                                         <td className="px-3 py-2 text-right">100.00%</td>
                                     </tr>
                                 )}
                             </tbody>

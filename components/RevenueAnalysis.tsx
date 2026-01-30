@@ -197,31 +197,31 @@ export default function RevenueAnalysis() {
                     {/* Table */}
                     <div className="overflow-x-auto border border-gray-200 rounded-lg">
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead className="bg-gray-100">
+                            <thead className="bg-blue-600 text-white select-none">
                                 <tr>
-                                    <th className="px-4 py-3 text-left font-medium text-gray-500">Năm</th>
-                                    <th className="px-4 py-3 text-right font-medium text-gray-500">Chuẩn thu</th>
-                                    <th className="px-4 py-3 text-right font-medium text-gray-500">Thực thu</th>
-                                    <th className="px-4 py-3 text-right font-medium text-gray-500">Tồn thu</th>
-                                    <th className="px-4 py-3 text-right font-medium text-gray-500">% Đạt</th>
-                                    <th className="px-4 py-3 text-center font-medium text-gray-500">Thao tác</th>
+                                    <th className="px-3 py-3 text-left font-bold border-r border-blue-500">Năm</th>
+                                    <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Chuẩn thu</th>
+                                    <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Thực thu</th>
+                                    <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Tồn thu</th>
+                                    <th className="px-3 py-3 text-right font-bold border-r border-blue-500">% Đạt</th>
+                                    <th className="px-3 py-3 text-center font-bold">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {yearlyData.length === 0 ? (
-                                    <tr><td colSpan={6} className="px-4 py-4 text-center text-gray-500">Chưa có dữ liệu</td></tr>
+                                    <tr><td colSpan={6} className="px-3 py-4 text-center text-gray-500">Chưa có dữ liệu</td></tr>
                                 ) : (
                                     yearlyData.map((row) => (
-                                        <tr key={row.Nam} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3 font-medium text-gray-900">{row.Nam}</td>
-                                            <td className="px-4 py-3 text-right text-gray-900 font-medium">{formatCurrency(row.TongDoanhThu)}</td>
-                                            <td className="px-4 py-3 text-right text-green-600 font-bold">{formatCurrency(row.TongThucThu)}</td>
-                                            <td className="px-4 py-3 text-right text-red-500 font-bold">{formatCurrency(row.TonThu)}</td>
-                                            <td className="px-4 py-3 text-right font-bold text-gray-900">{row.PhanTramDat.toFixed(2)}%</td>
-                                            <td className="px-4 py-3 text-center">
+                                        <tr key={row.Nam} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-3 py-2 font-medium text-gray-900 border-r border-gray-100">{row.Nam}</td>
+                                            <td className="px-3 py-2 text-right text-gray-900 font-medium border-r border-gray-100">{formatCurrency(row.TongDoanhThu)}</td>
+                                            <td className="px-3 py-2 text-right text-green-700 font-bold border-r border-gray-100 bg-green-50">{formatCurrency(row.TongThucThu)}</td>
+                                            <td className="px-3 py-2 text-right text-red-600 font-bold border-r border-gray-100 bg-red-50">{formatCurrency(row.TonThu)}</td>
+                                            <td className="px-3 py-2 text-right font-bold text-gray-900 border-r border-gray-100 bg-amber-50">{row.PhanTramDat.toFixed(2)}%</td>
+                                            <td className="px-3 py-2 text-center">
                                                 <button
                                                     onClick={() => handleSelectYear(row.Nam)}
-                                                    className="text-blue-600 hover:text-blue-800 text-xs font-semibold uppercase"
+                                                    className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase transition-colors"
                                                 >
                                                     Xem chi tiết
                                                 </button>
@@ -261,31 +261,31 @@ export default function RevenueAnalysis() {
                             {/* Table */}
                             <div className="overflow-x-auto border border-gray-200 rounded-lg">
                                 <table className="min-w-full divide-y divide-gray-200 text-sm">
-                                    <thead className="bg-gray-100">
+                                    <thead className="bg-blue-600 text-white select-none">
                                         <tr>
-                                            <th className="px-4 py-3 text-left font-medium text-gray-500">Kỳ</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500">Chuẩn thu</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500">Thực thu</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500">Tồn thu</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500">% Đạt</th>
-                                            <th className="px-4 py-3 text-center font-medium text-gray-500">Thao tác</th>
+                                            <th className="px-3 py-3 text-left font-bold border-r border-blue-500">Kỳ</th>
+                                            <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Chuẩn thu</th>
+                                            <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Thực thu</th>
+                                            <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Tồn thu</th>
+                                            <th className="px-3 py-3 text-right font-bold border-r border-blue-500">% Đạt</th>
+                                            <th className="px-3 py-3 text-center font-bold">Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {monthlyData.length === 0 ? (
-                                            <tr><td colSpan={6} className="px-4 py-4 text-center text-gray-500">Không có dữ liệu tháng</td></tr>
+                                            <tr><td colSpan={6} className="px-3 py-4 text-center text-gray-500">Không có dữ liệu tháng</td></tr>
                                         ) : (
                                             monthlyData.map((row) => (
-                                                <tr key={row.Ky} className="hover:bg-gray-50">
-                                                    <td className="px-4 py-3 font-medium text-gray-900">Kỳ {row.Ky}</td>
-                                                    <td className="px-4 py-3 text-right text-gray-900 font-medium">{formatCurrency(row.TongDoanhThuKy)}</td>
-                                                    <td className="px-4 py-3 text-right text-green-600 font-bold">{formatCurrency(row.TongThucThuThang)}</td>
-                                                    <td className="px-4 py-3 text-right text-red-500 font-bold">{formatCurrency(row.TonThu)}</td>
-                                                    <td className="px-4 py-3 text-right font-bold text-gray-900">{row.PhanTramDat.toFixed(2)}%</td>
-                                                    <td className="px-4 py-3 text-center">
+                                                <tr key={row.Ky} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-3 py-2 font-medium text-gray-900 border-r border-gray-100">Kỳ {row.Ky}</td>
+                                                    <td className="px-3 py-2 text-right text-gray-900 font-medium border-r border-gray-100">{formatCurrency(row.TongDoanhThuKy)}</td>
+                                                    <td className="px-3 py-2 text-right text-green-700 font-bold border-r border-gray-100 bg-green-50">{formatCurrency(row.TongThucThuThang)}</td>
+                                                    <td className="px-3 py-2 text-right text-red-600 font-bold border-r border-gray-100 bg-red-50">{formatCurrency(row.TonThu)}</td>
+                                                    <td className="px-3 py-2 text-right font-bold text-gray-900 border-r border-gray-100 bg-amber-50">{row.PhanTramDat.toFixed(2)}%</td>
+                                                    <td className="px-3 py-2 text-center">
                                                         <button
                                                             onClick={() => handleSelectKy(row.Ky)}
-                                                            className="text-blue-600 hover:text-blue-800 text-xs font-semibold uppercase"
+                                                            className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase transition-colors"
                                                         >
                                                             Xem ngày
                                                         </button>
@@ -327,24 +327,24 @@ export default function RevenueAnalysis() {
                             {/* Table */}
                             <div className="overflow-x-auto border border-gray-200 rounded-lg h-[500px] overflow-y-auto">
                                 <table className="min-w-full divide-y divide-gray-200 text-sm">
-                                    <thead className="bg-gray-100 sticky top-0">
+                                    <thead className="bg-blue-600 text-white select-none sticky top-0">
                                         <tr>
-                                            <th className="px-4 py-3 text-left font-medium text-gray-500">Ngày giải ngân</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500">Số lượng HĐ</th>
-                                            <th className="px-4 py-3 text-right font-medium text-gray-500">Tổng cộng</th>
+                                            <th className="px-3 py-3 text-left font-bold border-r border-blue-500">Ngày giải ngân</th>
+                                            <th className="px-3 py-3 text-right font-bold border-r border-blue-500">Số lượng HĐ</th>
+                                            <th className="px-3 py-3 text-right font-bold">Tổng cộng</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {dailyData.length === 0 ? (
-                                            <tr><td colSpan={3} className="px-4 py-4 text-center text-gray-500">Không có dữ liệu ngày</td></tr>
+                                            <tr><td colSpan={3} className="px-3 py-4 text-center text-gray-500">Không có dữ liệu ngày</td></tr>
                                         ) : (
                                             dailyData.map((row, idx) => (
-                                                <tr key={idx} className="hover:bg-gray-50">
-                                                    <td className="px-4 py-3 font-medium text-gray-900">
+                                                <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-3 py-2 font-medium text-gray-900 border-r border-gray-100">
                                                         {new Date(row.NgayGiaiNgan).toLocaleDateString('vi-VN')}
                                                     </td>
-                                                    <td className="px-4 py-3 text-right text-gray-900 font-medium">{row.SoLuongHoaDon}</td>
-                                                    <td className="px-4 py-3 text-right font-bold text-blue-600">{formatCurrency(row.TongCongNgay)}</td>
+                                                    <td className="px-3 py-2 text-right text-gray-900 font-medium border-r border-gray-100 bg-orange-50">{row.SoLuongHoaDon}</td>
+                                                    <td className="px-3 py-2 text-right font-bold text-blue-600 bg-green-50">{formatCurrency(row.TongCongNgay)}</td>
                                                 </tr>
                                             ))
                                         )}
