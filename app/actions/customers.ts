@@ -69,7 +69,7 @@ export async function searchCustomers(params: CustomerSearchParams) {
       console.log('[searchCustomers] Searching by receipt number:', so_bien_lai)
       const currentYear = new Date().getFullYear()
       const sblQuery = `
-        SELECT DISTINCT TOP 50000 hd.DANHBA
+        SELECT DISTINCT TOP 200 hd.DANHBA
         FROM ThuUNC AS unc WITH (NOLOCK)
         INNER JOIN HoaDon AS hd WITH (NOLOCK) ON unc.Id_hd = hd.id
         WHERE unc.SoBK = N'${so_bien_lai.replace(/'/g, "''")}'
@@ -85,11 +85,11 @@ export async function searchCustomers(params: CustomerSearchParams) {
         return []
       }
       
-      const danhbaList = sblResults.map((r: any) => String(r.DANHBA).padStart(11, '0'))
+      const danhbaList = sblResults.slice(0, 200).map((r: any) => String(r.DANHBA).padStart(11, '0'))
       const danhbaIn = danhbaList.map(db => `'${db}'`).join(',')
       
       const query = `
-        SELECT DanhBa, MLT2, TenKH, So, Duong, SDT, SoThan, Hieu, Co, GB
+        SELECT TOP 200 DanhBa, MLT2, TenKH, So, Duong, SDT, SoThan, Hieu, Co, GB
         FROM KhachHang WITH (NOLOCK)
         WHERE DanhBa IN (${danhbaIn})
       `
@@ -109,7 +109,7 @@ export async function searchCustomers(params: CustomerSearchParams) {
         const tongNoValue = parseFloat(tong_no.replace(/[,.]/g, ''))
         console.log('[searchCustomers] Debt amount:', tongNoValue)
         debtQuery = `
-          SELECT DANHBA, SUM(TONGCONG) AS TongNo
+          SELECT TOP 200 DANHBA, SUM(TONGCONG) AS TongNo
           FROM HoaDon WITH (NOLOCK)
           WHERE NGAYGIAI IS NULL
           GROUP BY DANHBA
@@ -119,7 +119,7 @@ export async function searchCustomers(params: CustomerSearchParams) {
         const tienHdValue = parseFloat(tien_hd.replace(/[,.]/g, ''))
         console.log('[searchCustomers] Invoice amount:', tienHdValue)
         debtQuery = `
-          SELECT DISTINCT DANHBA
+          SELECT DISTINCT TOP 200 DANHBA
           FROM HoaDon WITH (NOLOCK)
           WHERE NGAYGIAI IS NULL
             AND ABS(TONGCONG - ${tienHdValue}) < 1
@@ -135,11 +135,11 @@ export async function searchCustomers(params: CustomerSearchParams) {
         return []
       }
       
-      const danhbaList = debtResults.map((r: any) => String(r.DANHBA).padStart(11, '0'))
+      const danhbaList = debtResults.slice(0, 200).map((r: any) => String(r.DANHBA).padStart(11, '0'))
       const danhbaIn = danhbaList.map(db => `'${db}'`).join(',')
       
       const query = `
-        SELECT DanhBa, MLT2, TenKH, So, Duong, SDT, SoThan, Hieu, Co, GB
+        SELECT TOP 200 DanhBa, MLT2, TenKH, So, Duong, SDT, SoThan, Hieu, Co, GB
         FROM KhachHang WITH (NOLOCK)
         WHERE DanhBa IN (${danhbaIn})
       `
@@ -193,7 +193,7 @@ export async function searchCustomers(params: CustomerSearchParams) {
 
     const whereClause = whereClauses.join(' AND ')
     const query = `
-      SELECT TOP 50000
+      SELECT TOP 200
         DanhBa, MLT2, TenKH, So, Duong, SDT, SoThan, Hieu, Co, GB
       FROM KhachHang WITH (NOLOCK)
       WHERE ${whereClause}
