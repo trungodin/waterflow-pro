@@ -75,10 +75,10 @@ export default function Navbar() {
                     key={item.path}
                     href={item.path}
                     className={`
-                      flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
+                      flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300
                       ${isActive
-                        ? 'bg-white text-blue-600 shadow-sm shadow-slate-200'
-                        : 'text-slate-500 hover:text-slate-900 hover:bg-white/60'
+                        ? 'bg-white text-blue-600 shadow-md shadow-blue-100 scale-105'
+                        : 'text-slate-500 hover:text-blue-600 hover:bg-white hover:shadow-lg hover:shadow-blue-100/50 hover:scale-105 hover:-translate-y-1'
                       }
                     `}
                   >
@@ -119,6 +119,14 @@ export default function Navbar() {
                                  <p className="text-xs text-slate-500 truncate">{user.email}</p>
                              </div>
                              <div className="p-1">
+                                <Link
+                                    href="/profile"
+                                    onClick={() => setProfileOpen(false)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                    Hồ sơ cá nhân
+                                </Link>
                                 <button
                                     onClick={handleSignOut}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
@@ -133,7 +141,7 @@ export default function Navbar() {
                ) : (
                   <Link
                     href="/login"
-                    className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-blue-600 transition-all duration-300 shadow-lg shadow-slate-200 hover:shadow-blue-200"
+                    className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg shadow-blue-200 hover:shadow-blue-300"
                   >
                     <span>Đăng nhập</span>
                     <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
@@ -197,6 +205,13 @@ export default function Navbar() {
                              <span className="text-xs text-slate-500 font-medium">Thành viên</span>
                           </div>
                      </div>
+                     <Link
+                        href="/profile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-all border border-slate-200"
+                    >
+                        Hồ sơ cá nhân
+                    </Link>
                      <button
                         onClick={handleSignOut}
                         className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-all"
@@ -208,7 +223,7 @@ export default function Navbar() {
                 <Link
                 href="/login"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition-all"
+                className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all"
                 >
                 Đăng nhập
                 </Link>

@@ -55,13 +55,25 @@ export default function Dashboard() {
         data = await getRevenueByDot(selectedYear)
       }
 
+      // Calculate total for percentage in Legend
+      const total = data.reduce((sum: number, item: any) => sum + (Number(item.DoanhThu) || 0), 0)
+
       setPieChartData([{
         values: data.map((d: any) => d.DoanhThu),
-        labels: data.map((d: any) => pieType === 'GB' ? `GB ${d.GB}` : `Đợt ${d.Dot}`),
+        // Add percentage to the label for the Legend
+        labels: data.map((d: any) => {
+             const label = pieType === 'GB' ? `GB ${d.GB}` : `Đợt ${d.Dot}`
+             const val = Number(d.DoanhThu) || 0
+             const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0'
+             return `${label}  ${pct}%`
+        }),
         type: 'pie',
-        textinfo: 'label+percent',
-        insidetextorientation: 'radial',
-        hovertemplate: `<b>%{label}</b><br>Doanh thu: %{value:,.0f} VNĐ<br>Tỷ lệ: %{percent}<extra></extra>`
+        // Show only percent on the chart slice
+        textinfo: 'percent',
+        // Force text inside to avoid spilling out
+        textposition: 'inside',
+        insidetextorientation: 'horizontal',
+        hovertemplate: `<b>%{label}</b><br>Doanh thu: %{value:,.0f} VNĐ<extra></extra>`
       }])
     } catch (e) {
       console.error("Error fetching pie data", e)
@@ -438,7 +450,9 @@ export default function Dashboard() {
               onPieTypeChange={setPieType}
               data={pieChartData}
               layout={{
-                 legend: { orientation: 'h', y: -0.1 },
+                 legend: { orientation: 'v', x: 1.02, y: 0.5, xanchor: 'left', yanchor: 'middle' },
+                 margin: { t: 20, b: 20, l: 20, r: 20 },
+                 uniformtext: { minsize: 10, mode: 'hide' }
               }}
            />
         </div>
