@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 import Navbar from '@/components/Navbar'
-import { getDashboardData, getComparisonData, getRevenueByPriceList, getRevenueByDot } from '@/app/actions/dashboard'
+import { getDashboardData, getComparisonData, getRevenueByPriceList, getRevenueByDot, getConsumptionByPriceList, getConsumptionByDot } from '@/app/actions/dashboard'
 import { DashboardKPIData } from '@/app/dashboard/types'
 import MetricCard from '@/components/dashboard/MetricCard'
 import DashboardFilters from '@/components/dashboard/DashboardFilters'
@@ -44,6 +44,7 @@ export default function Dashboard() {
   const [collectionRateChartData, setCollectionRateChartData] = useState<ChartDataArray>([])
   const [pieChartData, setPieChartData] = useState<PieChartData[]>([])
   const [pieType, setPieType] = useState<'GB' | 'Dot'>('GB')
+  const [pieMetric, setPieMetric] = useState<'Revenue' | 'Consumption'>('Revenue')
 
   // Generate last 5 years for comparison
   const availableYears = Array.from({ length: 5 }, (_, i) => currentYear - i)
@@ -54,25 +55,28 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchPieData()
-  }, [selectedYear, pieType])
+  }, [selectedYear, pieType, pieMetric])
 
   const fetchPieData = useCallback(async () => {
     try {
-      let data: RevenueByPriceList[] | RevenueByDot[] = []
+      let data: any[] = []
+      const isRevenue = pieMetric === 'Revenue'
+
       if (pieType === 'GB') {
-        data = await getRevenueByPriceList(selectedYear)
+        data = isRevenue ? await getRevenueByPriceList(selectedYear) : await getConsumptionByPriceList(selectedYear)
       } else {
-        data = await getRevenueByDot(selectedYear)
+        data = isRevenue ? await getRevenueByDot(selectedYear) : await getConsumptionByDot(selectedYear)
       }
 
       // Calculate total for percentage in Legend
-      const total = data.reduce((sum, item) => sum + (Number(item.DoanhThu) || 0), 0)
+      const valueKey = isRevenue ? 'DoanhThu' : 'SanLuong'
+      const total = data.reduce((sum, item) => sum + (Number(item[valueKey]) || 0), 0)
 
       setPieChartData([{
-        values: data.map((d) => d.DoanhThu),
+        values: data.map((d) => d[valueKey]),
         labels: data.map((d) => {
-          const label = pieType === 'GB' ? `GB ${(d as RevenueByPriceList).GB}` : `Đợt ${(d as RevenueByDot).Dot}`
-          const val = Number(d.DoanhThu) || 0
+          const label = pieType === 'GB' ? `GB ${d.GB}` : `Đợt ${d.Dot}`
+          const val = Number(d[valueKey]) || 0
           const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0'
           return `${label}  ${pct}%`
         }),
@@ -80,13 +84,13 @@ export default function Dashboard() {
         textinfo: 'percent',
         textposition: 'inside',
         insidetextorientation: 'horizontal',
-        hovertemplate: `<b>%{label}</b><br>Doanh thu: %{value:,.0f} VNĐ<extra></extra>`
+        hovertemplate: `<b>%{label}</b><br>${isRevenue ? 'Doanh thu' : 'Sản lượng'}: %{value:,.0f} ${isRevenue ? 'VNĐ' : 'm³'}<extra></extra>`
       }])
     } catch (e) {
       logger.error('Error fetching pie data:', e)
       toast.error('Không thể tải dữ liệu biểu đồ tròn')
     }
-  }, [selectedYear, pieType])
+  }, [selectedYear, pieType, pieMetric])
 
   const fetchData = useCallback(async () => {
     try {
@@ -434,11 +438,13 @@ export default function Dashboard() {
           />
 
           <ChartSection
-            title="Cơ cấu Doanh thu"
+            title="Cơ cấu"
             chartType="pie"
             isPie={true}
             pieViewType={pieType}
             onPieTypeChange={setPieType}
+            pieMetric={pieMetric}
+            onPieMetricChange={setPieMetric}
             data={pieChartData}
             layout={{
               legend: { orientation: 'v', x: 1.02, y: 0.5, xanchor: 'left', yanchor: 'middle' },

@@ -121,6 +121,7 @@ export async function getRevenueByPriceList(year: number) {
   return data
 }
 
+
 export async function getRevenueByDot(year: number) {
   // Breakdown by Dot (Book/Route)
   const query = `
@@ -132,5 +133,33 @@ export async function getRevenueByDot(year: number) {
   `
 
   const data = await executeSqlQuery('f_Select_SQL_Thutien', query)
+  return data
+}
+
+export async function getConsumptionByPriceList(year: number) {
+  // Breakdown by GB (Consumption)
+  const query = `
+    SELECT GB, SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) AS SanLuong
+    FROM DocSo WITH (NOLOCK)
+    WHERE Nam = ${year} AND GB IS NOT NULL AND GB <> ''
+    GROUP BY GB
+    ORDER BY SanLuong DESC
+  `
+
+  const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
+  return data
+}
+
+export async function getConsumptionByDot(year: number) {
+  // Breakdown by Dot (Consumption)
+  const query = `
+    SELECT Dot, SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) AS SanLuong
+    FROM DocSo WITH (NOLOCK)
+    WHERE Nam = ${year} AND Dot IS NOT NULL
+    GROUP BY Dot
+    ORDER BY SanLuong DESC
+  `
+
+  const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
   return data
 }
