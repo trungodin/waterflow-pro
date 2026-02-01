@@ -17,8 +17,10 @@ import {
 const formatNumber = (val: number) => new Intl.NumberFormat('vi-VN').format(val)
 
 export default function ReadingYearlyReport() {
+    // ... existing state ...
     const [yearlyData, setYearlyData] = useState<YearlyAnalysisData[]>([])
 
+    // ... (keep state definitions) ...
     // 2. Comparison State
     const currentYear = new Date().getFullYear()
     const [compYear1, setCompYear1] = useState(currentYear)
@@ -105,7 +107,7 @@ export default function ReadingYearlyReport() {
     const availableYears = Array.from({ length: 10 }, (_, i) => currentYear - i)
     const periods = Array.from({ length: 12 }, (_, i) => i + 1)
 
-    if (loadingOverview) return <div className="p-12 text-center text-gray-500 flex flex-col items-center gap-2"><div className="animate-spin h-6 w-6 border-2 border-blue-600 rounded-full border-t-transparent"></div>Đang tải báo cáo...</div>
+    if (loadingOverview) return <div className="p-12 text-center text-gray-500 flex flex-col items-center gap-2"><div className="animate-spin h-6 w-6 border-2 border-blue-600 rounded-full border-t-transparent"></div>Äang táº£i bÃ¡o cÃ¡o...</div>
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -113,8 +115,9 @@ export default function ReadingYearlyReport() {
             {/* SECTION 1: YEARLY OVERVIEW */}
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
                 <h3 className="font-bold text-gray-900 mb-6 text-xl flex items-center gap-2">
-                    📊 Tổng Quan Sản Lượng Theo Năm
+                    ðŸ“Š Tá»•ng Quan Sáº£n LÆ°á»£ng Theo NÄƒm
                 </h3>
+                {/* ... (Keep Section 1 Content Unchanged) ... */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 h-[350px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -135,19 +138,19 @@ export default function ReadingYearlyReport() {
                                             const data = payload[0].payload;
                                             return (
                                                 <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[200px]">
-                                                    <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Năm {label}</p>
+                                                    <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">NÄƒm {label}</p>
                                                     <div className="space-y-1">
                                                         <div className="flex justify-between items-center gap-4">
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                                                                <span className="text-gray-600 text-sm">Sản lượng:</span>
+                                                                <span className="text-gray-600 text-sm">Sáº£n lÆ°á»£ng:</span>
                                                             </div>
-                                                            <span className="text-blue-600 font-bold text-base">{formatNumber(Number(payload[0].value))} m³</span>
+                                                            <span className="text-blue-600 font-bold text-base">{formatNumber(Number(payload[0].value))} mÂ³</span>
                                                         </div>
                                                         <div className="flex justify-between items-center gap-4">
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                                                                <span className="text-gray-600 text-sm">Khách hàng:</span>
+                                                                <span className="text-gray-600 text-sm">KhÃ¡ch hÃ ng:</span>
                                                             </div>
                                                             <span className="text-gray-900 font-bold text-sm">{formatNumber(data.RecordCount)}</span>
                                                         </div>
@@ -158,7 +161,7 @@ export default function ReadingYearlyReport() {
                                         return null;
                                     }}
                                 />
-                                <Bar dataKey="TotalConsumption" name="Sản Lượng (m³)" fill="url(#colorConsumption)" radius={[6, 6, 0, 0]} maxBarSize={60}>
+                                <Bar dataKey="TotalConsumption" name="Sáº£n LÆ°á»£ng (mÂ³)" fill="url(#colorConsumption)" radius={[6, 6, 0, 0]} maxBarSize={60}>
                                     <LabelList dataKey="TotalConsumption" position="top" formatter={(val: any) => formatNumber(Number(val))} style={{ fontSize: '11px', fontWeight: 'bold', fill: '#1f2937' }} offset={10} />
                                 </Bar>
                                 <Line type="monotone" dataKey="TotalConsumption" stroke="#f97316" strokeWidth={3} dot={{ r: 4, fill: '#f97316', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
@@ -172,9 +175,9 @@ export default function ReadingYearlyReport() {
                             <table className="min-w-full divide-y divide-gray-200 text-sm">
                                 <thead className="bg-blue-700 text-white select-none sticky top-0 shadow-sm">
                                     <tr>
-                                        <th className="px-3 py-2 text-left font-bold border-r border-blue-600">Năm</th>
+                                        <th className="px-3 py-2 text-left font-bold border-r border-blue-600">NÄƒm</th>
                                         <th className="px-3 py-2 text-right font-bold border-r border-blue-600">SL KH</th>
-                                        <th className="px-3 py-2 text-right font-bold border-r border-blue-600">Sản Lượng</th>
+                                        <th className="px-3 py-2 text-right font-bold border-r border-blue-600">Sáº£n LÆ°á»£ng</th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
@@ -192,13 +195,12 @@ export default function ReadingYearlyReport() {
                 </div>
             </div>
 
-            {/* SECTIONS 2 & 3: COMPARISON & DOT ANALYSIS */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                 {/* SECTION 2: COMPARISON */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">📈 So Sánh 2 Năm</h3>
+                        <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">ðŸ“ˆ So SÃ¡nh 2 NÄƒm</h3>
                         <div className="flex gap-2">
                             <select value={compYear1} onChange={(e) => setCompYear1(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition-colors shadow-sm">
                                 {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
@@ -212,12 +214,12 @@ export default function ReadingYearlyReport() {
 
                     <div className="flex-1 min-h-[300px]">
                         {loadingComparison ? (
-                            <div className="h-full flex items-center justify-center text-gray-400">Đang tải dữ liệu...</div>
+                            <div className="h-full flex items-center justify-center text-gray-400">Äang táº£i dá»¯ liá»‡u...</div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={comparisonData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="Ky" label={{ value: 'Kỳ', position: 'insideBottomRight', offset: -5 }} />
+                                    <XAxis dataKey="Ky" label={{ value: 'Ká»³', position: 'insideBottomRight', offset: -5 }} />
                                     <YAxis tickFormatter={(val) => new Intl.NumberFormat('en-US', { notation: "compact" }).format(val)} />
                                     <Tooltip
                                         cursor={{ fill: '#f3f4f6' }}
@@ -228,28 +230,28 @@ export default function ReadingYearlyReport() {
                                                 const diff = v1 - v2
                                                 const percent = v2 > 0 ? (diff / v2) * 100 : 0
                                                 const color = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-500'
-                                                const icon = diff > 0 ? '▲' : diff < 0 ? '▼' : '−'
+                                                const icon = diff > 0 ? 'â–²' : diff < 0 ? 'â–¼' : 'âˆ’'
 
                                                 return (
                                                     <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[200px]">
-                                                        <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Kỳ {label}</p>
+                                                        <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Ká»³ {label}</p>
                                                         <div className="space-y-1">
                                                             <div className="flex justify-between items-center gap-2">
                                                                 <div className="flex items-center gap-1">
                                                                     <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                                                                    <span className="text-xs text-blue-700 font-semibold">Năm {compYear1}:</span>
+                                                                    <span className="text-xs text-blue-700 font-semibold">NÄƒm {compYear1}:</span>
                                                                 </div>
                                                                 <span className="font-bold text-gray-800">{formatNumber(v1)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center gap-2">
                                                                 <div className="flex items-center gap-1">
                                                                     <div className="w-2 h-2 rounded-full bg-red-600"></div>
-                                                                    <span className="text-xs text-red-700 font-semibold">Năm {compYear2}:</span>
+                                                                    <span className="text-xs text-red-700 font-semibold">NÄƒm {compYear2}:</span>
                                                                 </div>
                                                                 <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
                                                             </div>
                                                             <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
-                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <span className="text-xs">ChÃªnh lá»‡ch:</span>
                                                                 <div className="flex items-center gap-1">
                                                                     <span className="text-xs">{icon}</span>
                                                                     <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
@@ -263,8 +265,8 @@ export default function ReadingYearlyReport() {
                                         }}
                                     />
                                     <Legend />
-                                    <Line type="monotone" dataKey="Year1" name={`Năm ${compYear1}`} stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                                    <Line type="monotone" dataKey="Year2" name={`Năm ${compYear2}`} stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="Year1" name={`NÄƒm ${compYear1}`} stroke="#2563eb" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                                    <Line type="monotone" dataKey="Year2" name={`NÄƒm ${compYear2}`} stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
                                 </LineChart>
                             </ResponsiveContainer>
                         )}
@@ -274,35 +276,35 @@ export default function ReadingYearlyReport() {
                 {/* SECTION 3: DOT ANALYSIS (NEW DUAL COMPARISON) */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
                     <div className="flex flex-col gap-4 mb-4">
-                        <div className="flex flex-col xl:flex-row justify-between xl:items-center gap-4">
-                            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">🌊 Sản Lượng Theo Đợt</h3>
-                            <div className="flex items-center gap-2 p-1.5 bg-blue-50 rounded-lg border border-blue-100 w-fit self-end xl:self-auto">
-                                <div className="flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-pink-600"></span>
-                                    <select value={sharedYear2} onChange={(e) => setSharedYear2(Number(e.target.value))} className="px-2 py-1 border border-gray-300 rounded text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-pink-500 cursor-pointer">
-                                        {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
-                                    </select>
-                                    <select value={sharedPeriod2} onChange={(e) => setSharedPeriod2(Number(e.target.value))} className="px-2 py-1 border border-gray-300 rounded text-xs font-bold text-pink-700 bg-pink-50 focus:outline-none focus:ring-1 focus:ring-pink-500 cursor-pointer">
-                                        {periods.map(p => <option key={p} value={p}>Kỳ {p}</option>)}
-                                    </select>
-                                </div>
-                                <span className="text-gray-400 font-extrabold text-xs">VS</span>
-                                <div className="flex items-center gap-1">
-                                    <select value={sharedYear1} onChange={(e) => setSharedYear1(Number(e.target.value))} className="px-2 py-1 border border-gray-300 rounded text-xs font-bold text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
-                                        {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
-                                    </select>
-                                    <select value={sharedPeriod1} onChange={(e) => setSharedPeriod1(Number(e.target.value))} className="px-2 py-1 border border-gray-300 rounded text-xs font-bold text-indigo-700 bg-indigo-50 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
-                                        {periods.map(p => <option key={p} value={p}>Kỳ {p}</option>)}
-                                    </select>
-                                    <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-                                </div>
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">ðŸŒŠ Sáº£n LÆ°á»£ng Theo Äá»£t</h3>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-indigo-600"></span>
+                                <select value={sharedYear1} onChange={(e) => setsharedYear1(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <select value={sharedPeriod1} onChange={(e) => setsharedPeriod1(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-indigo-700 bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer">
+                                    {periods.map(p => <option key={p} value={p}>Ká»³ {p}</option>)}
+                                </select>
+                            </div>
+                            <span className="text-gray-400 font-extrabold px-1">VS</span>
+                            <div className="flex items-center gap-2">
+                                <select value={sharedYear2} onChange={(e) => setsharedYear2(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 cursor-pointer">
+                                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <select value={sharedPeriod2} onChange={(e) => setsharedPeriod2(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-pink-700 bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-500 cursor-pointer">
+                                    {periods.map(p => <option key={p} value={p}>Ká»³ {p}</option>)}
+                                </select>
+                                <span className="w-3 h-3 rounded-full bg-pink-600"></span>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex-1 min-h-[300px]">
                         {loadingDot ? (
-                            <div className="h-full flex items-center justify-center text-gray-400">Đang tải dữ liệu...</div>
+                            <div className="h-full flex items-center justify-center text-gray-400">Äang táº£i dá»¯ liá»‡u...</div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={dotData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -329,28 +331,28 @@ export default function ReadingYearlyReport() {
                                                 const diff = v1 - v2
                                                 const percent = v2 > 0 ? (diff / v2) * 100 : 0
                                                 const color = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-500'
-                                                const icon = diff > 0 ? '▲' : diff < 0 ? '▼' : '−'
+                                                const icon = diff > 0 ? 'â–²' : diff < 0 ? 'â–¼' : 'âˆ’'
 
                                                 return (
                                                     <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[200px]">
-                                                        <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Đợt {label}</p>
+                                                        <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Äá»£t {label}</p>
                                                         <div className="space-y-1">
                                                             <div className="flex justify-between items-center gap-2">
                                                                 <div className="flex items-center gap-1">
                                                                     <div className="w-2 h-2 rounded-full bg-indigo-600"></div>
-                                                                    <span className="text-xs text-indigo-700 font-semibold">Kỳ {sharedPeriod1}/{sharedYear1}:</span>
+                                                                    <span className="text-xs text-indigo-700 font-semibold">Ká»³ {sharedPeriod1}/{sharedYear1}:</span>
                                                                 </div>
                                                                 <span className="font-bold text-gray-800">{formatNumber(v1)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center gap-2">
                                                                 <div className="flex items-center gap-1">
                                                                     <div className="w-2 h-2 rounded-full bg-pink-600"></div>
-                                                                    <span className="text-xs text-pink-700 font-semibold">Kỳ {sharedPeriod2}/{sharedYear2}:</span>
+                                                                    <span className="text-xs text-pink-700 font-semibold">Ká»³ {sharedPeriod2}/{sharedYear2}:</span>
                                                                 </div>
                                                                 <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
                                                             </div>
                                                             <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
-                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <span className="text-xs">ChÃªnh lá»‡ch:</span>
                                                                 <div className="flex items-center gap-1">
                                                                     <span className="text-xs">{icon}</span>
                                                                     <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
@@ -363,7 +365,7 @@ export default function ReadingYearlyReport() {
                                             return null
                                         }}
                                     />
-                                    <Bar dataKey="Val1" name={`Kỳ ${sharedPeriod1}/${sharedYear1}`} fill="#4f46e5" radius={[3, 3, 0, 0]}>
+                                    <Bar dataKey="Val1" name={`Ká»³ ${sharedPeriod1}/${sharedYear1}`} fill="#4f46e5" radius={[3, 3, 0, 0]}>
                                         <LabelList
                                             dataKey="Val1"
                                             content={(props: any) => {
@@ -375,13 +377,13 @@ export default function ReadingYearlyReport() {
                                                 const v2 = Number(item.Val2 || 0)
 
                                                 if (v1 > v2) {
-                                                    return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#4f46e5" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>★</text>
+                                                    return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#4f46e5" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>â˜…</text>
                                                 }
                                                 return null
                                             }}
                                         />
                                     </Bar>
-                                    <Bar dataKey="Val2" name={`Kỳ ${sharedPeriod2}/${sharedYear2}`} fill="#db2777" radius={[3, 3, 0, 0]}>
+                                    <Bar dataKey="Val2" name={`Ká»³ ${sharedPeriod2}/${sharedYear2}`} fill="#db2777" radius={[3, 3, 0, 0]}>
                                         <LabelList
                                             dataKey="Val2"
                                             content={(props: any) => {
@@ -393,7 +395,7 @@ export default function ReadingYearlyReport() {
                                                 const v2 = Number(item.Val2 || 0)
 
                                                 if (v2 > v1) {
-                                                    return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#db2777" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>★</text>
+                                                    return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#db2777" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>â˜…</text>
                                                 }
                                                 return null
                                             }}
@@ -411,26 +413,39 @@ export default function ReadingYearlyReport() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 {/* SECTION 4: GB ANALYSIS (NEW) */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
-                        <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">💰 Sản Lượng Theo Giá Biểu</h3>
-                        <div className="flex items-center gap-3 text-xs font-bold">
-                            <div className="flex items-center gap-1.5 p-1 px-2 rounded-md bg-teal-50 border border-teal-100 text-teal-700">
-                                <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                                <span>Kỳ {sharedPeriod1}/{sharedYear1}</span>
+                    <div className="flex flex-col gap-4 mb-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">ðŸ’° Sáº£n LÆ°á»£ng Theo GiÃ¡ Biá»ƒu</h3>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-gray-200 shadow-sm w-fit">
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-teal-500"></span>
+                                <select value={sharedYear1} onChange={(e) => setsharedYear1(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <select value={sharedPeriod1} onChange={(e) => setsharedPeriod1(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-teal-700 bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-500 cursor-pointer">
+                                    {periods.map(p => <option key={p} value={p}>Ká»³ {p}</option>)}
+                                </select>
                             </div>
-                            <div className="flex items-center gap-1.5 p-1 px-2 rounded-md bg-orange-50 border border-orange-100 text-orange-700">
-                                <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                                <span>Kỳ {sharedPeriod2}/{sharedYear2}</span>
+                            <span className="text-gray-400 font-extrabold px-1">VS</span>
+                            <div className="flex items-center gap-2">
+                                <select value={sharedYear2} onChange={(e) => setsharedYear2(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer">
+                                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <select value={sharedPeriod2} onChange={(e) => setsharedPeriod2(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-orange-700 bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer">
+                                    {periods.map(p => <option key={p} value={p}>Ká»³ {p}</option>)}
+                                </select>
+                                <span className="w-3 h-3 rounded-full bg-orange-500"></span>
                             </div>
                         </div>
                     </div>
                     <div className="h-[400px] w-full">
                         {loadingGB ? (
-                            <div className="h-full flex items-center justify-center text-gray-400">Đang tải dữ liệu...</div>
+                            <div className="h-full flex items-center justify-center text-gray-400">Äang táº£i dá»¯ liá»‡u...</div>
                         ) : gbData.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-2">
-                                <div className="text-4xl">📉</div>
-                                <span>Không có dữ liệu cho giai đoạn này</span>
+                                <div className="text-4xl">ðŸ“­</div>
+                                <span>KhÃ´ng cÃ³ dá»¯ liá»‡u cho giai Ä‘oáº¡n nÃ y</span>
                             </div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
@@ -447,28 +462,28 @@ export default function ReadingYearlyReport() {
                                                 const diff = v1 - v2
                                                 const percent = v2 > 0 ? (diff / v2) * 100 : 0
                                                 const color = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-500'
-                                                const icon = diff > 0 ? '▲' : diff < 0 ? '▼' : '−'
+                                                const icon = diff > 0 ? 'â–²' : diff < 0 ? 'â–¼' : 'âˆ’'
 
                                                 return (
                                                     <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[200px]">
-                                                        <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Biểu Giá: {label}</p>
+                                                        <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Biá»ƒu GiÃ¡: {label}</p>
                                                         <div className="space-y-1">
                                                             <div className="flex justify-between items-center gap-2">
                                                                 <div className="flex items-center gap-1">
                                                                     <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                                                                    <span className="text-xs text-teal-700 font-semibold">Kỳ {sharedPeriod1}/{sharedYear1}:</span>
+                                                                    <span className="text-xs text-teal-700 font-semibold">Ká»³ {sharedPeriod1}/{sharedYear1}:</span>
                                                                 </div>
                                                                 <span className="font-bold text-gray-800">{formatNumber(v1)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center gap-2">
                                                                 <div className="flex items-center gap-1">
                                                                     <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                                                                    <span className="text-xs text-orange-700 font-semibold">Kỳ {sharedPeriod2}/{sharedYear2}:</span>
+                                                                    <span className="text-xs text-orange-700 font-semibold">Ká»³ {sharedPeriod2}/{sharedYear2}:</span>
                                                                 </div>
                                                                 <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
                                                             </div>
                                                             <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
-                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <span className="text-xs">ChÃªnh lá»‡ch:</span>
                                                                 <div className="flex items-center gap-1">
                                                                     <span className="text-xs">{icon}</span>
                                                                     <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
@@ -481,11 +496,11 @@ export default function ReadingYearlyReport() {
                                             return null
                                         }}
                                     />
-                                    <Bar dataKey="Val1" name={`Kỳ ${sharedPeriod1}/${sharedYear1}`} fill="#14b8a6" radius={[4, 4, 0, 0]}>
-                                        <LabelList dataKey="Val1" content={(props: any) => { const { x, y, width, index } = props; const item = gbData[index]; if (!item) return null; const v1 = Number(item.Val1 || 0); const v2 = Number(item.Val2 || 0); if (v1 > v2) return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#14b8a6" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>★</text>; return null; }} />
+                                    <Bar dataKey="Val1" name={`Ká»³ ${sharedPeriod1}/${sharedYear1}`} fill="#14b8a6" radius={[4, 4, 0, 0]}>
+                                        <LabelList dataKey="Val1" content={(props: any) => { const { x, y, width, index } = props; const item = gbData[index]; if (!item) return null; const v1 = Number(item.Val1 || 0); const v2 = Number(item.Val2 || 0); if (v1 > v2) return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#14b8a6" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>â˜…</text>; return null; }} />
                                     </Bar>
-                                    <Bar dataKey="Val2" name={`Kỳ ${sharedPeriod2}/${sharedYear2}`} fill="#f97316" radius={[4, 4, 0, 0]}>
-                                        <LabelList dataKey="Val2" content={(props: any) => { const { x, y, width, index } = props; const item = gbData[index]; if (!item) return null; const v1 = Number(item.Val1 || 0); const v2 = Number(item.Val2 || 0); if (v2 > v1) return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#f97316" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>★</text>; return null; }} />
+                                    <Bar dataKey="Val2" name={`Ká»³ ${sharedPeriod2}/${sharedYear2}`} fill="#f97316" radius={[4, 4, 0, 0]}>
+                                        <LabelList dataKey="Val2" content={(props: any) => { const { x, y, width, index } = props; const item = gbData[index]; if (!item) return null; const v1 = Number(item.Val1 || 0); const v2 = Number(item.Val2 || 0); if (v2 > v1) return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#f97316" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>â˜…</text>; return null; }} />
                                     </Bar>
                                 </ComposedChart>
                             </ResponsiveContainer>
@@ -493,28 +508,41 @@ export default function ReadingYearlyReport() {
                     </div>
                 </div>
 
-                {/* SECTION 5: COCU ANALYSIS */}
+                {/* SECTION 5: COCU ANALYSIS (NEW) */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
-                        <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">📏 Sản Lượng Theo Cỡ Đồng Hồ</h3>
-                        <div className="flex items-center gap-3 text-xs font-bold">
-                            <div className="flex items-center gap-1.5 p-1 px-2 rounded-md bg-cyan-50 border border-cyan-100 text-cyan-700">
-                                <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
-                                <span>Kỳ {sharedPeriod1}/{sharedYear1}</span>
+                    <div className="flex flex-col gap-4 mb-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-gray-900 text-lg flex items-center gap-2">ðŸ“ Sáº£n LÆ°á»£ng Theo Cá»¡ Äá»“ng Há»“</h3>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 p-2 bg-white rounded-lg border border-gray-200 shadow-sm w-fit">
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full bg-cyan-500"></span>
+                                <select value={sharedYear1} onChange={(e) => setsharedYear1(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer">
+                                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <select value={sharedPeriod1} onChange={(e) => setsharedPeriod1(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-cyan-700 bg-cyan-50 focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer">
+                                    {periods.map(p => <option key={p} value={p}>Ká»³ {p}</option>)}
+                                </select>
                             </div>
-                            <div className="flex items-center gap-1.5 p-1 px-2 rounded-md bg-amber-50 border border-amber-100 text-amber-700">
-                                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                                <span>Kỳ {sharedPeriod2}/{sharedYear2}</span>
+                            <span className="text-gray-400 font-extrabold px-1">VS</span>
+                            <div className="flex items-center gap-2">
+                                <select value={sharedYear2} onChange={(e) => setsharedYear2(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-gray-700 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+                                    {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+                                </select>
+                                <select value={sharedPeriod2} onChange={(e) => setsharedPeriod2(Number(e.target.value))} className="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-bold text-amber-700 bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer">
+                                    {periods.map(p => <option key={p} value={p}>Ká»³ {p}</option>)}
+                                </select>
+                                <span className="w-3 h-3 rounded-full bg-amber-500"></span>
                             </div>
                         </div>
                     </div>
                     <div className="h-[400px] w-full">
                         {loadingCoCu ? (
-                            <div className="h-full flex items-center justify-center text-gray-400">Đang tải dữ liệu...</div>
+                            <div className="h-full flex items-center justify-center text-gray-400">Äang táº£i dá»¯ liá»‡u...</div>
                         ) : cocuData.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-2">
-                                <div className="text-4xl">📉</div>
-                                <span>Không có dữ liệu cho giai đoạn này</span>
+                                <div className="text-4xl">ðŸ“­</div>
+                                <span>KhÃ´ng cÃ³ dá»¯ liá»‡u cho giai Ä‘oáº¡n nÃ y</span>
                             </div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
@@ -531,28 +559,28 @@ export default function ReadingYearlyReport() {
                                                 const diff = v1 - v2
                                                 const percent = v2 > 0 ? (diff / v2) * 100 : 0
                                                 const color = diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-500'
-                                                const icon = diff > 0 ? '▲' : diff < 0 ? '▼' : '−'
+                                                const icon = diff > 0 ? 'â–²' : diff < 0 ? 'â–¼' : 'âˆ’'
 
                                                 return (
                                                     <div className="bg-white p-3 border border-gray-100 shadow-xl rounded-lg min-w-[200px]">
-                                                        <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Cỡ ĐH: {label}</p>
+                                                        <p className="text-sm font-semibold text-gray-500 mb-2 border-b border-gray-100 pb-1">Cá»¡ ÄH: {label}</p>
                                                         <div className="space-y-1">
                                                             <div className="flex justify-between items-center gap-2">
                                                                 <div className="flex items-center gap-1">
                                                                     <div className="w-2 h-2 rounded-full bg-cyan-500"></div>
-                                                                    <span className="text-xs text-cyan-700 font-semibold">Kỳ {sharedPeriod1}/{sharedYear1}:</span>
+                                                                    <span className="text-xs text-cyan-700 font-semibold">Ká»³ {sharedPeriod1}/{sharedYear1}:</span>
                                                                 </div>
                                                                 <span className="font-bold text-gray-800">{formatNumber(v1)}</span>
                                                             </div>
                                                             <div className="flex justify-between items-center gap-2">
                                                                 <div className="flex items-center gap-1">
                                                                     <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                                                                    <span className="text-xs text-amber-700 font-semibold">Kỳ {sharedPeriod2}/{sharedYear2}:</span>
+                                                                    <span className="text-xs text-amber-700 font-semibold">Ká»³ {sharedPeriod2}/{sharedYear2}:</span>
                                                                 </div>
                                                                 <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
                                                             </div>
                                                             <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
-                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <span className="text-xs">ChÃªnh lá»‡ch:</span>
                                                                 <div className="flex items-center gap-1">
                                                                     <span className="text-xs">{icon}</span>
                                                                     <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
@@ -565,11 +593,11 @@ export default function ReadingYearlyReport() {
                                             return null
                                         }}
                                     />
-                                    <Bar dataKey="Val1" name={`Kỳ ${sharedPeriod1}/${sharedYear1}`} fill="#06b6d4" radius={[4, 4, 0, 0]}>
-                                        <LabelList dataKey="Val1" content={(props: any) => { const { x, y, width, index } = props; const item = cocuData[index]; if (!item) return null; const v1 = Number(item.Val1 || 0); const v2 = Number(item.Val2 || 0); if (v1 > v2) return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#06b6d4" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>★</text>; return null; }} />
+                                    <Bar dataKey="Val1" name={`Ká»³ ${sharedPeriod1}/${sharedYear1}`} fill="#06b6d4" radius={[4, 4, 0, 0]}>
+                                        <LabelList dataKey="Val1" content={(props: any) => { const { x, y, width, index } = props; const item = cocuData[index]; if (!item) return null; const v1 = Number(item.Val1 || 0); const v2 = Number(item.Val2 || 0); if (v1 > v2) return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#06b6d4" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>â˜…</text>; return null; }} />
                                     </Bar>
-                                    <Bar dataKey="Val2" name={`Kỳ ${sharedPeriod2}/${sharedYear2}`} fill="#f59e0b" radius={[4, 4, 0, 0]}>
-                                        <LabelList dataKey="Val2" content={(props: any) => { const { x, y, width, index } = props; const item = cocuData[index]; if (!item) return null; const v1 = Number(item.Val1 || 0); const v2 = Number(item.Val2 || 0); if (v2 > v1) return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#f59e0b" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>★</text>; return null; }} />
+                                    <Bar dataKey="Val2" name={`Ká»³ ${sharedPeriod2}/${sharedYear2}`} fill="#f59e0b" radius={[4, 4, 0, 0]}>
+                                        <LabelList dataKey="Val2" content={(props: any) => { const { x, y, width, index } = props; const item = cocuData[index]; if (!item) return null; const v1 = Number(item.Val1 || 0); const v2 = Number(item.Val2 || 0); if (v2 > v1) return <text x={Number(x) + Number(width) / 2} y={Number(y) - 4} fill="#f59e0b" textAnchor="middle" style={{ fontSize: '14px', fontWeight: '900' }}>â˜…</text>; return null; }} />
                                     </Bar>
                                 </ComposedChart>
                             </ResponsiveContainer>

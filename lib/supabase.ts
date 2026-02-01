@@ -3,12 +3,13 @@
 
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from './database.types'
+import { logger } from './logger'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ Supabase credentials not found.')
+  logger.warn('⚠️ Supabase credentials not found.')
 }
 
 // Create typed Supabase client for Browser

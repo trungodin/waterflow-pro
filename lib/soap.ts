@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser'
+import { logger } from './logger'
 
 const API_URL = process.env.SOAP_API_URL || 'http://14.161.13.194:8065/ws_Banggia.asmx'
 const API_USER = process.env.SOAP_API_USER || 'BENTHANH@194'
@@ -39,28 +40,28 @@ export async function executeSqlQuery(functionName: string, sqlQuery: string) {
 
     // Navigate to NewDataSet -> Table1
     // Structure: Envelope -> Body -> Response -> Result -> diffgram -> NewDataSet -> Table1
-    const body = result['soap:Envelope']?.['soap:Body'] || result['s:Envelope']?.['s:Body'] 
+    const body = result['soap:Envelope']?.['soap:Body'] || result['s:Envelope']?.['s:Body']
     const responseBody = body?.[`${functionName}Response`]
     const innerResult = responseBody?.[`${functionName}Result`]
-    
+
     // The innerResult might be complex. Usually diffgram is present.
     // fast-xml-parser might handle nested namespaces diffculty. 
     // Let's look for 'NewDataSet' recursively or handle known path.
-    
+
     const diffgram = innerResult?.['diffgr:diffgram']
     const newDataSet = diffgram?.['NewDataSet']
-    
+
     if (!newDataSet) return []
 
     const table1 = newDataSet['Table1']
-    
+
     if (!table1) return []
-    
+
     // If only 1 row, it might be an object, not array. Normalize to array.
     return Array.isArray(table1) ? table1 : [table1]
 
   } catch (error) {
-    console.error('SOAP Execution Error:', error)
+    logger.error('SOAP Execution Error:', error)
     return []
   }
 }

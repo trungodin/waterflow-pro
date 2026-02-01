@@ -1,10 +1,12 @@
 
 
+import { envLogger } from './logger'
+
 /**
  * Environment Variables Validation
  * Validates and exports typed environment configuration
  */
-console.log('Loading Env Config:', {
+envLogger.info('Loading Env Config:', {
   hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
   hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   hasSoapUrl: !!process.env.SOAP_API_URL
@@ -66,13 +68,13 @@ export function validateEnv() {
   }
 
   if (warnings.length > 0) {
-    console.log('\n' + '='.repeat(60))
-    console.log('🔧 ENVIRONMENT CONFIGURATION WARNINGS')
-    console.log('='.repeat(60))
-    warnings.forEach(w => console.log(w))
-    console.log('\nℹ️  See .env.example for configuration instructions')
-    console.log('ℹ️  App will run with limited functionality\n')
-    console.log('='.repeat(60) + '\n')
+    envLogger.warn('\n' + '='.repeat(60))
+    envLogger.warn('🔧 ENVIRONMENT CONFIGURATION WARNINGS')
+    envLogger.warn('='.repeat(60))
+    warnings.forEach(w => envLogger.warn(w))
+    envLogger.warn('\nℹ️  See .env.example for configuration instructions')
+    envLogger.warn('ℹ️  App will run with limited functionality\n')
+    envLogger.warn('='.repeat(60) + '\n')
   }
 
   return {

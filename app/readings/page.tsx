@@ -43,7 +43,7 @@ export default function ReadingsPage() {
 
             <main className="w-full px-4 sm:px-6 lg:px-8 py-24">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">✍️ Đọc Số (GHI)</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">⏱️ Đọc Số</h1>
                     <p className="text-gray-500 mt-1">Quản lý và phân tích số liệu đọc số.</p>
                 </div>
 
@@ -53,11 +53,10 @@ export default function ReadingsPage() {
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                activeTab === tab.id
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${activeTab === tab.id
                                     ? 'bg-blue-600 text-white shadow-md'
                                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                            }`}
+                                }`}
                         >
                             {tab.label}
                         </button>
@@ -68,10 +67,10 @@ export default function ReadingsPage() {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     {activeTab === 'detail' && (
                         <>
-                             <div className="mb-6">
+                            <div className="mb-6">
                                 <ReadingFiltersComponent onSearch={handleSearch} loading={loading} />
-                             </div>
-                             <ReadingTable data={tableData} loading={loading} hasSearched={hasSearched} />
+                            </div>
+                            <ReadingTable data={tableData} loading={loading} hasSearched={hasSearched} />
                         </>
                     )}
 

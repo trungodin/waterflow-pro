@@ -3,6 +3,7 @@
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { logger } from '@/lib/logger'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -18,7 +19,6 @@ export async function middleware(request: NextRequest) {
   // DEMO MODE CHECK
   // If credentials are missing or placeholder, skip authentication entirely
   if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('placeholder')) {
-    // console.log('⚠️ Middleware: Running in DEMO mode - authentication disabled')
     return response
   }
 
@@ -96,7 +96,7 @@ export async function middleware(request: NextRequest) {
     return response
 
   } catch (e) {
-    console.error('Middleware Error:', e);
+    logger.error('Middleware Error:', e);
     // In case of middleware failure, return original response to avoid crash
     return response;
   }
