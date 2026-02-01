@@ -101,13 +101,24 @@ export default function VirtualDMNTable({
   const sortedDates = useMemo(() => {
     if (isFlatMode) return []
     return Object.keys(groupedData).sort((a, b) => {
-      const parseDate = (d: string) => {
-        if (d === 'Chưa xác định') return 0
-        const parts = d.split('/')
-        if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime()
+      const parseDateVal = (d: string) => {
+        if (!d || d === 'Chưa xác định') return 0
+        try {
+          const parts = d.split('/')
+          if (parts.length === 3) {
+            // Ensure YYYYMMDD format for correct integer comparison
+            // parts[0] is day, parts[1] is month, parts[2] is year
+            const day = parseInt(parts[0], 10)
+            const month = parseInt(parts[1], 10)
+            const year = parseInt(parts[2], 10)
+            return year * 10000 + month * 100 + day
+          }
+        } catch (e) {
+          return 0
+        }
         return 0
       }
-      return parseDate(b) - parseDate(a)
+      return parseDateVal(b) - parseDateVal(a)
     })
   }, [groupedData, isFlatMode])
 
