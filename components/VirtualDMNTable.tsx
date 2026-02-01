@@ -10,6 +10,7 @@ interface VirtualTableProps {
   customColumns?: any[]
   selectedIds?: Set<string>
   onSelectionChange?: (id: string, checked: boolean) => void
+  onRowClick?: (item: any) => void
 }
 
 // Default columns configuration - Generous widths to fit content automatically
@@ -34,7 +35,8 @@ export default function VirtualDMNTable({
   isFlatMode = false,
   customColumns,
   selectedIds,
-  onSelectionChange
+  onSelectionChange,
+  onRowClick
 }: VirtualTableProps) {
   // --- Column Resizing Logic ---
   // Use custom columns if provided
@@ -221,7 +223,12 @@ export default function VirtualDMNTable({
     const rowBgClass = item.isEven ? 'bg-white' : 'bg-[#f4f7f9]'
 
     return (
-      <div key={index} style={style} className={`border-b border-gray-300 hover:bg-yellow-50 transition-colors flex items-center ${rowBgClass}`}>
+      <div
+        key={index}
+        style={style}
+        onClick={() => onRowClick && onRowClick(row)}
+        className={`border-b border-gray-300 hover:bg-yellow-50 transition-colors flex items-center ${rowBgClass} ${onRowClick ? 'cursor-pointer' : ''}`}
+      >
         <div
           className="grid items-center h-full"
           style={{

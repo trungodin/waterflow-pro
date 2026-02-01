@@ -9,17 +9,75 @@ const getGoogleSheetsClient = () => {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
       private_key: process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     },
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'], // Read/Write Access
+    scopes: [
+      'https://www.googleapis.com/auth/spreadsheets', // Read/Write Access
+      'https://www.googleapis.com/auth/drive.readonly' // Read Drive files
+    ],
   })
 
-  return google.sheets({ version: 'v4', auth })
+  const sheets = google.sheets({ version: 'v4', auth })
+  const drive = google.drive({ version: 'v3', auth })
+
+  return { sheets, drive }
+}
+
+// ... existing exports ...
+
+export async function getDriveImageLink(fullPath: string) {
+  'use server'
+  try {
+    if (!fullPath || fullPath.startsWith('http')) return fullPath
+
+    // Extract filename: "database_Images/abc.jpg" -> "abc.jpg"
+    const filename = fullPath.split('/').pop()
+    if (!filename) return ''
+
+    const { drive } = getGoogleSheetsClient()
+
+    // DEBUG: Log what we are searching for
+    console.log(`[getDriveImageLink] Searching for: ${filename} (Full: ${fullPath})`)
+
+    // Search for file text match
+    // Note: This matches exact name. 
+    const res = await drive.files.list({
+      q: `name = '${filename}' and trashed = false`,
+      fields: 'files(id, thumbnailLink, webContentLink, mimeType)',
+      pageSize: 1,
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true
+    })
+
+    const file = res.data.files?.[0]
+    console.log(`[getDriveImageLink] Found file for ${filename}:`, file ? file.id : 'NOT FOUND')
+
+    if (file) {
+      // Priority 1: Official API Thumbnail Link (usually lh3.googleusercontent.com...)
+      if (file.thumbnailLink) {
+        return file.thumbnailLink.replace('=s220', '=s1000') // get larger image
+      }
+
+      // Priority 2: If it's an image but no thumbnail link, force the thumbnail endpoint
+      // This is more reliable for <img> tags than webContentLink which forces download
+      if (file.mimeType && file.mimeType.startsWith('image/') && file.id) {
+        return `https://drive.google.com/thumbnail?id=${file.id}&sz=w1000`
+      }
+
+      // Priority 3: Fallback to webContentLink (might break img tag but good for clicking)
+      return file.webContentLink
+    }
+
+    return ''
+  } catch (error) {
+    console.error('Error searching Drive file:', error)
+    return ''
+  }
 }
 
 // ... existing code ...
 
 export async function appendData_ToSheet(sheetName: string, values: any[][]) {
   try {
-    const sheets = getGoogleSheetsClient()
+    const { sheets } = getGoogleSheetsClient()
     const spreadsheetId = process.env.GOOGLE_SHEET_ID
 
     if (!spreadsheetId) {
@@ -124,7 +182,7 @@ export async function getCustomerStatus(danhba: string) {
   // ... existing code ...
 
   try {
-    const sheets = getGoogleSheetsClient()
+    const { sheets } = getGoogleSheetsClient()
     const spreadsheetId = process.env.GOOGLE_SHEET_ID
 
     if (!spreadsheetId) {
@@ -214,7 +272,7 @@ import { unstable_cache } from 'next/cache'
 
 async function getOnOffDataInternal() {
   try {
-    const sheets = getGoogleSheetsClient()
+    const { sheets } = getGoogleSheetsClient()
     const spreadsheetId = process.env.GOOGLE_SHEET_ID
 
     if (!spreadsheetId) {
@@ -224,7 +282,7 @@ async function getOnOffDataInternal() {
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'ON_OFF!A:Z',
+      range: 'ON_OFF!A:AZ',
     })
 
     const rows = response.data.values
@@ -257,7 +315,24 @@ async function getOnOffDataInternal() {
       nhomKhoa: findIndex(['nhom_khoa', 'nhóm_khóa']),
       kieuKhoa: findIndex(['kieu_khoa', 'kiểu_khóa']),
       codeMoi: findIndex(['code_moi', 'code_mới', 'codemoi']),
-      dot: findIndex(['dot', 'đợt'])
+      dot: findIndex(['dot', 'đợt']),
+      hinhKhoa: findIndex(['hinh_khoa', 'hình_khóa']),
+      ghiChuMo: findIndex(['ghi_chu_mo', 'ghi_chú_mở']),
+      hinhMo: findIndex(['hinh_mo', 'hình_mở']),
+      hinhTb: findIndex(['hinh_tb', 'hình_tb']),
+      ngayTb: findIndex(['ngay_tb', 'ngày_tb']),
+      nvMo: findIndex(['nv_mo', 'nhân_viên_mở'])
+    }
+
+    // FALLBACK: If header search failed (likely because header row was truncated),
+    // use hardcoded indices based on user confirmation (AA=26, AB=27)
+    if (colIndices.hinhTb === -1) {
+      console.warn('[getOnOffData] hinhTb header not found, falling back to index 26 (AA)')
+      colIndices.hinhTb = 26
+    }
+    if (colIndices.ngayTb === -1) {
+      console.warn('[getOnOffData] ngayTb header not found, falling back to index 27 (AB)')
+      colIndices.ngayTb = 27
     }
 
     const data = rows.slice(1).map((row: any[]) => ({
@@ -276,6 +351,13 @@ async function getOnOffDataInternal() {
       KieuKhoa: colIndices.kieuKhoa !== -1 ? row[colIndices.kieuKhoa] : '',
       CodeMoi: colIndices.codeMoi !== -1 ? row[colIndices.codeMoi] : '',
       Dot: colIndices.dot !== -1 ? row[colIndices.dot] : '',
+      // New fields
+      HinhKhoa: colIndices.hinhKhoa !== -1 ? row[colIndices.hinhKhoa] : '',
+      GhiChuMo: colIndices.ghiChuMo !== -1 ? row[colIndices.ghiChuMo] : '',
+      HinhMo: colIndices.hinhMo !== -1 ? row[colIndices.hinhMo] : '',
+      HinhTb: colIndices.hinhTb !== -1 ? row[colIndices.hinhTb] : '',
+      NgayTb: colIndices.ngayTb !== -1 ? row[colIndices.ngayTb] : '',
+      NvMo: colIndices.nvMo !== -1 ? row[colIndices.nvMo] : '',
     }))
 
     return data
@@ -291,7 +373,7 @@ export const getOnOffData = getOnOffDataInternal
 
 export async function getDatabaseSheetData() {
   try {
-    const sheets = getGoogleSheetsClient()
+    const { sheets } = getGoogleSheetsClient()
     const spreadsheetId = process.env.GOOGLE_SHEET_ID
 
     if (!spreadsheetId) {
