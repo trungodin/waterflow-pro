@@ -451,11 +451,28 @@ export default function PaymentsPage() {
                 </div>
                 <h2 className="text-base font-medium text-gray-600">{selectedCustomer.TenKH}</h2>
               </div>
-              <div className={`px-5 py-2 rounded-lg font-bold text-sm whitespace-nowrap shadow-sm border ${selectedCustomer.TinhTrang?.toLowerCase().includes('mở')
-                ? 'bg-green-100 text-green-700 border-green-200'
-                : 'bg-red-100 text-red-700 border-red-200'
-                }`}>
-                {selectedCustomer.TinhTrang || 'Chưa xác định'}
+              <div className="flex items-center gap-3">
+                {/* Action Buttons */}
+                <button
+                  className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-lg font-bold hover:bg-red-50 transition-colors"
+                  onClick={() => alert('Chức năng Đề nghị đang phát triển')}
+                >
+                  Đề nghị
+                </button>
+                <button
+                  className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-lg font-bold hover:bg-red-50 transition-colors"
+                  onClick={() => window.print()}
+                >
+                  In
+                </button>
+
+                {/* Status Badge */}
+                <div className={`px-5 py-2 rounded-lg font-bold text-sm whitespace-nowrap shadow-sm border ${selectedCustomer.TinhTrang?.toLowerCase().includes('mở')
+                  ? 'bg-green-100 text-green-700 border-green-200'
+                  : 'bg-red-100 text-red-700 border-red-200'
+                  }`}>
+                  {selectedCustomer.TinhTrang || 'Chưa xác định'}
+                </div>
               </div>
             </div>
 
