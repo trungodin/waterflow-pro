@@ -23,9 +23,9 @@ export default function Modal({ isOpen, onClose, children, title, width = 'max-w
         <div className="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
             <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
 
-                {/* Background overlay - Transparent as requested */}
+                {/* Background overlay - Darker as requested */}
                 <div
-                    className="fixed inset-0 bg-transparent transition-opacity"
+                    className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
                     aria-hidden="true"
                     onClick={onClose}
                 ></div>
