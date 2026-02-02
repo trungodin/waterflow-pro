@@ -11,7 +11,7 @@ const getGoogleSheetsClient = () => {
     },
     scopes: [
       'https://www.googleapis.com/auth/spreadsheets', // Read/Write Access
-      'https://www.googleapis.com/auth/drive.readonly' // Read Drive files
+      'https://www.googleapis.com/auth/drive' // Full Drive Access (Create/Files)
     ],
   })
 
@@ -72,6 +72,9 @@ export async function getDriveImageLink(fullPath: string) {
     return ''
   }
 }
+
+
+
 
 // ... existing code ...
 

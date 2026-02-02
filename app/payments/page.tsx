@@ -15,16 +15,8 @@ import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
 import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
 
 import Modal from '@/components/ui/Modal'
-
-
-// Format currency
-const formatCurrency = (val: string | number) => {
-  if (!val) return '0'
-  const num = typeof val === 'string' ? parseFloat(val.replace(/[.,]/g, '')) : val
-  if (isNaN(num)) return val
-  return new Intl.NumberFormat('vi-VN').format(num)
-}
-
+import { formatCurrency } from '@/lib/utils'
+import { generateProposalPDF } from '@/lib/utils/pdfGenerator'
 
 
 // Helper to get direct image URL (especially for Google Drive)
@@ -113,14 +105,16 @@ const DetailRow = ({ label, value, isImage = false, isLink = false, className = 
               <span className="animate-spin">⏳</span> Đang tải ảnh...
             </div>
           ) : (
-            <img
-              src={displayUrl}
-              alt={label}
-              referrerPolicy="no-referrer"
-              className="rounded-lg border border-gray-200 shadow-sm max-h-72 w-full object-contain bg-gray-50 hover:bg-white transition-colors cursor-zoom-in"
-              onClick={() => window.open(openUrl, '_blank')}
-              onError={handleImageError}
-            />
+            displayUrl ? (
+              <img
+                src={displayUrl}
+                alt={label}
+                referrerPolicy="no-referrer"
+                className="rounded-lg border border-gray-200 shadow-sm max-h-72 w-full object-contain bg-gray-50 hover:bg-white transition-colors cursor-zoom-in"
+                onClick={() => window.open(openUrl, '_blank')}
+                onError={handleImageError}
+              />
+            ) : <span className="text-sm text-gray-400 italic">Không có ảnh hiển thị</span>
           )}
         </div>
       ) : (
@@ -158,9 +152,32 @@ export default function PaymentsPage() {
 
   // State for Modal
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const handleRowClick = (item: any) => {
     setSelectedCustomer(item)
+  }
+
+  const handleCreateProposal = async () => {
+    if (!selectedCustomer) return
+
+    // Confirm download
+    if (!confirm(`Tải giấy đề nghị cho khách hàng ${selectedCustomer.TenKH} về máy?`)) return
+
+    setIsGenerating(true)
+    try {
+      const result = await generateProposalPDF(selectedCustomer)
+      if (result.success) {
+        alert('Đã tải file đề nghị xuống máy thành công!')
+      } else {
+        alert(`Lỗi khi tạo file: ${result.error}`)
+      }
+    } catch (error) {
+      console.error('Error creating proposal:', error)
+      alert('Đã xảy ra lỗi không mong muốn.')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const fetchData = async () => {
@@ -453,17 +470,30 @@ export default function PaymentsPage() {
               </div>
               <div className="flex items-center gap-3">
                 {/* Action Buttons */}
+                {['khóa', 'khoá'].some(k => (selectedCustomer.TinhTrang || '').toLowerCase().includes(k)) && (
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-sm hover:shadow active:scale-95 transition-all text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleCreateProposal}
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    )}
+                    {isGenerating ? 'Đang tạo...' : 'Đề nghị'}
+                  </button>
+                )}
                 <button
-                  className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-lg font-bold hover:bg-red-50 transition-colors"
-                  onClick={() => alert('Chức năng Đề nghị đang phát triển')}
-                >
-                  Đề nghị
-                </button>
-                <button
-                  className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-lg font-bold hover:bg-red-50 transition-colors"
+                  className="p-2 text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg transition-colors shadow-sm"
                   onClick={() => window.print()}
+                  title="In thông tin"
                 >
-                  In
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
                 </button>
 
                 {/* Status Badge */}
