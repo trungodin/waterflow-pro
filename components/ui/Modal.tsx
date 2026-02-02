@@ -25,7 +25,7 @@ export default function Modal({ isOpen, onClose, children, title, width = 'max-w
 
                 {/* Background overlay - Darker as requested */}
                 <div
-                    className="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity"
+                    className="fixed inset-0 bg-black/80 transition-opacity"
                     aria-hidden="true"
                     onClick={onClose}
                 ></div>
