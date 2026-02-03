@@ -58,7 +58,7 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
 
     // Column Visibility State
     const [visibleColumnIds, setVisibleColumnIds] = useState<Set<string>>(new Set([
-        'stt', 'select', 'danhBa', 'gb', 'tongNo', 'tongKy', 'kyNam', 'tenKH', 'soNha', 'duong', 'mlt2', 'soMoi', 'Dot', 'CodeMoi', 'soThan'
+        'stt', 'select', 'danhBa', 'gb', 'tongNo', 'tongKy', 'kyNam', 'tenKH', 'soNha', 'duong', 'mlt2', 'soMoi', 'Dot', 'CodeMoi', 'soThan', 'hopBaoVe'
     ]))
 
     // Toggle Column Visibility Menu
