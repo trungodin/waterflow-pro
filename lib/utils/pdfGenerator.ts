@@ -22,7 +22,7 @@ async function loadFont(url: string) {
     return window.btoa(binary);
 }
 
-export async function generateProposalPDF(customer: any) {
+export async function generateProposalPDF(customer: any, download = true) {
     try {
         // A5 Landscape (210mm x 148mm)
         const doc = new jsPDF('l', 'mm', 'a5');
@@ -145,10 +145,14 @@ export async function generateProposalPDF(customer: any) {
         doc.setFont(fontName, 'bolditalic');
         doc.text("Ngô Hoàng Trung", CR, sigY + 25, { align: 'center' });
 
-        const fileName = `DeNghi_${customer.DanhBa}.pdf`;
-        doc.save(fileName);
+        const fileName = `M-${customer.IdTB || customer.DanhBa}-${new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '')}.pdf`;
 
-        return { success: true };
+        if (download) {
+            doc.save(fileName);
+        }
+
+        const pdfBlob = doc.output('blob');
+        return { success: true, pdfBlob, fileName };
     } catch (error) {
         console.error('Generate Proposal PDF Error:', error);
         return { success: false, error: String(error) };

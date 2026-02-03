@@ -324,7 +324,8 @@ async function getOnOffDataInternal() {
       hinhMo: findIndex(['hinh_mo', 'hình_mở']),
       hinhTb: findIndex(['hinh_tb', 'hình_tb']),
       ngayTb: findIndex(['ngay_tb', 'ngày_tb']),
-      nvMo: findIndex(['nv_mo', 'nhân_viên_mở'])
+      nvMo: findIndex(['nv_mo', 'nhân_viên_mở']),
+      fileDeNghi: findIndex(['file_cpmn', 'file_de_nghi'])
     }
 
     // FALLBACK: If header search failed (likely because header row was truncated),
@@ -336,6 +337,9 @@ async function getOnOffDataInternal() {
     if (colIndices.ngayTb === -1) {
       console.warn('[getOnOffData] ngayTb header not found, falling back to index 27 (AB)')
       colIndices.ngayTb = 27
+    }
+    if (colIndices.fileDeNghi === -1) {
+      colIndices.fileDeNghi = 23 // Column X
     }
 
     const data = rows.slice(1).map((row: any[]) => ({
@@ -361,6 +365,7 @@ async function getOnOffDataInternal() {
       HinhTb: colIndices.hinhTb !== -1 ? row[colIndices.hinhTb] : '',
       NgayTb: colIndices.ngayTb !== -1 ? row[colIndices.ngayTb] : '',
       NvMo: colIndices.nvMo !== -1 ? row[colIndices.nvMo] : '',
+      FileDeNghi: colIndices.fileDeNghi !== -1 ? row[colIndices.fileDeNghi] : '',
     }))
 
     return data

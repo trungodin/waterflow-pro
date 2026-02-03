@@ -161,14 +161,35 @@ export default function PaymentsPage() {
   const handleCreateProposal = async () => {
     if (!selectedCustomer) return
 
-    // Confirm download
-    if (!confirm(`Tải giấy đề nghị cho khách hàng ${selectedCustomer.TenKH} về máy?`)) return
+    // Confirm upload only
+    if (!confirm(`Tạo đề nghị cho khách hàng ${selectedCustomer.TenKH}?\n(File sẽ được lưu vào hệ thống)`)) return
 
     setIsGenerating(true)
     try {
-      const result = await generateProposalPDF(selectedCustomer)
-      if (result.success) {
-        alert('Đã tải file đề nghị xuống máy thành công!')
+      // 1. Generate PDF Blob (download=false: Only upload to server)
+      const result = await generateProposalPDF(selectedCustomer, false)
+
+      if (result.success && result.pdfBlob) {
+        // 2. Upload to Server
+        const formData = new FormData()
+        formData.append('file', result.pdfBlob, result.fileName)
+        formData.append('fileName', result.fileName)
+        formData.append('idTB', selectedCustomer.IdTB || '') // Ensure IdTB exists
+
+        // Import dynamically or use the imported action (need to add import)
+        const { uploadProposalAndSave } = await import('./actions')
+        const uploadRes = await uploadProposalAndSave(formData)
+
+        if (uploadRes.success) {
+          alert(`✅ Đã tạo và lưu file thành công!\nLink: ${uploadRes.url}`)
+
+          const newUrl = uploadRes.url
+          setSelectedCustomer((prev: any) => ({ ...prev, FileDeNghi: newUrl }))
+          setDmnData(prev => prev.map(item => item.IdTB === selectedCustomer.IdTB ? { ...item, FileDeNghi: newUrl } : item))
+        } else {
+          alert(`⚠️ Đã tải file về máy, nhưng lỗi lưu hệ thống: ${uploadRes.error}`)
+        }
+
       } else {
         alert(`Lỗi khi tạo file: ${result.error}`)
       }
@@ -470,7 +491,21 @@ export default function PaymentsPage() {
               </div>
               <div className="flex items-center gap-3">
                 {/* Action Buttons */}
-                {['khóa', 'khoá'].some(k => (selectedCustomer.TinhTrang || '').toLowerCase().includes(k)) && (
+                {selectedCustomer.FileDeNghi && (
+                  <a
+                    href={selectedCustomer.FileDeNghi}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors shadow-sm"
+                    title="Xem phiếu đề nghị"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                  </a>
+                )}
+
+                {['khóa', 'khoá'].some(k => (selectedCustomer.TinhTrang || '').toLowerCase().includes(k)) && !selectedCustomer.FileDeNghi && (
                   <button
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-sm hover:shadow active:scale-95 transition-all text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleCreateProposal}
@@ -486,15 +521,6 @@ export default function PaymentsPage() {
                     {isGenerating ? 'Đang tạo...' : 'Đề nghị'}
                   </button>
                 )}
-                <button
-                  className="p-2 text-gray-600 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-lg transition-colors shadow-sm"
-                  onClick={() => window.print()}
-                  title="In thông tin"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                  </svg>
-                </button>
 
                 {/* Status Badge */}
                 <div className={`px-5 py-2 rounded-lg font-bold text-sm whitespace-nowrap shadow-sm border ${selectedCustomer.TinhTrang?.toLowerCase().includes('mở')
@@ -575,9 +601,10 @@ export default function PaymentsPage() {
               </button>
             </div>
           </div>
-        )}
-      </Modal>
+        )
+        }
+      </Modal >
 
-    </div>
+    </div >
   )
 }
