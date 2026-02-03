@@ -1,10 +1,10 @@
 'use server'
 
 import { executeSqlQuery } from '@/lib/soap'
-import { unstable_cache, revalidateTag } from 'next/cache'
+import { unstable_cache, revalidatePath } from 'next/cache'
 
 export async function forceRefreshDashboard() {
-  revalidateTag('dashboard')
+  revalidatePath('/dashboard')
 }
 
 // Internal functions containing the actual logic
