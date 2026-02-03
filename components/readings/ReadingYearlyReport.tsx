@@ -249,7 +249,7 @@ export default function ReadingYearlyReport() {
                                                                 <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
                                                             </div>
                                                             <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
-                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <span className="text-xs">{diff > 0 ? 'Tăng' : (diff < 0 ? 'Giảm' : 'Chênh lệch')}:</span>
                                                                 <div className="flex items-center gap-1">
                                                                     <span className="text-xs">{icon}</span>
                                                                     <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
@@ -350,7 +350,7 @@ export default function ReadingYearlyReport() {
                                                                 <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
                                                             </div>
                                                             <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
-                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <span className="text-xs">{diff > 0 ? 'Tăng' : (diff < 0 ? 'Giảm' : 'Chênh lệch')}:</span>
                                                                 <div className="flex items-center gap-1">
                                                                     <span className="text-xs">{icon}</span>
                                                                     <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
@@ -468,7 +468,7 @@ export default function ReadingYearlyReport() {
                                                                 <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
                                                             </div>
                                                             <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
-                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <span className="text-xs">{diff > 0 ? 'Tăng' : (diff < 0 ? 'Giảm' : 'Chênh lệch')}:</span>
                                                                 <div className="flex items-center gap-1">
                                                                     <span className="text-xs">{icon}</span>
                                                                     <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
@@ -552,7 +552,7 @@ export default function ReadingYearlyReport() {
                                                                 <span className="font-bold text-gray-800">{formatNumber(v2)}</span>
                                                             </div>
                                                             <div className={`flex justify-between items-center gap-2 pt-2 mt-1 border-t border-gray-100 font-bold ${color}`}>
-                                                                <span className="text-xs">Chênh lệch:</span>
+                                                                <span className="text-xs">{diff > 0 ? 'Tăng' : (diff < 0 ? 'Giảm' : 'Chênh lệch')}:</span>
                                                                 <div className="flex items-center gap-1">
                                                                     <span className="text-xs">{icon}</span>
                                                                     <span>{formatNumber(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)</span>
