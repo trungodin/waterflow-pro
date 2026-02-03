@@ -287,7 +287,13 @@ export default function VirtualDMNTable({
               // Hidden columns by default
               case 'hieu': content = <span className="text-gray-700">{row.Hieu}</span>; break;
               case 'coCu': content = <span className="text-gray-700">{row.CoCu}</span>; break;
-              case 'hopBaoVe': content = <span className="text-gray-700">{row.HopBaoVe}</span>; break;
+              case 'hopBaoVe':
+                const hbv = row.HopBaoVe;
+                let hbvDisplay = hbv;
+                if (hbv === true || String(hbv).toLowerCase() === 'true') hbvDisplay = 'Có';
+                else if (hbv === false || String(hbv).toLowerCase() === 'false') hbvDisplay = 'Không';
+                content = <span className="text-gray-700">{hbvDisplay}</span>;
+                break;
               case 'sdt': content = <span className="text-gray-700">{row.SDT}</span>; break;
 
               default: content = <span className="text-gray-700">{row[col.id] || ''}</span>
