@@ -9,6 +9,7 @@ import MetricCard from '@/components/dashboard/MetricCard'
 import DashboardFilters from '@/components/dashboard/DashboardFilters'
 import YearComparisonSelector from '@/components/dashboard/YearComparisonSelector'
 import ChartSection from '@/components/dashboard/ChartSection'
+import ComparisonChart from '@/components/dashboard/ComparisonChart'
 import { logger } from '@/lib/logger'
 import {
   ChartDataArray,
@@ -119,60 +120,21 @@ export default function Dashboard() {
       const rateCurr = calculateRate(colCurrRaw, revCurrRaw)
       const rateComp = calculateRate(colCompRaw, revCompRaw)
 
-      // --- Set Chart State ---
-      setRevenueChartData([
-        {
-          x: months,
-          y: scaleValues(revCompRaw, 1_000_000_000),
-          customdata: revCompRaw,
-          type: 'scatter',
-          mode: 'lines+markers',
-          name: `${comparisonYear}`,
-          connectgaps: false,
-          line: { color: '#3b82f6', width: 3 },
-          marker: { size: 6 },
-          hovertemplate: '<b>%{x}</b><br>Năm: %{data.name}<br>Doanh thu: %{customdata:,.0f} VNĐ<extra></extra>'
-        },
-        {
-          x: months,
-          y: scaleValues(revCurrRaw, 1_000_000_000),
-          customdata: revCurrRaw,
-          type: 'scatter',
-          mode: 'lines+markers',
-          name: `${selectedYear}`,
-          connectgaps: false,
-          line: { color: '#ef4444', width: 3 },
-          marker: { size: 6 },
-          hovertemplate: '<b>%{x}</b><br>Năm: %{data.name}<br>Doanh thu: %{customdata:,.0f} VNĐ<extra></extra>'
-        }
-      ])
+      // --- Set Chart State (Recharts) ---
+      const combinedRevenueData = months.map((month, index) => ({
+        name: month,
+        current: revCurrRaw[index] ?? null,
+        previous: revCompRaw[index] ?? null
+      }))
 
-      setConsumptionChartData([
-        {
-          x: months,
-          y: scaleValues(consCompRaw, 1_000_000),
-          customdata: consCompRaw,
-          type: 'scatter',
-          mode: 'lines+markers',
-          name: `${comparisonYear}`,
-          connectgaps: false,
-          line: { color: '#06b6d4', width: 3 },
-          marker: { size: 6 },
-          hovertemplate: '<b>%{x}</b><br>Năm: %{data.name}<br>Sản lượng: %{customdata:,.0f} m³<extra></extra>'
-        },
-        {
-          x: months,
-          y: scaleValues(consCurrRaw, 1_000_000),
-          customdata: consCurrRaw,
-          type: 'scatter',
-          mode: 'lines+markers',
-          name: `${selectedYear}`,
-          connectgaps: false,
-          line: { color: '#f97316', width: 3 },
-          marker: { size: 6 },
-          hovertemplate: '<b>%{x}</b><br>Năm: %{data.name}<br>Sản lượng: %{customdata:,.0f} m³<extra></extra>'
-        }
-      ])
+      const combinedConsumptionData = months.map((month, index) => ({
+        name: month,
+        current: consCurrRaw[index] ?? null,
+        previous: consCompRaw[index] ?? null
+      }))
+
+      setRevenueChartData(combinedRevenueData as any)
+      setConsumptionChartData(combinedConsumptionData as any)
 
       setCollectionRateChartData([
         {
@@ -376,26 +338,7 @@ export default function Dashboard() {
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-6">
-          <ChartSection
-            title={
-              <div className="flex items-center justify-between w-full">
-                <span>Doanh thu</span>
-                <YearComparisonSelector
-                  selectedYear={selectedYear} setSelectedYear={setSelectedYear}
-                  comparisonYear={comparisonYear} setComparisonYear={setComparisonYear}
-                  years={availableYears}
-                />
-              </div>
-            }
-            chartType="line"
-            data={revenueChartData}
-            layout={{
-              yaxis: { tickformat: '.0f', ticksuffix: ' Tỷ' },
-              xaxis: { title: 'Tháng', tickmode: 'linear', type: 'category' },
-              margin: { t: 40, b: 60, l: 60, r: 20 },
-            }}
-          />
-          <ChartSection
+          <ComparisonChart
             title={
               <div className="flex items-center justify-between w-full">
                 <span>Sản lượng</span>
@@ -406,13 +349,31 @@ export default function Dashboard() {
                 />
               </div>
             }
-            chartType="line"
             data={consumptionChartData}
-            layout={{
-              yaxis: { tickformat: '.2f', ticksuffix: ' Triệu' },
-              xaxis: { title: 'Tháng', tickmode: 'linear', type: 'category' },
-              margin: { t: 40, b: 60, l: 80, r: 20 },
-            }}
+            currentYear={selectedYear}
+            previousYear={comparisonYear}
+            unit="m³"
+            colorCurrent="#f97316"
+            colorPrevious="#06b6d4"
+          />
+          <ComparisonChart
+            title={
+              <div className="flex items-center justify-between w-full">
+                <span>Doanh thu</span>
+                <YearComparisonSelector
+                  selectedYear={selectedYear} setSelectedYear={setSelectedYear}
+                  comparisonYear={comparisonYear} setComparisonYear={setComparisonYear}
+                  years={availableYears}
+                />
+              </div>
+            }
+            data={revenueChartData}
+            currentYear={selectedYear}
+            previousYear={comparisonYear}
+            unit="VNĐ"
+            colorCurrent="#ef4444"
+            colorPrevious="#3b82f6"
+            isCurrency={true}
           />
         </div>
 
@@ -454,7 +415,7 @@ export default function Dashboard() {
           />
         </div>
 
-      </main>
-    </div>
+      </main >
+    </div >
   )
 }
