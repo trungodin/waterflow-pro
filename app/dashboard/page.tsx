@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 import Navbar from '@/components/Navbar'
-import { getDashboardData, getComparisonData, getRevenueByPriceList, getRevenueByDot, getConsumptionByPriceList, getConsumptionByDot } from '@/app/actions/dashboard'
+import { getDashboardData, getComparisonData, getRevenueByPriceList, getRevenueByDot, getConsumptionByPriceList, getConsumptionByDot, forceRefreshDashboard } from '@/app/actions/dashboard'
 import { DashboardKPIData } from '@/app/dashboard/types'
 import MetricCard from '@/components/dashboard/MetricCard'
 import DashboardFilters from '@/components/dashboard/DashboardFilters'
@@ -167,6 +167,21 @@ export default function Dashboard() {
     }
   }, [selectedYear, selectedMonth, comparisonYear])
 
+  const handleRefresh = async () => {
+    toast.promise(
+      async () => {
+        await forceRefreshDashboard()
+        await fetchData()
+        await fetchPieData()
+      },
+      {
+        loading: 'Đang làm mới dữ liệu...',
+        success: 'Dữ liệu đã được cập nhật!',
+        error: 'Lỗi khi làm mới'
+      }
+    )
+  }
+
   // Derived calculations for Metric Cards (memoized for performance)
   const yearlyOutstanding = useMemo(() => (stats.DoanhThu || 0) - (stats.ThucThu || 0), [stats])
   const yearlyOutstandingGB = useMemo(() => (stats.DoanhThu_GB || 0) - (stats.ThucThu_GB || 0), [stats])
@@ -188,7 +203,7 @@ export default function Dashboard() {
           <DashboardFilters
             selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth}
             selectedYear={selectedYear} setSelectedYear={setSelectedYear}
-            onRefresh={fetchData}
+            onRefresh={handleRefresh}
             years={availableYears}
           />
         </div>

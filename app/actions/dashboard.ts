@@ -1,8 +1,14 @@
 'use server'
 
 import { executeSqlQuery } from '@/lib/soap'
+import { unstable_cache, revalidateTag } from 'next/cache'
 
-export async function getDashboardData(ky: number, nam: number, namRevenue: number) {
+export async function forceRefreshDashboard() {
+  revalidateTag('dashboard')
+}
+
+// Internal functions containing the actual logic
+async function _getDashboardData(ky: number, nam: number, namRevenue: number) {
   const currentYearForRevenue = namRevenue
   const endOfYearStr = `${currentYearForRevenue}-12-31 23:59:59`
 
@@ -68,7 +74,7 @@ export async function getDashboardData(ky: number, nam: number, namRevenue: numb
   }
 }
 
-export async function getComparisonData(year1: number, year2: number) {
+async function _getComparisonData(year1: number, year2: number) {
   // Removed month filter to allow full year data for comparison
 
   // Revenue
@@ -107,7 +113,7 @@ export async function getComparisonData(year1: number, year2: number) {
   return { revenueData, collectionData, consumptionData }
 }
 
-export async function getRevenueByPriceList(year: number) {
+async function _getRevenueByPriceList(year: number) {
   // Breakdown by GB (Gia Bieu)
   const query = `
     SELECT GB, SUM(GIABAN_BD) AS DoanhThu
@@ -122,7 +128,7 @@ export async function getRevenueByPriceList(year: number) {
 }
 
 
-export async function getRevenueByDot(year: number) {
+async function _getRevenueByDot(year: number) {
   // Breakdown by Dot (Book/Route)
   const query = `
     SELECT Dot, SUM(GIABAN_BD) AS DoanhThu
@@ -136,7 +142,7 @@ export async function getRevenueByDot(year: number) {
   return data
 }
 
-export async function getConsumptionByPriceList(year: number) {
+async function _getConsumptionByPriceList(year: number) {
   // Breakdown by GB (Consumption)
   const query = `
     SELECT GB, SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) AS SanLuong
@@ -150,7 +156,7 @@ export async function getConsumptionByPriceList(year: number) {
   return data
 }
 
-export async function getConsumptionByDot(year: number) {
+async function _getConsumptionByDot(year: number) {
   // Breakdown by Dot (Consumption)
   const query = `
     SELECT Dot, SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) AS SanLuong
@@ -163,3 +169,40 @@ export async function getConsumptionByDot(year: number) {
   const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
   return data
 }
+
+// Export cached versions
+export const getDashboardData = unstable_cache(
+  _getDashboardData,
+  ['dashboard-kpi-data'],
+  { revalidate: 300, tags: ['dashboard'] }
+)
+
+export const getComparisonData = unstable_cache(
+  _getComparisonData,
+  ['dashboard-comparison-data'],
+  { revalidate: 300, tags: ['dashboard'] }
+)
+
+export const getRevenueByPriceList = unstable_cache(
+  _getRevenueByPriceList,
+  ['dashboard-revenue-by-pricelist'],
+  { revalidate: 300, tags: ['dashboard'] }
+)
+
+export const getRevenueByDot = unstable_cache(
+  _getRevenueByDot,
+  ['dashboard-revenue-by-dot'],
+  { revalidate: 300, tags: ['dashboard'] }
+)
+
+export const getConsumptionByPriceList = unstable_cache(
+  _getConsumptionByPriceList,
+  ['dashboard-consumption-by-pricelist'],
+  { revalidate: 300, tags: ['dashboard'] }
+)
+
+export const getConsumptionByDot = unstable_cache(
+  _getConsumptionByDot,
+  ['dashboard-consumption-by-dot'],
+  { revalidate: 300, tags: ['dashboard'] }
+)
