@@ -99,9 +99,9 @@ const CustomTooltip = ({ active, payload, label, currentYear, previousYear, unit
                 {/* Difference Row */}
                 {showDiff && (
                     <div className={`text-sm font-bold flex items-center gap-2 ${diff >= 0 ? 'text-green-600 bg-green-50' : 'text-red-500 bg-red-50'} p-2 rounded-lg`}>
-                        <span>Chênh lệch:</span>
+                        <span>{diff > 0 ? 'Tăng' : (diff < 0 ? 'Giảm' : 'Chênh lệch')}:</span>
                         <span className="ml-auto flex items-center tabular-nums">
-                            {diff > 0 ? '▲' : (diff < 0 ? '▼' : '-')} {formatValue(Math.abs(diff))} ({percent.toFixed(1)}%)
+                            {diff > 0 ? '▲' : (diff < 0 ? '▼' : '-')} {formatValue(Math.abs(diff))} ({Math.abs(percent).toFixed(1)}%)
                         </span>
                     </div>
                 )}
