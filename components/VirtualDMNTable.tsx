@@ -287,7 +287,7 @@ export default function VirtualDMNTable({
               // Hidden columns by default
               case 'hieu': content = <span className="text-gray-700">{row.Hieu}</span>; break;
               case 'coCu': content = <span className="text-gray-700">{row.CoCu}</span>; break;
-              case 'hopBaoVe': content = <span className="text-gray-700">{row.HopBaoVe ? 'Có' : ''}</span>; break;
+              case 'hopBaoVe': content = <span className="text-gray-700">{row.HopBaoVe}</span>; break;
               case 'sdt': content = <span className="text-gray-700">{row.SDT}</span>; break;
 
               default: content = <span className="text-gray-700">{row[col.id] || ''}</span>
