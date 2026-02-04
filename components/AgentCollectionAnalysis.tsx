@@ -157,8 +157,36 @@ export default function AgentCollectionAnalysis() {
                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                                 <XAxis type="number" hide />
                                 <YAxis dataKey="NganHang" type="category" width={120} tick={{fontSize: 12}} interval={0} />
-                                <Tooltip formatter={(val: any) => formatCurrency(val)} />
-                                <Bar dataKey="TongCong" fill="#1e90ff" radius={[0, 4, 4, 0]} barSize={20} />
+                                <Tooltip 
+                                    content={({ active, payload, label }) => {
+                                        if (active && payload && payload.length) {
+                                            const data = payload[0].payload;
+                                            return (
+                                                <div className="bg-white/95 backdrop-blur-sm p-3 border border-slate-200 shadow-xl rounded-xl z-50">
+                                                    <p className="font-bold text-slate-800 mb-1 text-sm border-b border-slate-100 pb-1">{label}</p>
+                                                    <div className="space-y-1 mt-1">
+                                                        <p className="text-blue-600 font-bold text-sm flex justify-between gap-4">
+                                                            <span>💰 Tổng tiền:</span>
+                                                            <span>{formatCurrency(data.TongCong)}</span>
+                                                        </p>
+                                                        <p className="text-orange-600 font-bold text-sm flex justify-between gap-4">
+                                                            <span>🧾 Hóa đơn:</span>
+                                                            <span>{formatNumber(data.TongHoaDon)}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                <Bar 
+                                    dataKey="TongCong" 
+                                    fill="#2563eb" 
+                                    radius={[0, 6, 6, 0]} 
+                                    barSize={24}
+                                    activeBar={{ fill: '#1d4ed8', stroke: '#1e40af', strokeWidth: 1 }}
+                                />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>

@@ -55,6 +55,7 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
     const [fileDbList, setFileDbList] = useState<string[] | null>(null) // List from file
     const [fileFilterMode, setFileFilterMode] = useState<'include' | 'exclude'>('include') // Mode: include or exclude
     const [fileName, setFileName] = useState<string>('')
+    const [topLimit, setTopLimit] = useState<number>(100)
 
     // Column Visibility State
     const [visibleColumnIds, setVisibleColumnIds] = useState<Set<string>>(new Set([
@@ -294,7 +295,7 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
                 gbFilter: gbList,
                 fileDbList: fileDbList || [],
                 fileFilterMode: fileFilterMode,
-                limit: 0
+                limit: topLimit
             })
 
             setData(result)
@@ -476,6 +477,16 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
                             type="text"
                             value={excludeCodeMoi}
                             onChange={(e) => setExcludeCodeMoi(e.target.value)}
+                            className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 lg:col-span-1">
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">TOP</label>
+                        <input
+                            type="number"
+                            value={topLimit}
+                            onChange={(e) => setTopLimit(parseInt(e.target.value) || 0)}
                             className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm font-bold text-black shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                         />
                     </div>

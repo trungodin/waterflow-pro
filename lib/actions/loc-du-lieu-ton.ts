@@ -443,6 +443,17 @@ export async function getDebtData(params: DebtFilterParams) {
     if (limit && limit > 0) {
         result.sort((a, b) => b.TongNo - a.TongNo)
         const limited = result.slice(0, limit)
+        
+        // Re-sort by MLT2 for display requirement
+        limited.sort((a, b) => {
+            const mlt2A = String(a.MLT2 || '')
+            const mlt2B = String(b.MLT2 || '')
+            if (mlt2A !== mlt2B) return mlt2A.localeCompare(mlt2B)
+            const dotA = String(a.Dot || '')
+            const dotB = String(b.Dot || '')
+            return dotA.localeCompare(dotB)
+        })
+        
         return limited
     }
 
