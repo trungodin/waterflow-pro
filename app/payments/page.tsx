@@ -17,6 +17,7 @@ import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
 import Modal from '@/components/ui/Modal'
 import { formatCurrency } from '@/lib/utils'
 import { generateProposalPDF } from '@/lib/utils/pdfGenerator'
+import { uploadProposalAndSave } from './actions'
 
 
 // Helper to get direct image URL (especially for Google Drive)
@@ -178,8 +179,8 @@ export default function PaymentsPage() {
         formData.append('fileName', result.fileName)
         formData.append('idTB', selectedCustomer.IdTB || '') // Ensure IdTB exists
 
-        // Import dynamically or use the imported action (need to add import)
-        const { uploadProposalAndSave } = await import('./actions')
+        // No dynamic import needed if static import is used
+        // const { uploadProposalAndSave } = await import('./actions')
         const uploadRes = await uploadProposalAndSave(formData)
 
         if (uploadRes.success) {
