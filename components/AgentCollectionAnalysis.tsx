@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
-} from 'recharts'
-import { getAgentCollectionData, getOutstandingAnalysisData, AgentCollectionRow, OutstandingAnalysis } from '@/app/actions/agent-collection'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { getAgentCollectionData, getOutstandingAnalysisData } from '@/app/actions/agent-collection'
+import type { AgentCollectionRow, OutstandingAnalysis } from '@/app/actions/agent-collection'
 
 const formatCurrency = (val: number) => new Intl.NumberFormat('vi-VN').format(val)
 const formatNumber = (val: number) => new Intl.NumberFormat('vi-VN').format(val)
