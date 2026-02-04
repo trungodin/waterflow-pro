@@ -149,6 +149,8 @@ export default function PaymentsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null)
+  const [filterStatus, setFilterStatus] = useState<string>('ALL')
+  const [filterDate, setFilterDate] = useState<string>('')
 
   // State for Modal
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
@@ -234,26 +236,73 @@ export default function PaymentsPage() {
 
   // Filter logic based on debounced term
   useEffect(() => {
-    if (!debouncedSearchTerm.trim()) {
-      setFilteredDmnData(dmnData)
-      return
-    }
-
     const lowerTerm = debouncedSearchTerm.toLowerCase().trim()
-    const filtered = dmnData.filter(item => {
-      // Support combined search: "156 hai" -> matches "156" (SoNha) + "HAI BA TRUNG" (Duong)
-      const fullAddress = `${item.SoNha} ${item.Duong}`.toLowerCase()
+    const targetDate = filterDate
+    const targetStatus = filterStatus // ALL, LOCKED, OPEN
 
-      return (
+    const filtered = dmnData.filter(item => {
+      // 1. Text Search Filter
+      const fullAddress = `${item.SoNha} ${item.Duong}`.toLowerCase()
+      const matchesText = !lowerTerm || (
         (item.DanhBa && item.DanhBa.toLowerCase().includes(lowerTerm)) ||
         (item.TenKH && item.TenKH.toLowerCase().includes(lowerTerm)) ||
         (item.SoNha && item.SoNha.toLowerCase().includes(lowerTerm)) ||
         (item.Duong && item.Duong.toLowerCase().includes(lowerTerm)) ||
-        (fullAddress.includes(lowerTerm)) // Combined address search
+        (fullAddress.includes(lowerTerm))
       )
+
+      if (!matchesText) return false
+
+      // 2. Status Filter
+      let matchesStatus = true
+      const statusRaw = (item.TinhTrang || '').toLowerCase()
+      // Normalize to handle potential unicode variations if needed, but simple includes usually works
+      // Check for both accented and non-accented just in case
+      if (targetStatus === 'LOCKED') {
+        matchesStatus = statusRaw.includes('khóa') || statusRaw.includes('khoá') || statusRaw.includes('khoa')
+      } else if (targetStatus === 'OPEN') {
+        matchesStatus = statusRaw.includes('mở') || statusRaw.includes('mo') || statusRaw.includes('bình thường')
+      }
+
+      if (!matchesStatus) return false
+
+      // 3. Date Filter
+      if (targetDate) {
+        // Parse dd/mm/yyyy or d/m/yyyy from data to yyyy-MM-dd
+        const parseDmnDate = (dStr: string) => {
+          if (!dStr) return ''
+          // Handle various separators
+          const cleanStr = dStr. trim().split(' ')[0] // Remove time "14/02/2025 10:00:00"
+          if (cleanStr.includes('/')) {
+              const parts = cleanStr.split('/')
+              if (parts.length === 3) {
+                  // Ensure padding: 1/2/2026 -> 01/02/2026 -> 2026-02-01
+                  const day = parts[0].padStart(2, '0')
+                  const month = parts[1].padStart(2, '0')
+                  const year = parts[2]
+                  return `${year}-${month}-${day}`
+              }
+          }
+          return ''
+        }
+        
+        const dateKhoa = parseDmnDate(item.NgayKhoa)
+        const dateMo = parseDmnDate(item.NgayMo)
+        
+        if (targetStatus === 'LOCKED') {
+           if (dateKhoa !== targetDate) return false
+        } else if (targetStatus === 'OPEN') {
+           if (dateMo !== targetDate) return false
+        } else {
+           // ALL status selected but Date provided -> Check BOTH
+           if (dateKhoa !== targetDate && dateMo !== targetDate) return false
+        }
+      }
+
+      return true
     })
     setFilteredDmnData(filtered)
-  }, [debouncedSearchTerm, dmnData])
+  }, [debouncedSearchTerm, dmnData, filterStatus, filterDate])
 
   // Group data by NgayKhoa
   const groupedData = filteredDmnData.reduce((acc, item) => {
@@ -434,13 +483,32 @@ export default function PaymentsPage() {
                       </button>
                     )}
                   </div>
-                  <button
-                    onClick={fetchData}
-                    disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-bold whitespace-nowrap disabled:opacity-70 flex items-center gap-2 shadow-[0_3px_0_rgb(29,78,216)] active:shadow-none active:translate-y-[3px] transition-all"
-                  >
-                    {loading ? 'Đang tải...' : '🔄 Làm mới'}
-                  </button>
+                  <div className='flex gap-2 items-center'>
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm font-bold text-gray-700 bg-white"
+                    >
+                        <option value="ALL">Tất cả trạng thái</option>
+                        <option value="LOCKED">Đang Khóa</option>
+                        <option value="OPEN">Đã Mở</option>
+                    </select>
+
+                    <input 
+                        type="date"
+                        value={filterDate}
+                        onChange={(e) => setFilterDate(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm font-bold text-gray-700 hover:cursor-pointer"
+                    />
+                    
+                    <button
+                      onClick={fetchData}
+                      disabled={loading}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-bold whitespace-nowrap disabled:opacity-70 flex items-center gap-2 shadow-[0_3px_0_rgb(29,78,216)] active:shadow-none active:translate-y-[3px] transition-all"
+                    >
+                      {loading ? 'Đang tải...' : '🔄 Làm mới'}
+                    </button>
+                  </div>
                 </div>
                 <div className="text-sm text-gray-500 text-right">
                   {lastRefreshed && <span>Cập nhật: {lastRefreshed.toLocaleTimeString()}</span>}
@@ -505,7 +573,7 @@ export default function PaymentsPage() {
                   </a>
                 )}
 
-                {['khóa', 'khoá'].some(k => (selectedCustomer.TinhTrang || '').toLowerCase().includes(k)) && !selectedCustomer.FileDeNghi && (
+                {!selectedCustomer.FileDeNghi && (
                   <button
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-sm hover:shadow active:scale-95 transition-all text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleCreateProposal}
