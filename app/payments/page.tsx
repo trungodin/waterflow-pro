@@ -13,6 +13,7 @@ import { getOnOffData, getDriveImageLink } from '@/lib/googlesheets'
 import LatenessAnalysisMain from '@/components/lateness-analysis/LatenessAnalysisMain'
 import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
 import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
+import { getDmnCache, setDmnCache, clearDmnCache } from '@/lib/dmn-cache'
 
 import Modal from '@/components/ui/Modal'
 import { formatCurrency } from '@/lib/utils'
@@ -161,6 +162,42 @@ export default function PaymentsPage() {
     setSelectedCustomer(item)
   }
 
+  const fetchData = async (forceRefresh = false) => {
+    setLoading(true)
+    try {
+      // 1. Try to load from cache first if not forced
+      if (!forceRefresh) {
+        const cached = getDmnCache()
+        if (cached) {
+            setDmnData(cached)
+            // If we have filters active (which is unlikely on fresh tab load but possible if navigating back), 
+            // the separate useEffect [dmnData] will handle setFilteredDmnData logic, 
+            // OR we can explicitly set it here if the useEffect filter logic depends on state change.
+            // Let's set it here to be sure for initial render.
+            setFilteredDmnData(cached) 
+            setLastRefreshed(new Date())
+            setLoading(false)
+            return
+        }
+      }
+
+      // 2. Fetch from API
+      const data = await getOnOffData()
+      
+      // 3. Save to Cache
+      setDmnCache(data)
+      
+      setDmnData(data)
+      setFilteredDmnData(data)
+      setLastRefreshed(new Date())
+    } catch (error) {
+      console.error('Error fetching ON_OFF data:', error)
+      alert('Có lỗi khi tải dữ liệu từ Google Sheets')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleCreateProposal = async () => {
     if (!selectedCustomer) return
 
@@ -204,25 +241,22 @@ export default function PaymentsPage() {
     }
   }
 
-  const fetchData = async () => {
-    setLoading(true)
-    try {
-      const data = await getOnOffData()
-      setDmnData(data)
-      setFilteredDmnData(data)
-      setLastRefreshed(new Date())
-    } catch (error) {
-      console.error('Error fetching ON_OFF data:', error)
-      alert('Có lỗi khi tải dữ liệu từ Google Sheets')
-    } finally {
-      setLoading(false)
-    }
-  }
+import { getDmnCache, setDmnCache, clearDmnCache } from '@/lib/dmn-cache'
+
+// ... existing code ...
+
+
 
   // Initial fetch when tab is active
   useEffect(() => {
-    if (activeTab === 'tra_cuu_dmn' && dmnData.length === 0) {
-      fetchData()
+    if (activeTab === 'tra_cuu_dmn') {
+        const cached = getDmnCache()
+        // If we have cached data, use it immediately without loading spinner if possible, 
+        // or just call fetchData(false) which handles it.
+        // But if dmnData is already populated (from React state preservation), we don't need to do anything.
+        if (dmnData.length === 0) {
+             fetchData(false)
+        }
     }
   }, [activeTab])
 
