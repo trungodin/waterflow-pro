@@ -18,7 +18,6 @@ import Modal from '@/components/ui/Modal'
 import { formatCurrency } from '@/lib/utils'
 import { generateProposalPDF } from '@/lib/utils/pdfGenerator'
 import { uploadProposalAndSave } from './actions'
-import { useCachedData } from '@/lib/data-cache'
 
 
 // Helper to get direct image URL (especially for Google Drive)
@@ -139,28 +138,15 @@ const MetricCard = ({ label, value, highlight = false, subValue }: { label: stri
 }
 
 export default function PaymentsPage() {
-  
+
   const [activeTab, setActiveTab] = useState('doanh_thu')
   const [subTabDoanhThu, setSubTabDoanhThu] = useState('phan_tich_doanh_thu')
   const [subTabDMN, setSubTabDMN] = useState('loc_du_lieu_ton')
 
-// ... existing imports ...
-
-// ... inside component ...
-
-  // Data states for Tra Cuu DMN with Caching
-  // Key 'on_off_data' identifies this cache. 
-  // Cache is global to the app session (until refresh).
-  const { 
-    data: cachedDmnData, 
-    loading, 
-    refresh: refreshData 
-  } = useCachedData<any[]>('on_off_data', getOnOffData)
-
-  const dmnData = cachedDmnData || []
+  // Data states for Tra Cuu DMN
+  const [dmnData, setDmnData] = useState<any[]>([])
   const [filteredDmnData, setFilteredDmnData] = useState<any[]>([])
-  
-  // Handlers
+  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null)
@@ -202,12 +188,7 @@ export default function PaymentsPage() {
 
           const newUrl = uploadRes.url
           setSelectedCustomer((prev: any) => ({ ...prev, FileDeNghi: newUrl }))
-          // Need to update cached data too to reflect change immediately?
-          // Since dmnData is from cache, modifying state here won't persist to cache store unless we manually update it?
-          // For now, let's refresh whole list or just local state. Local state is enough for session.
-          // Ideally, we should update cacheStore but our simple hook doesn't expose setCache.
-          // Quick fix: Just update filteredDmnData which is what UI sees.
-          
+          setDmnData(prev => prev.map(item => item.IdTB === selectedCustomer.IdTB ? { ...item, FileDeNghi: newUrl } : item))
         } else {
           alert(`⚠️ Đã tải file về máy, nhưng lỗi lưu hệ thống: ${uploadRes.error}`)
         }
@@ -224,22 +205,26 @@ export default function PaymentsPage() {
   }
 
   const fetchData = async () => {
+    setLoading(true)
     try {
-      refreshData()
+      const data = await getOnOffData()
+      setDmnData(data)
+      setFilteredDmnData(data)
       setLastRefreshed(new Date())
     } catch (error) {
-      console.error('Error refreshing data:', error)
-      alert('Có lỗi khi tải dữ liệu')
+      console.error('Error fetching ON_OFF data:', error)
+      alert('Có lỗi khi tải dữ liệu từ Google Sheets')
+    } finally {
+      setLoading(false)
     }
   }
 
-  // Update filtered list when source data changes
+  // Initial fetch when tab is active
   useEffect(() => {
-    if (dmnData) {
-        setFilteredDmnData(dmnData)
+    if (activeTab === 'tra_cuu_dmn' && dmnData.length === 0) {
+      fetchData()
     }
-  }, [dmnData])
-
+  }, [activeTab])
 
   // Debounce search term
   useEffect(() => {
