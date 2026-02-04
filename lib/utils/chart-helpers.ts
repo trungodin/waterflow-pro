@@ -76,7 +76,7 @@ export function formatNumber(value: number): string {
  * Generate month labels for charts
  */
 export function getMonthLabels(): string[] {
-    return Array.from({ length: 12 }, (_, i) => `Tháng ${i + 1}`)
+    return Array.from({ length: 12 }, (_, i) => `T${i + 1}`)
 }
 
 /**

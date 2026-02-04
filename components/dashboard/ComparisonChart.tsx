@@ -148,7 +148,8 @@ export default function ComparisonChart({
                             dataKey="name"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#64748B', fontSize: 12 }}
+                            tick={{ fill: '#64748B', fontSize: 11 }}
+                            interval={0}
                             dy={10}
                             padding={{ left: 10, right: 10 }}
                         />
