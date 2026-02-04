@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Fragment } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import RevenueAnalysis from '@/components/RevenueAnalysis'
 import AgentCollectionAnalysis from '@/components/AgentCollectionAnalysis'
@@ -13,7 +13,7 @@ import { getOnOffData, getDriveImageLink } from '@/lib/googlesheets'
 import LatenessAnalysisMain from '@/components/lateness-analysis/LatenessAnalysisMain'
 import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
 import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
-import { getDmnCache, setDmnCache, clearDmnCache } from '@/lib/dmn-cache'
+import { getDmnCache, setDmnCache } from '@/lib/dmn-cache'
 
 import Modal from '@/components/ui/Modal'
 import { formatCurrency } from '@/lib/utils'
@@ -241,9 +241,7 @@ export default function PaymentsPage() {
     }
   }
 
-import { getDmnCache, setDmnCache, clearDmnCache } from '@/lib/dmn-cache'
 
-// ... existing code ...
 
 
 
@@ -537,7 +535,7 @@ import { getDmnCache, setDmnCache, clearDmnCache } from '@/lib/dmn-cache'
                     />
                     
                     <button
-                      onClick={fetchData}
+                      onClick={() => fetchData(true)}
                       disabled={loading}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-bold whitespace-nowrap disabled:opacity-70 flex items-center gap-2 shadow-[0_3px_0_rgb(29,78,216)] active:shadow-none active:translate-y-[3px] transition-all"
                     >

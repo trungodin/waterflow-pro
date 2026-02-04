@@ -1,6 +1,6 @@
 
 // Simple Global Cache for DMN Data
-const CACHE_KEY = 'waterflow_dmn_cache'
+// Simple Global Cache for DMN Data
 const CACHE_DURATION_MS = 15 * 60 * 1000 // 15 Minutes
 
 type CacheEntry = {
@@ -28,8 +28,4 @@ export const setDmnCache = (data: any[]) => {
     data,
     timestamp: Date.now()
   }
-}
-
-export const clearDmnCache = () => {
-  globalCache = null
 }
