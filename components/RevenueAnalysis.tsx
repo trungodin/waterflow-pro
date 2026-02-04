@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
     ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     BarChart, LineChart
@@ -9,6 +9,34 @@ import { getYearlyRevenue, getMonthlyRevenue, getDailyRevenue, YearlyRevenue, Mo
 
 // Format currency helper
 const formatCurrency = (val: number) => new Intl.NumberFormat('vi-VN').format(val)
+
+// CustomTooltip component moved outside to prevent re-renders
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white p-3 border-2 border-gray-700 shadow-lg rounded text-sm font-semibold text-gray-900">
+                <p className="font-bold mb-2 border-b border-gray-200 pb-1">{label}</p>
+                {payload.map((entry: any, index: number) => {
+                    const val = entry.value;
+                    let formattedVal = new Intl.NumberFormat('vi-VN').format(val)
+                    if (val >= 1000000000) {
+                        formattedVal = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(val / 1000000000) + ' Tỷ'
+                    } else if (val >= 1000000) {
+                        formattedVal = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(val / 1000000) + ' Triệu'
+                    }
+
+                    return (
+                        <p key={index} style={{ color: entry.color }} className="flex justify-between gap-4">
+                            <span>{entry.name}:</span>
+                            <span>{formattedVal}</span>
+                        </p>
+                    )
+                })}
+            </div>
+        )
+    }
+    return null
+}
 
 export default function RevenueAnalysis() {
     const currentYear = new Date().getFullYear()
@@ -87,35 +115,6 @@ export default function RevenueAnalysis() {
         } finally {
             setLoadingDaily(false)
         }
-    }
-
-    // --- RENDER HELPERS ---
-
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="bg-white p-3 border-2 border-gray-700 shadow-lg rounded text-sm font-semibold text-gray-900">
-                    <p className="font-bold mb-2 border-b border-gray-200 pb-1">{label}</p>
-                    {payload.map((entry: any, index: number) => {
-                        const val = entry.value;
-                        let formattedVal = new Intl.NumberFormat('vi-VN').format(val)
-                        if (val >= 1000000000) {
-                            formattedVal = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(val / 1000000000) + ' Tỷ'
-                        } else if (val >= 1000000) {
-                            formattedVal = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(val / 1000000) + ' Triệu'
-                        }
-
-                        return (
-                            <p key={index} style={{ color: entry.color }} className="flex justify-between gap-4">
-                                <span>{entry.name}:</span>
-                                <span>{formattedVal}</span>
-                            </p>
-                        )
-                    })}
-                </div>
-            )
-        }
-        return null
     }
 
     return (
