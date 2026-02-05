@@ -275,7 +275,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 gap-2 mt-4 pt-4 border-t border-white/20">
                   {/* Total Revenue */}
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-medium text-white/90">Tổng doanh thu</span>
+                    <span className="text-xs font-medium text-white/90">Tổng cộng</span>
                     <span className="text-sm font-bold text-white">
                       {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(stats.DoanhThu))}
                     </span>
@@ -304,7 +304,7 @@ export default function Dashboard() {
               value={Number(stats.ThucThu_GB)}
               type='currency'
               gradientColor='emerald'
-              subValueLabel='Tổng thực thu'
+              subValueLabel='TC :'
               subValue={Number(stats.ThucThu)}
               iconPath={<svg className="w-32 h-32 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
             />
@@ -314,7 +314,7 @@ export default function Dashboard() {
               type='currency'
               gradientColor='orange' // Amber/Orange
               trendMode='inverse' // High Debt is Bad
-              subValueLabel='Tổng tồn thu'
+              subValueLabel='TC :'
               subValue={yearlyOutstanding}
               iconPath={<svg className="w-32 h-32 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
             />
@@ -336,7 +336,7 @@ export default function Dashboard() {
 
                 <div>
                   <div className="flex justify-between items-end mb-1">
-                    <span className="text-xs font-bold text-white/90">Tổng doanh thu</span>
+                    <span className="text-xs font-bold text-white/90">Tổng cộng</span>
                     <span className="text-xl font-black text-white">{completionRateTotal.toFixed(2)}%</span>
                   </div>
                   <div className="w-full bg-black/20 rounded-full h-2.5 backdrop-blur-sm">
