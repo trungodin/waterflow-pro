@@ -215,7 +215,7 @@ export default function Dashboard() {
             <h3 className="text-xl font-bold text-slate-800">Sản Xuất <span className="text-sm font-normal text-slate-500 ml-2">(Tháng {selectedMonth}/{selectedYear})</span></h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_0.7fr_1.5fr] gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <MetricCard
               title="Tổng ĐHN"
               value={Number(stats.TongDHN_Current)}
