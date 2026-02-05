@@ -12,7 +12,7 @@ interface MetricCardProps {
     iconPath: React.ReactNode
     description?: string // For extra text like "High Priority"
     subValueLabel?: string // e.g. "Tiền nước"
-    subValue?: number
+    subValue?: number | string
 }
 
 const colorMap = {
@@ -42,11 +42,11 @@ export default function MetricCard({
         ? (type === 'currency' ? formatCurrency(value) : formatNumber(value))
         : value
 
-    const diff = (typeof value === 'number' && typeof prevValue === 'number') 
-        ? value - prevValue 
+    const diff = (typeof value === 'number' && typeof prevValue === 'number')
+        ? value - prevValue
         : 0
     const isIncrease = diff >= 0
-    
+
     // Trend logic
     // Normal: Increase = Good (Green), Decrease = Bad (Red)
     // Inverse: Increase = Bad (Red), Decrease = Good (Green) -> e.g. Debt
@@ -81,9 +81,9 @@ export default function MetricCard({
 
                 {/* Extra Description Tag */}
                 {description && (
-                   <p className="mt-3 text-xs font-bold text-white bg-white/20 backdrop-blur-sm border border-white/20 inline-block px-2 py-1 rounded-lg">
-                       {description}
-                   </p>
+                    <p className="mt-3 text-xs font-bold text-white bg-white/20 backdrop-blur-sm border border-white/20 inline-block px-2 py-1 rounded-lg">
+                        {description}
+                    </p>
                 )}
             </div>
 
@@ -93,7 +93,7 @@ export default function MetricCard({
                     <div className="flex justify-between items-center bg-white/10 p-2.5 rounded-lg">
                         <span className="text-sm font-semibold text-white/80">{subValueLabel}</span>
                         <span className="text-xl font-bold text-white">
-                             {type === 'currency' ? formatCurrency(subValue) : formatNumber(subValue)}
+                            {typeof subValue === 'number' ? (type === 'currency' ? formatCurrency(subValue) : formatNumber(subValue)) : subValue}
                         </span>
                     </div>
                 </div>
@@ -103,9 +103,9 @@ export default function MetricCard({
             <div className="absolute right-0 bottom-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity duration-500 text-white pointer-events-none">
                 {iconPath}
             </div>
-            
+
             <div className="absolute right-0 top-0 p-4 opacity-20 group-hover:opacity-30 transition-opacity duration-500 text-white pointer-events-none">
-                 {/* Optional Top Decoration for some cards */}
+                {/* Optional Top Decoration for some cards */}
             </div>
         </div>
     )
