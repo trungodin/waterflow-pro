@@ -12,6 +12,7 @@ export interface DashboardKPIData {
   SanLuong_Year: number;
   SanLuong_Year_Prev: number;
   DHN_BangKhong_Current: number;
+  SoNgayBQ: number;
 }
 
 export interface ChartDataPoint {

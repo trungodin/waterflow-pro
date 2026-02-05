@@ -36,7 +36,8 @@ export default function Dashboard() {
     DoanhThu: 0, ThucThu: 0, DoanhThu_GB: 0, ThucThu_GB: 0,
     DoanhThu_Prev: 0, DoanhThu_GB_Prev: 0,
     TongDHN_Current: 0, SanLuong_Current: 0, SanLuong_Prev: 0,
-    SanLuong_Year: 0, SanLuong_Year_Prev: 0, DHN_BangKhong_Current: 0
+    SanLuong_Year: 0, SanLuong_Year_Prev: 0, DHN_BangKhong_Current: 0,
+    SoNgayBQ: 0
   })
 
   // Chart Data States
@@ -214,7 +215,7 @@ export default function Dashboard() {
             <h3 className="text-xl font-bold text-slate-800">Sản Xuất <span className="text-sm font-normal text-slate-500 ml-2">(Tháng {selectedMonth}/{selectedYear})</span></h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <MetricCard
               title="Tổng ĐHN"
               value={Number(stats.TongDHN_Current)}
@@ -238,10 +239,17 @@ export default function Dashboard() {
               iconPath={<svg className="w-24 h-24 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>}
             />
             <MetricCard
+              title="TB ngày"
+              value={Number(stats.SoNgayBQ) > 0 ? Number(stats.SoNgayBQ).toFixed(2) : '0'}
+              unit="ngày"
+              gradientColor="purple"
+              iconPath={<svg className="w-24 h-24 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>}
+            />
+            <MetricCard
               title="ĐHN 0 m³"
               value={Number(stats.DHN_BangKhong_Current)}
               gradientColor="orange"
-              trendMode='inverse' // Higher is "bad" usually but here just highlighting
+              trendMode='inverse'
               description="High Priority"
               iconPath={<svg className="w-24 h-24 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>}
             />

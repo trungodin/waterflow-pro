@@ -62,15 +62,41 @@ async function _getDashboardData(ky: number, nam: number, namRevenue: number) {
     WHERE Nam IN (${nam}, ${nam - 1})
   `
 
+  // 3. Calculate Average Days (SoNgayBQ)
+  const lichColumn = `TC_${ky}`
+  const avgDaysQuery = `
+    WITH ConsumptionByDot AS (
+        SELECT Dot, SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) AS SL
+        FROM DocSo WITH (NOLOCK)
+        WHERE Nam = ${nam} AND Ky = ${ky}
+        GROUP BY Dot
+    ),
+    DaysByDot AS (
+        SELECT Dot, ${lichColumn} AS Days
+        FROM LichDS WITH (NOLOCK)
+        WHERE Nam = ${nam}
+    )
+    SELECT 
+      SUM(c.SL * ISNULL(d.Days, 0)) AS WeightedSum,
+      SUM(c.SL) AS TotalSL
+    FROM ConsumptionByDot c
+    LEFT JOIN DaysByDot d ON c.Dot = d.Dot
+  `
+
   // Execute in parallel
-  const [thuTienRaw, docSoRaw] = await Promise.all([
+  const [thuTienRaw, docSoRaw, avgDaysRaw] = await Promise.all([
     executeSqlQuery('f_Select_SQL_Thutien', kpiThuTienQuery),
-    executeSqlQuery('f_Select_SQL_Doc_so', kpiDocSoQuery)
+    executeSqlQuery('f_Select_SQL_Doc_so', kpiDocSoQuery),
+    executeSqlQuery('f_Select_SQL_Doc_so', avgDaysQuery)
   ])
+
+  const avgDaysData = avgDaysRaw[0] || { WeightedSum: 0, TotalSL: 0 }
+  const soNgayBQ = avgDaysData.TotalSL > 0 ? (avgDaysData.WeightedSum / avgDaysData.TotalSL) : 0
 
   return {
     ...thuTienRaw[0],
-    ...docSoRaw[0]
+    ...docSoRaw[0],
+    SoNgayBQ: soNgayBQ
   }
 }
 
@@ -80,29 +106,29 @@ async function _getComparisonData(year1: number, year2: number) {
   // Revenue
   const revenueQuery = `
     SELECT Nam, Ky, SUM(GIABAN_BD) AS DoanhThu
-    FROM HoaDon WITH (NOLOCK) 
-    WHERE Nam IN (${year1}, ${year2})
+    FROM HoaDon WITH(NOLOCK) 
+    WHERE Nam IN(${year1}, ${year2})
     GROUP BY Nam, Ky
-  `
+    `
 
   // Collection
   const collectionQuery = `
     SELECT Nam, Ky, SUM(GIABAN) AS ThucThu
-    FROM HoaDon WITH (NOLOCK)
-    WHERE Nam IN (${year1}, ${year2})
+    FROM HoaDon WITH(NOLOCK)
+    WHERE Nam IN(${year1}, ${year2})
       AND NGAYGIAI IS NOT NULL 
       AND Nam = YEAR(NGAYGIAI) 
       AND Ky = MONTH(NGAYGIAI)
     GROUP BY Nam, Ky
-  `
+    `
 
   // Consumption
   const consumptionQuery = `
     SELECT Nam, Ky, SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) AS SanLuong
-    FROM DocSo WITH (NOLOCK)
-    WHERE Nam IN (${year1}, ${year2})
+    FROM DocSo WITH(NOLOCK)
+    WHERE Nam IN(${year1}, ${year2})
     GROUP BY Nam, Ky
-  `
+    `
 
   const [revenueData, collectionData, consumptionData] = await Promise.all([
     executeSqlQuery('f_Select_SQL_Thutien', revenueQuery),
@@ -121,7 +147,7 @@ async function _getRevenueByPriceList(year: number) {
     WHERE Nam = ${year} 
     GROUP BY GB
     ORDER BY DoanhThu DESC
-  `
+    `
 
   const data = await executeSqlQuery('f_Select_SQL_Thutien', query)
   return data
@@ -136,7 +162,7 @@ async function _getRevenueByDot(year: number) {
     WHERE Nam = ${year} 
     GROUP BY Dot
     ORDER BY DoanhThu DESC
-  `
+    `
 
   const data = await executeSqlQuery('f_Select_SQL_Thutien', query)
   return data
@@ -146,11 +172,11 @@ async function _getConsumptionByPriceList(year: number) {
   // Breakdown by GB (Consumption)
   const query = `
     SELECT GB, SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) AS SanLuong
-    FROM DocSo WITH (NOLOCK)
+    FROM DocSo WITH(NOLOCK)
     WHERE Nam = ${year} AND GB IS NOT NULL AND GB <> ''
     GROUP BY GB
     ORDER BY SanLuong DESC
-  `
+    `
 
   const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
   return data
@@ -160,11 +186,11 @@ async function _getConsumptionByDot(year: number) {
   // Breakdown by Dot (Consumption)
   const query = `
     SELECT Dot, SUM(ISNULL(TRY_CAST(TieuThuMoi AS FLOAT), 0)) AS SanLuong
-    FROM DocSo WITH (NOLOCK)
+    FROM DocSo WITH(NOLOCK)
     WHERE Nam = ${year} AND Dot IS NOT NULL
     GROUP BY Dot
     ORDER BY SanLuong DESC
-  `
+    `
 
   const data = await executeSqlQuery('f_Select_SQL_Doc_so', query)
   return data
