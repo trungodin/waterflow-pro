@@ -80,7 +80,7 @@ async function _getDashboardData(ky: number, nam: number, namRevenue: number) {
       SUM(c.SL * ISNULL(d.Days, 0)) AS WeightedSum,
       SUM(c.SL) AS TotalSL
     FROM ConsumptionByDot c
-    LEFT JOIN DaysByDot d ON c.Dot = d.Dot
+    LEFT JOIN DaysByDot d ON TRY_CAST(c.Dot AS INT) = TRY_CAST(d.Dot AS INT)
   `
 
   // Execute in parallel

@@ -215,11 +215,13 @@ export default function Dashboard() {
             <h3 className="text-xl font-bold text-slate-800">Sản Xuất <span className="text-sm font-normal text-slate-500 ml-2">(Tháng {selectedMonth}/{selectedYear})</span></h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
               title="Tổng ĐHN"
               value={Number(stats.TongDHN_Current)}
               gradientColor="cyan"
+              subValueLabel="TB ngày"
+              subValue={Number(stats.SoNgayBQ)}
               iconPath={<svg className="w-24 h-24 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>}
             />
             <MetricCard
@@ -237,13 +239,6 @@ export default function Dashboard() {
               unit="m³"
               gradientColor="blue"
               iconPath={<svg className="w-24 h-24 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>}
-            />
-            <MetricCard
-              title="TB ngày"
-              value={Number(stats.SoNgayBQ) > 0 ? Number(stats.SoNgayBQ).toFixed(2) : '0'}
-              unit="ngày"
-              gradientColor="purple"
-              iconPath={<svg className="w-24 h-24 transform translate-x-4 translate-y-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>}
             />
             <MetricCard
               title="ĐHN 0 m³"
