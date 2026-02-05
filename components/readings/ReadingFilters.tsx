@@ -5,8 +5,8 @@ import { getReadingFilters, ReadingFilters } from '@/app/readings/actions'
 import Select from 'react-select'
 
 interface FilterProps {
-  onSearch: (filters: ReadingFilters) => void
-  loading: boolean
+    onSearch: (filters: ReadingFilters) => void
+    loading: boolean
 }
 
 export default function ReadingFiltersComponent({ onSearch, loading }: FilterProps) {
@@ -19,7 +19,7 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
 
     const [gbOp, setGbOp] = useState("Tất cả")
     const [gbVal, setGbVal] = useState("")
-    
+
     const [ttmOp, setTtmOp] = useState("Tất cả")
     const [ttmVal, setTtmVal] = useState<number | undefined>(undefined)
 
@@ -39,7 +39,7 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
     const [congdung, setCongdung] = useState<string[]>([]) // Multiselect simulation
 
     const [limit, setLimit] = useState(200)
-    const [isExpanded, setIsExpanded] = useState(true)
+    const [isExpanded, setIsExpanded] = useState(false)
 
     useEffect(() => {
         const fetchOpts = async () => {
@@ -79,7 +79,7 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
     return (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-6 transition-all duration-200">
             {/* Header / Toggle */}
-            <div 
+            <div
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors rounded-xl select-none"
             >
@@ -102,7 +102,7 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
             {/* Collapsible Content */}
             {isExpanded && (
                 <div className="p-5 border-t border-gray-100 animate-in slide-in-from-top-2 fade-in duration-200">
-                    
+
                     {/* 1. Time Filters */}
                     <div className="mb-5">
                         <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -118,7 +118,7 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Từ Năm</label>
                                 <input type="number" min="2020" max="2099" value={namFrom} onChange={e => setNamFrom(Number(e.target.value))} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
                             </div>
-                             <div>
+                            <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Đến Kỳ (Tùy chọn)</label>
                                 <input type="number" min="1" max="12" value={kyTo || ''} placeholder="-" onChange={e => setKyTo(e.target.value ? Number(e.target.value) : undefined)} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors placeholder:text-gray-400" />
                             </div>
@@ -128,7 +128,7 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="border-t border-dashed border-gray-200 my-5"></div>
 
                     {/* 2. Attribute Filters (GB, TTM, TTL) */}
@@ -147,7 +147,7 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
                                     </select>
                                 </div>
                                 <div className="w-2/3">
-                                   <input type="text" value={gbVal} onChange={e => setGbVal(e.target.value)} placeholder="Nhập giá trị..." disabled={gbOp === "Tất cả"} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-400 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
+                                    <input type="text" value={gbVal} onChange={e => setGbVal(e.target.value)} placeholder="Nhập giá trị..." disabled={gbOp === "Tất cả"} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-400 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
                                 </div>
                             </div>
                             {/* TTM */}
@@ -159,7 +159,7 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
                                     </select>
                                 </div>
                                 <div className="w-2/3">
-                                     <input type="number" value={ttmVal || ''} onChange={e => setTtmVal(e.target.value ? Number(e.target.value) : undefined)} placeholder="Nhập số..." disabled={ttmOp === "Tất cả"} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-400 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
+                                    <input type="number" value={ttmVal || ''} onChange={e => setTtmVal(e.target.value ? Number(e.target.value) : undefined)} placeholder="Nhập số..." disabled={ttmOp === "Tất cả"} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-400 placeholder:text-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" />
                                 </div>
                             </div>
                             {/* TTL */}
@@ -178,7 +178,7 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
                     </div>
 
                     <div className="border-t border-dashed border-gray-200 my-5"></div>
-        
+
                     {/* 3. Dropdown Filters */}
                     <div className="mb-6">
                         <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -186,44 +186,44 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
                             Chi Tiết
                         </h4>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                             <div>
+                            <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Cỡ Cũ</label>
                                 <select value={cocu} onChange={e => setCocu(e.target.value)} className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white">
                                     <option value="Tất cả">Tất cả</option>
                                     {filterOptions.CoCu?.map((o: string, idx: number) => <option key={`${o}-${idx}`} value={o}>{o}</option>)}
                                 </select>
-                             </div>
-                             <div>
+                            </div>
+                            <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Đợt</label>
                                 <select value={dot} onChange={e => setDot(e.target.value)} className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white">
                                     <option value="Tất cả">Tất cả</option>
                                     {filterOptions.Dot?.map((o: any) => <option key={o} value={o}>{o}</option>)}
                                 </select>
-                             </div>
-                             <div>
+                            </div>
+                            <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Hiệu Cũ</label>
                                 <select value={hieucu} onChange={e => setHieucu(e.target.value)} className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white">
                                     <option value="Tất cả">Tất cả</option>
                                     {filterOptions.HieuCu?.map((o: string) => <option key={o} value={o}>{o}</option>)}
                                 </select>
-                             </div>
-                             <div>
+                            </div>
+                            <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Code Mới</label>
                                 <select value={codemoi} onChange={e => setCodemoi(e.target.value)} className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white">
                                     <option value="Tất cả">Tất cả</option>
                                     {filterOptions.CodeMoi?.map((o: string) => <option key={o} value={o}>{o}</option>)}
                                 </select>
-                             </div>
-                             <div>
+                            </div>
+                            <div>
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Hộp Bảo Vệ</label>
                                 <select value={hopbaove} onChange={e => setHopbaove(e.target.value)} className="w-full border border-gray-300 rounded-md px-2 py-2 text-sm text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white">
                                     <option value="Tất cả">Tất cả</option>
                                     {filterOptions.HopBaoVe?.map((o: string) => <option key={o} value={o}>{o}</option>)}
                                 </select>
-                             </div>
-                             <div className="md:col-span-2 lg:col-span-1">
+                            </div>
+                            <div className="md:col-span-2 lg:col-span-1">
                                 <label className="block text-xs font-bold text-gray-700 mb-1.5">Công Dụng</label>
-                                <Select 
+                                <Select
                                     instanceId="reading-filters-congdung"
                                     isMulti
                                     options={filterOptions.CongDung?.map((o: string) => ({ value: o, label: o }))}
@@ -257,22 +257,22 @@ export default function ReadingFiltersComponent({ onSearch, loading }: FilterPro
                                         })
                                     }}
                                 />
-                             </div>
+                            </div>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-end gap-4 border-t border-gray-100 pt-5">
-                         <div className="w-48">
+                        <div className="w-48">
                             <label className="block text-xs font-bold text-gray-700 mb-1.5">Giới hạn số dòng</label>
                             <input type="number" value={limit} onChange={e => setLimit(Number(e.target.value))} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-bold text-gray-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
-                         </div>
-                         <button 
+                        </div>
+                        <button
                             onClick={handleSearch}
                             disabled={loading || loadingOptions}
                             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm uppercase tracking-wide py-2.5 rounded-lg shadow-sm hover:shadow transition-all disabled:opacity-70 active:translate-y-0.5"
-                         >
+                        >
                             {loading ? '⏳ Đang Tải...' : '🔍 Tìm Kiếm'}
-                         </button>
+                        </button>
                     </div>
                 </div>
             )}
