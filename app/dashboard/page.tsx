@@ -256,28 +256,28 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {/* KPI Cards for Revenue */}
-            {/* Custom Card for DOANH THU (With Avg Price) */}
+            {/* Custom Card for TIỀN NƯỚC (With Avg Price) */}
             <div className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-6 shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
               <div className="relative z-10 text-white">
-                <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-1">Doanh Thu</p>
+                <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-1">Tiền Nước</p>
                 <h3 className="text-2xl font-black mb-2 tracking-tight">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(stats.DoanhThu))}
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(stats.DoanhThu_GB))}
                 </h3>
 
                 {/* Trend / Prev Value */}
                 <div className="flex items-center gap-2 mb-4">
                   <span className={`text-xs px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm font-bold flex items-center gap-1`}>
-                    {Number(stats.DoanhThu) >= Number(stats.DoanhThu_Prev) ? '▲' : '▼'}
-                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.abs(Number(stats.DoanhThu) - Number(stats.DoanhThu_Prev)))}
+                    {Number(stats.DoanhThu_GB) >= Number(stats.DoanhThu_GB_Prev) ? '▲' : '▼'}
+                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Math.abs(Number(stats.DoanhThu_GB) - Number(stats.DoanhThu_GB_Prev)))}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 gap-2 mt-4 pt-4 border-t border-white/20">
-                  {/* Water Money */}
+                  {/* Total Revenue */}
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-medium text-white/90">Tiền nước</span>
+                    <span className="text-xs font-medium text-white/90">Tổng doanh thu</span>
                     <span className="text-sm font-bold text-white">
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(stats.DoanhThu_GB))}
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(stats.DoanhThu))}
                     </span>
                   </div>
 
@@ -300,22 +300,22 @@ export default function Dashboard() {
               </div>
             </div>
             <MetricCard
-              title="Thực thu"
-              value={Number(stats.ThucThu)}
+              title="Thực thu (Tiền nước)"
+              value={Number(stats.ThucThu_GB)}
               type='currency'
               gradientColor='emerald'
-              subValueLabel='Tiền nước'
-              subValue={Number(stats.ThucThu_GB)}
+              subValueLabel='Tổng thực thu'
+              subValue={Number(stats.ThucThu)}
               iconPath={<svg className="w-32 h-32 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
             />
             <MetricCard
-              title="Tồn thu"
-              value={yearlyOutstanding}
+              title="Tồn thu (Tiền nước)"
+              value={yearlyOutstandingGB}
               type='currency'
               gradientColor='orange' // Amber/Orange
               trendMode='inverse' // High Debt is Bad
-              subValueLabel='Tiền nước'
-              subValue={yearlyOutstandingGB}
+              subValueLabel='Tổng tồn thu'
+              subValue={yearlyOutstanding}
               iconPath={<svg className="w-32 h-32 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
             />
 
@@ -326,21 +326,21 @@ export default function Dashboard() {
 
                 <div className="mb-4">
                   <div className="flex justify-between items-end mb-1">
-                    <span className="text-xs font-bold text-white/90">Tổng doanh thu</span>
-                    <span className="text-xl font-black text-white">{completionRateTotal.toFixed(2)}%</span>
+                    <span className="text-xs font-bold text-white/90">Tiền nước</span>
+                    <span className="text-lg font-black text-white">{completionRateGB.toFixed(2)}%</span>
                   </div>
                   <div className="w-full bg-black/20 rounded-full h-2.5 backdrop-blur-sm">
-                    <div className="bg-white h-2.5 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: `${Math.min(completionRateTotal, 100)}%` }}></div>
+                    <div className="bg-white h-2.5 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: `${Math.min(completionRateGB, 100)}%` }}></div>
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-end mb-1">
-                    <span className="text-xs font-bold text-white/90">Tiền nước</span>
-                    <span className="text-lg font-black text-white">{completionRateGB.toFixed(2)}%</span>
+                    <span className="text-xs font-bold text-white/90">Tổng doanh thu</span>
+                    <span className="text-xl font-black text-white">{completionRateTotal.toFixed(2)}%</span>
                   </div>
                   <div className="w-full bg-black/20 rounded-full h-2.5 backdrop-blur-sm">
-                    <div className="bg-white/80 h-2.5 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: `${Math.min(completionRateGB, 100)}%` }}></div>
+                    <div className="bg-white/80 h-2.5 rounded-full transition-all duration-1000 ease-out shadow-sm" style={{ width: `${Math.min(completionRateTotal, 100)}%` }}></div>
                   </div>
                 </div>
               </div>
