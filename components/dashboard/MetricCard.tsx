@@ -63,7 +63,7 @@ export default function MetricCard({
             <div className="relative z-10 text-white">
                 <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-2">{title}</p>
                 <div className="flex items-end gap-2 text-white flex-wrap">
-                    <span className={`${type === 'currency' ? 'text-3xl' : 'text-4xl'} font-black tracking-tight`}>
+                    <span className={`${type === 'currency' ? 'text-2xl' : 'text-3xl'} font-black tracking-tight`}>
                         {formattedValue}
                     </span>
                     {unit && <span className="text-sm font-bold opacity-80 mb-2">{unit}</span>}
