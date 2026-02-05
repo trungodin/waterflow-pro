@@ -256,10 +256,10 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {/* KPI Cards for Revenue */}
-            {/* Custom Card for TIỀN NƯỚC (With Avg Price) */}
+            {/* Custom Card for TIỀN NƯỚC (Renamed to Doanh Thu) (With Avg Price) */}
             <div className="bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl p-6 shadow-lg shadow-indigo-200 hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
               <div className="relative z-10 text-white">
-                <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-1">Tiền Nước</p>
+                <p className="text-xs font-bold text-white/80 uppercase tracking-wider mb-1">Doanh Thu</p>
                 <h3 className="text-2xl font-black mb-2 tracking-tight">
                   {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(stats.DoanhThu_GB))}
                 </h3>
@@ -300,7 +300,7 @@ export default function Dashboard() {
               </div>
             </div>
             <MetricCard
-              title="Thực thu (Tiền nước)"
+              title="Thực thu"
               value={Number(stats.ThucThu_GB)}
               type='currency'
               gradientColor='emerald'
@@ -309,7 +309,7 @@ export default function Dashboard() {
               iconPath={<svg className="w-32 h-32 transform translate-x-8 -translate-y-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
             />
             <MetricCard
-              title="Tồn thu (Tiền nước)"
+              title="Tồn thu"
               value={yearlyOutstandingGB}
               type='currency'
               gradientColor='orange' // Amber/Orange
@@ -322,7 +322,7 @@ export default function Dashboard() {
             {/* % Dat - Custom Card Logic (Complexity here warrants keeping custom initially) */}
             <div className="bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl p-6 shadow-lg shadow-purple-200 hover:shadow-xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group">
               <div className="relative z-10 w-full text-white">
-                <dt className="text-xs font-bold text-white/80 uppercase tracking-wider mb-4">% Hoàn thành (Thu tiền)</dt>
+                <dt className="text-xs font-bold text-white/80 uppercase tracking-wider mb-4">% Hoàn thành</dt>
 
                 <div className="mb-4">
                   <div className="flex justify-between items-end mb-1">
