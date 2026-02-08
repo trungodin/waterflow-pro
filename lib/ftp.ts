@@ -36,9 +36,6 @@ export async function listFiles(remotePath: string = '/G'): Promise<FileInfo[]> 
     const client = new ftp.Client();
     client.ftp.verbose = false;
 
-    // Set timeout for socket operations
-    client.ftp.timeout = 10000; // 10 seconds
-
     try {
         await withTimeout(client.access(FTP_CONFIG), 10000);
         const list = await withTimeout(client.list(remotePath), 10000);
@@ -61,7 +58,6 @@ export async function listFiles(remotePath: string = '/G'): Promise<FileInfo[]> 
 export async function downloadFile(remotePath: string): Promise<Buffer> {
     const client = new ftp.Client();
     client.ftp.verbose = false;
-    client.ftp.timeout = 30000; // 30 seconds for downloads
 
     try {
         await withTimeout(client.access(FTP_CONFIG), 10000);
@@ -92,7 +88,6 @@ export async function uploadFile(
 ): Promise<void> {
     const client = new ftp.Client();
     client.ftp.verbose = false;
-    client.ftp.timeout = 30000; // 30 seconds for uploads
 
     try {
         await withTimeout(client.access(FTP_CONFIG), 10000);
