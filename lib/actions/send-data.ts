@@ -31,7 +31,7 @@ export async function sendToListSheet(selectedData: any[], assignGroup: string, 
             const stt = index + 1
             const id = `${danhBa}-${idSuffix}`
             const traCuuLink = `${TRACKING_SHEET_URL}${danhBa}`
-            const hopBaoVe = item.HopBaoVe === 'Có' || item.HopBaoVe === true || item.HopBaoVe === '1' ? 'Có' : 'Không'
+            const hopBaoVe = item.HopBaoVe === 'Có' || item.HopBaoVe === true || item.HopBaoVe === '1' ? '1' : '0'
 
             // Columns mapping:
             // 0: Empty (Column A)
@@ -137,7 +137,7 @@ export async function sendToNhacNoSheet(selectedData: any[], assignDate: string)
             const danhBa = String(item.DanhBa || '').padStart(11, '0')
             const stt = index + 1
             const id = `${danhBa}-${idSuffix}`
-            const hopBaoVe = item.HopBaoVe === 'Có' || item.HopBaoVe === true || item.HopBaoVe === '1' ? 'Có' : 'Không'
+            const hopBaoVe = item.HopBaoVe === 'Có' || item.HopBaoVe === true || item.HopBaoVe === '1' ? '1' : '0'
             const mlt2 = String(item.MLT2 || '').trim().padStart(9, '0')
 
             // Extract 'may' from Mlt2 (index 2-4 -> chars 3,4)
