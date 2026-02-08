@@ -22,13 +22,26 @@ const FTP_CONFIG: FTPConfig = {
     secure: false
 };
 
+// Timeout wrapper for FTP operations
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 15000): Promise<T> {
+    return Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+            setTimeout(() => reject(new Error('FTP operation timeout')), timeoutMs)
+        )
+    ]);
+}
+
 export async function listFiles(remotePath: string = '/G'): Promise<FileInfo[]> {
     const client = new ftp.Client();
     client.ftp.verbose = false;
 
+    // Set timeout for socket operations
+    client.ftp.timeout = 10000; // 10 seconds
+
     try {
-        await client.access(FTP_CONFIG);
-        const list = await client.list(remotePath);
+        await withTimeout(client.access(FTP_CONFIG), 10000);
+        const list = await withTimeout(client.list(remotePath), 10000);
 
         return list.map(item => ({
             name: item.name,
@@ -48,9 +61,10 @@ export async function listFiles(remotePath: string = '/G'): Promise<FileInfo[]> 
 export async function downloadFile(remotePath: string): Promise<Buffer> {
     const client = new ftp.Client();
     client.ftp.verbose = false;
+    client.ftp.timeout = 30000; // 30 seconds for downloads
 
     try {
-        await client.access(FTP_CONFIG);
+        await withTimeout(client.access(FTP_CONFIG), 10000);
         const { Writable } = require('stream');
         const chunks: Buffer[] = [];
 
@@ -61,7 +75,7 @@ export async function downloadFile(remotePath: string): Promise<Buffer> {
             }
         });
 
-        await client.downloadTo(writableStream, remotePath);
+        await withTimeout(client.downloadTo(writableStream, remotePath), 30000);
 
         return Buffer.concat(chunks);
     } catch (error) {
@@ -78,12 +92,13 @@ export async function uploadFile(
 ): Promise<void> {
     const client = new ftp.Client();
     client.ftp.verbose = false;
+    client.ftp.timeout = 30000; // 30 seconds for uploads
 
     try {
-        await client.access(FTP_CONFIG);
+        await withTimeout(client.access(FTP_CONFIG), 10000);
         const { Readable } = require('stream');
         const stream = Readable.from(localBuffer);
-        await client.uploadFrom(stream, remotePath);
+        await withTimeout(client.uploadFrom(stream, remotePath), 30000);
     } catch (error) {
         console.error('FTP upload error:', error);
         throw new Error('Không thể upload file');
