@@ -23,7 +23,7 @@ export default function Navbar() {
       await signOut()
       router.push('/login')
     } catch (error) {
-       console.error(error)
+      console.error(error)
     }
   }
 
@@ -46,6 +46,11 @@ export default function Navbar() {
     {
       name: 'Thu Tiền', path: '/payments', icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+      )
+    },
+    {
+      name: 'Share', path: '/share', icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" /></svg>
       )
     }
   ]
@@ -91,62 +96,62 @@ export default function Navbar() {
 
             {/* Login/Profile Action */}
             <div className="pl-4 border-l border-slate-200">
-               {loading ? (
-                   <div className="w-24 h-10 bg-slate-100 rounded-xl animate-pulse"></div>
-               ) : user ? (
-                 <div className="relative">
-                    <button 
-                        onClick={() => setProfileOpen(!profileOpen)}
-                        className="flex items-center gap-3 pl-2 pr-4 py-1.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
-                    >
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-xs uppercase shadow-sm">
-                            {user.email?.[0] || 'U'}
-                          </div>
-                          <div className="flex flex-col items-start">
-                             <span className="text-xs font-bold text-slate-700 max-w-[140px] truncate">
-                                {user.user_metadata?.full_name || user.email?.split('@')[0]}
-                             </span>
-                             <span className="text-[10px] text-slate-400 font-bold">Thành viên</span>
-                          </div>
-                          <svg className={`w-4 h-4 text-slate-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-
-                    {/* Dropdown */}
-                    {profileOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
-                             <div className="px-4 py-3 border-b border-slate-50">
-                                 <p className="text-sm font-bold text-slate-900">Tài khoản</p>
-                                 <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                             </div>
-                             <div className="p-1">
-                                <Link
-                                    href="/profile"
-                                    onClick={() => setProfileOpen(false)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                                    Hồ sơ cá nhân
-                                </Link>
-                                <button
-                                    onClick={handleSignOut}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                                    Đăng xuất
-                                </button>
-                             </div>
-                        </div>
-                    )}
-                 </div>
-               ) : (
-                  <Link
-                    href="/login"
-                    className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg shadow-blue-200 hover:shadow-blue-300"
+              {loading ? (
+                <div className="w-24 h-10 bg-slate-100 rounded-xl animate-pulse"></div>
+              ) : user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setProfileOpen(!profileOpen)}
+                    className="flex items-center gap-3 pl-2 pr-4 py-1.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
                   >
-                    <span>Đăng nhập</span>
-                    <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                  </Link>
-               )}
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-xs uppercase shadow-sm">
+                      {user.email?.[0] || 'U'}
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="text-xs font-bold text-slate-700 max-w-[140px] truncate">
+                        {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-bold">Thành viên</span>
+                    </div>
+                    <svg className={`w-4 h-4 text-slate-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+
+                  {/* Dropdown */}
+                  {profileOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="px-4 py-3 border-b border-slate-50">
+                        <p className="text-sm font-bold text-slate-900">Tài khoản</p>
+                        <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                      </div>
+                      <div className="p-1">
+                        <Link
+                          href="/profile"
+                          onClick={() => setProfileOpen(false)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                          Hồ sơ cá nhân
+                        </Link>
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                          Đăng xuất
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="group relative inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg shadow-blue-200 hover:shadow-blue-300"
+                >
+                  <span>Đăng nhập</span>
+                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -192,42 +197,42 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="pt-4 mt-2 border-t border-slate-100 p-4">
-             {loading ? null : user ? (
-                 <div className="space-y-4">
-                     <div className="flex items-center gap-3 px-2">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm uppercase shadow-sm">
-                            {user.email?.[0] || 'U'}
-                          </div>
-                          <div className="flex flex-col items-start overflow-hidden">
-                             <span className="text-sm font-bold text-slate-800 truncate w-full">
-                                {user.user_metadata?.full_name || user.email}
-                             </span>
-                             <span className="text-xs text-slate-500 font-medium">Thành viên</span>
-                          </div>
-                     </div>
-                     <Link
-                        href="/profile"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-all border border-slate-200"
-                    >
-                        Hồ sơ cá nhân
-                    </Link>
-                     <button
-                        onClick={handleSignOut}
-                        className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-all"
-                    >
-                        Đăng xuất
-                    </button>
-                 </div>
-             ) : (
+            {loading ? null : user ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 px-2">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold text-sm uppercase shadow-sm">
+                    {user.email?.[0] || 'U'}
+                  </div>
+                  <div className="flex flex-col items-start overflow-hidden">
+                    <span className="text-sm font-bold text-slate-800 truncate w-full">
+                      {user.user_metadata?.full_name || user.email}
+                    </span>
+                    <span className="text-xs text-slate-500 font-medium">Thành viên</span>
+                  </div>
+                </div>
                 <Link
+                  href="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-slate-50 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-all border border-slate-200"
+                >
+                  Hồ sơ cá nhân
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-all"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            ) : (
+              <Link
                 href="/login"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all"
-                >
+              >
                 Đăng nhập
-                </Link>
-             )}
+              </Link>
+            )}
           </div>
         </div>
       </div>
