@@ -51,12 +51,17 @@ export async function downloadFile(remotePath: string): Promise<Buffer> {
 
     try {
         await client.access(FTP_CONFIG);
+        const { Writable } = require('stream');
         const chunks: Buffer[] = [];
 
-        await client.downloadTo(
-            (chunk) => chunks.push(chunk),
-            remotePath
-        );
+        const writableStream = new Writable({
+            write(chunk: Buffer, encoding: string, callback: () => void) {
+                chunks.push(chunk);
+                callback();
+            }
+        });
+
+        await client.downloadTo(writableStream, remotePath);
 
         return Buffer.concat(chunks);
     } catch (error) {
