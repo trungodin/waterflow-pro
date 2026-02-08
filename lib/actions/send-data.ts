@@ -31,7 +31,7 @@ export async function sendToListSheet(selectedData: any[], assignGroup: string, 
             const stt = index + 1
             const id = `${danhBa}-${idSuffix}`
             const traCuuLink = `${TRACKING_SHEET_URL}${danhBa}`
-            const hopBaoVe = item.HopBaoVe ? '1' : '0'
+            const hopBaoVe = item.HopBaoVe === 'Có' || item.HopBaoVe === true || item.HopBaoVe === '1' ? 'Có' : 'Không'
 
             // Columns mapping:
             // 0: Empty (Column A)
@@ -52,7 +52,7 @@ export async function sendToListSheet(selectedData: any[], assignGroup: string, 
             // 15: ngay_giao_ds (assignDate)
             // 16: ID
             // 17: tra_cuu_no
-            
+
             return [
                 '', // Col A skipped
                 stt,
@@ -90,7 +90,7 @@ export async function sendToListSheet(selectedData: any[], assignGroup: string, 
 
 const MAY_TO_NHAN_VIEN: Record<string, string> = {
     '11': 'Lê Trung Quốc',
-    '12': 'Vũ Hoàng Quốc Việt', 
+    '12': 'Vũ Hoàng Quốc Việt',
     '13': 'Lê Hồng Tuấn',
     '14': 'Bùi Xuân Hoàng',
     '15': 'Lương Văn Hùng',
@@ -137,9 +137,9 @@ export async function sendToNhacNoSheet(selectedData: any[], assignDate: string)
             const danhBa = String(item.DanhBa || '').padStart(11, '0')
             const stt = index + 1
             const id = `${danhBa}-${idSuffix}`
-            const hopBaoVe = item.HopBaoVe ? '1' : '0'
+            const hopBaoVe = item.HopBaoVe === 'Có' || item.HopBaoVe === true || item.HopBaoVe === '1' ? 'Có' : 'Không'
             const mlt2 = String(item.MLT2 || '').trim().padStart(9, '0')
-            
+
             // Extract 'may' from Mlt2 (index 2-4 -> chars 3,4)
             // Python: mlt2_str[2:4] -> Take characters at indices 2 and 3.
             // "123456789" -> index 2 is '3', index 3 is '4'.
@@ -148,7 +148,7 @@ export async function sendToNhacNoSheet(selectedData: any[], assignDate: string)
             if (mlt2.length >= 4) {
                 may = mlt2.substring(2, 4)
             }
-            
+
             const nhanVien = MAY_TO_NHAN_VIEN[may] || ''
 
             // Columns mapping:
