@@ -13,6 +13,7 @@ import { getOnOffData, getDriveImageLink } from '@/lib/googlesheets'
 import LatenessAnalysisMain from '@/components/lateness-analysis/LatenessAnalysisMain'
 import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
 import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
+import ShareContent from '@/components/ShareContent'
 import { getDmnCache, setDmnCache } from '@/lib/dmn-cache'
 
 import Modal from '@/components/ui/Modal'
@@ -169,24 +170,24 @@ export default function PaymentsPage() {
       if (!forceRefresh) {
         const cached = getDmnCache()
         if (cached) {
-            setDmnData(cached)
-            // If we have filters active (which is unlikely on fresh tab load but possible if navigating back), 
-            // the separate useEffect [dmnData] will handle setFilteredDmnData logic, 
-            // OR we can explicitly set it here if the useEffect filter logic depends on state change.
-            // Let's set it here to be sure for initial render.
-            setFilteredDmnData(cached) 
-            setLastRefreshed(new Date())
-            setLoading(false)
-            return
+          setDmnData(cached)
+          // If we have filters active (which is unlikely on fresh tab load but possible if navigating back), 
+          // the separate useEffect [dmnData] will handle setFilteredDmnData logic, 
+          // OR we can explicitly set it here if the useEffect filter logic depends on state change.
+          // Let's set it here to be sure for initial render.
+          setFilteredDmnData(cached)
+          setLastRefreshed(new Date())
+          setLoading(false)
+          return
         }
       }
 
       // 2. Fetch from API
       const data = await getOnOffData()
-      
+
       // 3. Save to Cache
       setDmnCache(data)
-      
+
       setDmnData(data)
       setFilteredDmnData(data)
       setLastRefreshed(new Date())
@@ -248,13 +249,13 @@ export default function PaymentsPage() {
   // Initial fetch when tab is active
   useEffect(() => {
     if (activeTab === 'tra_cuu_dmn') {
-        const cached = getDmnCache()
-        // If we have cached data, use it immediately without loading spinner if possible, 
-        // or just call fetchData(false) which handles it.
-        // But if dmnData is already populated (from React state preservation), we don't need to do anything.
-        if (dmnData.length === 0) {
-             fetchData(false)
-        }
+      const cached = getDmnCache()
+      // If we have cached data, use it immediately without loading spinner if possible, 
+      // or just call fetchData(false) which handles it.
+      // But if dmnData is already populated (from React state preservation), we don't need to do anything.
+      if (dmnData.length === 0) {
+        fetchData(false)
+      }
     }
   }, [activeTab])
 
@@ -305,30 +306,30 @@ export default function PaymentsPage() {
         const parseDmnDate = (dStr: string) => {
           if (!dStr) return ''
           // Handle various separators
-          const cleanStr = dStr. trim().split(' ')[0] // Remove time "14/02/2025 10:00:00"
+          const cleanStr = dStr.trim().split(' ')[0] // Remove time "14/02/2025 10:00:00"
           if (cleanStr.includes('/')) {
-              const parts = cleanStr.split('/')
-              if (parts.length === 3) {
-                  // Ensure padding: 1/2/2026 -> 01/02/2026 -> 2026-02-01
-                  const day = parts[0].padStart(2, '0')
-                  const month = parts[1].padStart(2, '0')
-                  const year = parts[2]
-                  return `${year}-${month}-${day}`
-              }
+            const parts = cleanStr.split('/')
+            if (parts.length === 3) {
+              // Ensure padding: 1/2/2026 -> 01/02/2026 -> 2026-02-01
+              const day = parts[0].padStart(2, '0')
+              const month = parts[1].padStart(2, '0')
+              const year = parts[2]
+              return `${year}-${month}-${day}`
+            }
           }
           return ''
         }
-        
+
         const dateKhoa = parseDmnDate(item.NgayKhoa)
         const dateMo = parseDmnDate(item.NgayMo)
-        
+
         if (targetStatus === 'LOCKED') {
-           if (dateKhoa !== targetDate) return false
+          if (dateKhoa !== targetDate) return false
         } else if (targetStatus === 'OPEN') {
-           if (dateMo !== targetDate) return false
+          if (dateMo !== targetDate) return false
         } else {
-           // ALL status selected but Date provided -> Check BOTH
-           if (dateKhoa !== targetDate && dateMo !== targetDate) return false
+          // ALL status selected but Date provided -> Check BOTH
+          if (dateKhoa !== targetDate && dateMo !== targetDate) return false
         }
       }
 
@@ -454,7 +455,8 @@ export default function PaymentsPage() {
                   { id: 'bao_cao_tuan', label: 'Báo cáo tuần' },
                   { id: 'phan_tich_hd_no', label: 'Phân tích Hóa đơn nợ' },
                   { id: 'phan_tich_thanh_toan', label: 'Phân tích Thanh toán' },
-                  { id: 'thong_ke_dmn', label: 'Thống kê Đóng Mở Nước' }
+                  { id: 'thong_ke_dmn', label: 'Thống kê Đóng Mở Nước' },
+                  { id: 'share', label: '📂 Share - NAS' }
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -483,6 +485,8 @@ export default function PaymentsPage() {
                 <DebtAnalysisMain />
               ) : subTabDMN === 'phan_tich_thanh_toan' ? (
                 <LatenessAnalysisMain />
+              ) : subTabDMN === 'share' ? (
+                <ShareContent />
               ) : (
                 <div className="p-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                   <p className="text-xl">Chức năng <b>{subTabDMN}</b> đang được phát triển.</p>
@@ -518,36 +522,36 @@ export default function PaymentsPage() {
                   </div>
                   <div className='flex gap-2 items-center'>
                     <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm font-bold text-gray-700 bg-white"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm font-bold text-gray-700 bg-white"
                     >
-                        <option value="ALL">Tất cả trạng thái</option>
-                        <option value="LOCKED">Đang Khóa</option>
-                        <option value="OPEN">Đã Mở</option>
+                      <option value="ALL">Tất cả trạng thái</option>
+                      <option value="LOCKED">Đang Khóa</option>
+                      <option value="OPEN">Đã Mở</option>
                     </select>
 
                     <div className="relative">
-                        <input 
-                            type="date"
-                            value={filterDate}
-                            onChange={(e) => setFilterDate(e.target.value)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm font-bold text-gray-700 hover:cursor-pointer [&::-webkit-inner-spin-button]:hidden [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                        />
-                        {filterDate && (
-                            <button
-                                onClick={() => setFilterDate('')}
-                                className="absolute right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
-                                title="Xóa chọn ngày"
-                                style={{ right: '2.5rem' }} // Adjust based on calendar icon width usually (~20px-30px)
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                </svg>
-                            </button>
-                        )}
+                      <input
+                        type="date"
+                        value={filterDate}
+                        onChange={(e) => setFilterDate(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm font-bold text-gray-700 hover:cursor-pointer [&::-webkit-inner-spin-button]:hidden [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                      />
+                      {filterDate && (
+                        <button
+                          onClick={() => setFilterDate('')}
+                          className="absolute right-8 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                          title="Xóa chọn ngày"
+                          style={{ right: '2.5rem' }} // Adjust based on calendar icon width usually (~20px-30px)
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      )}
                     </div>
-                    
+
                     <button
                       onClick={() => fetchData(true)}
                       disabled={loading}
