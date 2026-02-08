@@ -31,8 +31,8 @@ export async function sendToListSheet(selectedData: any[], assignGroup: string, 
             const stt = index + 1
             const id = `${danhBa}-${idSuffix}`
             const traCuuLink = `${TRACKING_SHEET_URL}${danhBa}`
-            // HopBaoVe: Check for any truthy value (true, 'Có', '1', 1, etc.)
-            const hopBaoVe = item.HopBaoVe ? '1' : '0'
+            // HopBaoVe: true/"true" -> 1, false/"false"/empty -> 0
+            const hopBaoVe = (item.HopBaoVe === true || String(item.HopBaoVe).toLowerCase() === 'true') ? '1' : '0'
 
             // Columns mapping:
             // 0: Empty (Column A)
@@ -138,8 +138,8 @@ export async function sendToNhacNoSheet(selectedData: any[], assignDate: string)
             const danhBa = String(item.DanhBa || '').padStart(11, '0')
             const stt = index + 1
             const id = `${danhBa}-${idSuffix}`
-            // HopBaoVe: Check for any truthy value (true, 'Có', '1', 1, etc.)
-            const hopBaoVe = item.HopBaoVe ? '1' : '0'
+            // HopBaoVe: true/"true" -> 1, false/"false"/empty -> 0
+            const hopBaoVe = (item.HopBaoVe === true || String(item.HopBaoVe).toLowerCase() === 'true') ? '1' : '0'
             const mlt2 = String(item.MLT2 || '').trim().padStart(9, '0')
 
             // Extract 'may' from Mlt2 (index 2-4 -> chars 3,4)
