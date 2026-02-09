@@ -456,7 +456,7 @@ export default function PaymentsPage() {
                   { id: 'phan_tich_hd_no', label: 'Phân tích Hóa đơn nợ' },
                   { id: 'phan_tich_thanh_toan', label: 'Phân tích Thanh toán' },
                   { id: 'thong_ke_dmn', label: 'Thống kê Đóng Mở Nước' },
-                  { id: 'share', label: '📂 Share - NAS' }
+                  { id: 'share', label: '📂 NAS' }
                 ].map(tab => (
                   <button
                     key={tab.id}

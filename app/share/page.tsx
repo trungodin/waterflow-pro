@@ -137,8 +137,8 @@ export default function SharePage() {
                             </svg>
                         </div>
                         <div>
-                            <h1 className="text-3xl font-black text-gray-900">Share - Quản Lý File NAS</h1>
-                            <p className="text-gray-600 font-medium mt-0.5">Truy cập và quản lý file trên ổ cứng SSD</p>
+                            <h1 className="text-3xl font-black text-gray-900">NAS</h1>
+                            <p className="text-gray-600 font-medium mt-0.5">Truy cập và quản lý dữ liệu tập trung</p>
                         </div>
                     </div>
                 </div>
