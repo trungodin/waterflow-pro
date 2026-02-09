@@ -118,7 +118,10 @@ export default function Navbar() {
                     </div>
                     <div className="flex flex-col items-start">
                       <span className="text-xs font-bold text-slate-700 max-w-[140px] truncate">
-                        {user.user_metadata?.full_name || user.email?.split('@')[0]}
+                        {(() => {
+                        console.log('User Metadata:', user.user_metadata) 
+                        return user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.display_name || user.email?.split('@')[0]
+                      })()}
                       </span>
                       <span className="text-[10px] text-slate-400 font-bold">Thành viên</span>
                     </div>
