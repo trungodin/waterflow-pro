@@ -83,7 +83,17 @@ async function getFtpClient(): Promise<ftp.Client> {
     }
 }
 
+// Cache for directory listings
+const dirCache = new Map<string, { timestamp: number, data: FileInfo[] }>();
+const CACHE_TTL = 60 * 1000; // 1 minute cache
+
 export async function listFiles(remotePath: string = '/G'): Promise<FileInfo[]> {
+    // Check Cache
+    const cached = dirCache.get(remotePath);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+        return cached.data;
+    }
+
     let client: ftp.Client | undefined;
 
     try {
@@ -92,13 +102,18 @@ export async function listFiles(remotePath: string = '/G'): Promise<FileInfo[]> 
         
         const list = await withTimeout(client.list(remotePath), 10000);
 
-        return list.map(item => ({
+        const result = list.map(item => ({
             name: item.name,
             type: item.isDirectory ? 'directory' : 'file',
             size: item.size,
             modifiedAt: item.modifiedAt || new Date(),
             path: `${remotePath}/${item.name}`.replace('//', '/')
-        }));
+        })) as FileInfo[]; // Type assertion needed for strict mode
+
+        // Update Cache
+        dirCache.set(remotePath, { timestamp: Date.now(), data: result });
+
+        return result;
     } catch (error) {
         console.error('FTP list error:', error);
         // If error occurs, invalidate the cache to force fresh connection next time
@@ -110,6 +125,17 @@ export async function listFiles(remotePath: string = '/G'): Promise<FileInfo[]> 
     } 
     // Do NOT close the client in finally, let it stay open for warm reuse
     // We only close on explicit timeout or error
+}
+
+// Helper to invalidate cache for a path (and parent potentially)
+function invalidateCache(path: string) {
+    // Simple strategy: Clear exact path and parent
+    dirCache.delete(path);
+    const parent = path.substring(0, path.lastIndexOf('/')) || '/';
+    dirCache.delete(parent);
+    
+    // Fallback: Clear all if too complex to track
+    // dirCache.clear();
 }
 
 export async function downloadFile(remotePath: string): Promise<Buffer> {
@@ -144,48 +170,66 @@ export async function uploadFile(
     localBuffer: Buffer,
     remotePath: string
 ): Promise<void> {
-    const client = new ftp.Client();
-    client.ftp.verbose = false;
+    let client: ftp.Client | undefined;
 
     try {
-        await withTimeout(client.access(FTP_CONFIG), 10000);
+        client = await getFtpClient();
+        lastActivityTime = Date.now();
         const { Readable } = require('stream');
         const stream = Readable.from(localBuffer);
         await withTimeout(client.uploadFrom(stream, remotePath), 30000);
+
+        // Invalidate cache for the directory containing the file
+        const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
+        invalidateCache(parentDir);
     } catch (error) {
         console.error('FTP upload error:', error);
+        if (cachedClient) {
+            try { cachedClient.close(); } catch(e) {}
+            cachedClient = null;
+        }
         throw new Error('Không thể upload file');
-    } finally {
-        client.close();
     }
 }
 
 export async function deleteFile(remotePath: string): Promise<void> {
-    const client = new ftp.Client();
-    client.ftp.verbose = false;
+    let client: ftp.Client | undefined;
 
     try {
-        await client.access(FTP_CONFIG);
+        client = await getFtpClient();
+        lastActivityTime = Date.now();
         await client.remove(remotePath);
+
+        // Invalidate cache
+        const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
+        invalidateCache(parentDir);
     } catch (error) {
         console.error('FTP delete error:', error);
+        if (cachedClient) {
+            try { cachedClient.close(); } catch(e) {}
+            cachedClient = null;
+        }
         throw new Error('Không thể xóa file');
-    } finally {
-        client.close();
     }
 }
 
 export async function createDirectory(remotePath: string): Promise<void> {
-    const client = new ftp.Client();
-    client.ftp.verbose = false;
+    let client: ftp.Client | undefined;
 
     try {
-        await client.access(FTP_CONFIG);
+        client = await getFtpClient();
+        lastActivityTime = Date.now();
         await client.ensureDir(remotePath);
+
+        // Invalidate cache
+        const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
+        invalidateCache(parentDir);
     } catch (error) {
         console.error('FTP mkdir error:', error);
+        if (cachedClient) {
+            try { cachedClient.close(); } catch(e) {}
+            cachedClient = null;
+        }
         throw new Error('Không thể tạo thư mục');
-    } finally {
-        client.close();
     }
 }
