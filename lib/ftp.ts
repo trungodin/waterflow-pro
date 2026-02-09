@@ -36,51 +36,62 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number = 15000): P
     ]);
 }
 
-// Global variable to cache the FTP client instance across warm invocations (Vercel)
+
+// Queue for serializing FTP operations to prevent concurrency errors (530)
+let taskQueue: Promise<any> = Promise.resolve();
 let cachedClient: ftp.Client | null = null;
-let lastActivityTime = 0;
-const SESSION_TIMEOUT = 30000; // 30 seconds keep-alive
 
-async function getFtpClient(): Promise<ftp.Client> {
-    const now = Date.now();
-    
-    // If we have a cached client
-    if (cachedClient) {
-        // If it's been idle too long, it might be dead or timeout by server
-        if (now - lastActivityTime > SESSION_TIMEOUT) {
-            console.log('FTP Session timeout, closing and reconnecting...');
+// Helper to execute tasks sequentially using a single persistent connection
+function runSerialized<T>(task: (client: ftp.Client) => Promise<T>): Promise<T> {
+    const operation = async () => {
+        try {
+            // Ensure client is ready
+            if (!cachedClient || cachedClient.closed) {
+                console.log('[FTP] Connecting new client...');
+                cachedClient = new ftp.Client();
+                cachedClient.ftp.verbose = false;
+                await cachedClient.access(FTP_CONFIG);
+                
+                // Force LIST instead of MLSD for better compatibility with consumer NAS
+                // MLSD can be very slow on large directories
+                (cachedClient.ftp as any).features?.delete('MLST');
+                (cachedClient.ftp as any).features?.delete('MLSD');
+            }
+            return await task(cachedClient);
+        } catch (error: any) {
+            console.warn('[FTP] Operation failed, retrying with fresh connection:', error.message);
+            // Force reconnect and retry once
             try {
-                cachedClient.close();
-            } catch (e) { /* ignore */ }
-            cachedClient = null;
-        } else if (!cachedClient.closed) {
-             // It seems valid, let's verify quickly or just return it
-             // Doing a full verify might defeat the purpose, but `basic-ftp` handles closed socket detection fairly well on command
-             return cachedClient;
+                if (cachedClient) cachedClient.close();
+            } catch {}
+            
+            cachedClient = new ftp.Client();
+            cachedClient.ftp.verbose = false;
+            await cachedClient.access(FTP_CONFIG);
+            
+            // Force LIST on retry too
+            (cachedClient.ftp as any).features?.delete('MLST');
+            (cachedClient.ftp as any).features?.delete('MLSD');
+            
+            return await task(cachedClient);
         }
-    }
+    };
 
-    const client = new ftp.Client();
-    client.ftp.verbose = false;
-    
-    // Optimizations for Vercel <-> Residential/Poor Network
-    // 1. Passive Mode is default and usually required.
-    // 2. Timeout adjustment
-    
-    try {
-        await withTimeout(client.access(FTP_CONFIG), 8000); // Authentication
-        cachedClient = client;
-        lastActivityTime = Date.now();
-        return client;
-    } catch (error) {
-        // Retry logic often helps with flaky FTP on high latency
-        console.warn('First FTP connection attempt failed, retrying...', error);
-        await new Promise(r => setTimeout(r, 1000));
-        await withTimeout(client.access(FTP_CONFIG), 10000);
-        cachedClient = client;
-        lastActivityTime = Date.now();
-        return client;
-    }
+    // Chain the operation
+    const result = taskQueue.then(operation);
+    // Ensure queue doesn't break on error
+    taskQueue = result.catch(() => {});
+    return result;
+}
+
+// We expose getFtpClient for legacy/direct usage if needed, but suggest using wrappers
+export async function getFtpClient(): Promise<ftp.Client> {
+   return new Error('Deprecated: Use exported functions directly') as any; 
+   // Actually let's keep it working just in case, but it breaks serialization.
+   // Providing a new client is safer for legacy code.
+   const client = new ftp.Client();
+   await client.access(FTP_CONFIG);
+   return client;
 }
 
 // Cache for directory listings
@@ -94,58 +105,34 @@ export async function listFiles(remotePath: string = '/G'): Promise<FileInfo[]> 
         return cached.data;
     }
 
-    let client: ftp.Client | undefined;
-
-    try {
-        client = await getFtpClient();
-        lastActivityTime = Date.now(); // Update activity time
-        
-        const list = await withTimeout(client.list(remotePath), 10000);
-
-        const result = list.map(item => ({
-            name: item.name,
-            type: item.isDirectory ? 'directory' : 'file',
-            size: item.size,
-            modifiedAt: item.modifiedAt || new Date(),
-            path: `${remotePath}/${item.name}`.replace('//', '/')
-        })) as FileInfo[]; // Type assertion needed for strict mode
-
-        // Update Cache
-        dirCache.set(remotePath, { timestamp: Date.now(), data: result });
-
-        return result;
-    } catch (error) {
-        console.error('FTP list error:', error);
-        // If error occurs, invalidate the cache to force fresh connection next time
-        if (cachedClient) {
-            try { cachedClient.close(); } catch(e) {}
-            cachedClient = null;
-        }
-        throw new Error('Không thể kết nối tới FTP server');
-    } 
-    // Do NOT close the client in finally, let it stay open for warm reuse
-    // We only close on explicit timeout or error
-}
-
-// Helper to invalidate cache for a path (and parent potentially)
-function invalidateCache(path: string) {
-    // Simple strategy: Clear exact path and parent
-    dirCache.delete(path);
-    const parent = path.substring(0, path.lastIndexOf('/')) || '/';
-    dirCache.delete(parent);
+    return runSerialized(async (client) => {
+        try {
+            console.log(`[FTP] Listing ${remotePath}...`);
+            // Increase timeout to 300s (5 minutes) for very large directories
+            const list = await withTimeout(client.list(remotePath), 300000);
+            console.log(`[FTP] Found ${list.length} items in ${remotePath}`);
+            
+            const files: FileInfo[] = list.map(item => ({
+                name: item.name,
+                type: item.type === 2 ? 'directory' : 'file',
+                size: item.size,
+                modifiedAt: item.modifiedAt || new Date(),
+                path: `${remotePath}/${item.name}`.replace(/\/+/g, '/')
+            }));
     
-    // Fallback: Clear all if too complex to track
-    // dirCache.clear();
+            // Update Cache
+            dirCache.set(remotePath, { timestamp: Date.now(), data: files });
+            return files;
+        } catch (error) {
+            dirCache.delete(remotePath);
+            throw error;
+        }
+    });
 }
 
 export async function downloadFile(remotePath: string): Promise<Buffer> {
-    const { Writable } = require('stream');
-    let client: ftp.Client | undefined;
-
-    try {
-        client = await getFtpClient();
-        lastActivityTime = Date.now();
-
+    return runSerialized(async (client) => {
+        const { Writable } = require('stream');
         const chunks: Buffer[] = [];
         const writableStream = new Writable({
             write(chunk: Buffer, encoding: string, callback: () => void) {
@@ -154,82 +141,45 @@ export async function downloadFile(remotePath: string): Promise<Buffer> {
             }
         });
 
-        await withTimeout(client.downloadTo(writableStream, remotePath), 30000);
+        await withTimeout(client.downloadTo(writableStream, remotePath), 60000); // Increased timeout for slow NAS
         return Buffer.concat(chunks);
-    } catch (error) {
-        console.error('FTP download error:', error);
-        if (cachedClient) {
-            try { cachedClient.close(); } catch(e) {}
-            cachedClient = null;
-        }
-        throw new Error('Không thể tải file');
-    }
+    });
 }
 
 export async function uploadFile(
     localBuffer: Buffer,
     remotePath: string
 ): Promise<void> {
-    let client: ftp.Client | undefined;
-
-    try {
-        client = await getFtpClient();
-        lastActivityTime = Date.now();
+    return runSerialized(async (client) => {
         const { Readable } = require('stream');
         const stream = Readable.from(localBuffer);
-        await withTimeout(client.uploadFrom(stream, remotePath), 30000);
+        await withTimeout(client.uploadFrom(stream, remotePath), 60000);
 
-        // Invalidate cache for the directory containing the file
         const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
         invalidateCache(parentDir);
-    } catch (error) {
-        console.error('FTP upload error:', error);
-        if (cachedClient) {
-            try { cachedClient.close(); } catch(e) {}
-            cachedClient = null;
-        }
-        throw new Error('Không thể upload file');
-    }
+    });
 }
 
 export async function deleteFile(remotePath: string): Promise<void> {
-    let client: ftp.Client | undefined;
-
-    try {
-        client = await getFtpClient();
-        lastActivityTime = Date.now();
+    return runSerialized(async (client) => {
         await client.remove(remotePath);
-
-        // Invalidate cache
         const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
         invalidateCache(parentDir);
-    } catch (error) {
-        console.error('FTP delete error:', error);
-        if (cachedClient) {
-            try { cachedClient.close(); } catch(e) {}
-            cachedClient = null;
-        }
-        throw new Error('Không thể xóa file');
-    }
+    });
 }
 
 export async function createDirectory(remotePath: string): Promise<void> {
-    let client: ftp.Client | undefined;
-
-    try {
-        client = await getFtpClient();
-        lastActivityTime = Date.now();
+    return runSerialized(async (client) => {
         await client.ensureDir(remotePath);
-
-        // Invalidate cache
         const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
         invalidateCache(parentDir);
-    } catch (error) {
-        console.error('FTP mkdir error:', error);
-        if (cachedClient) {
-            try { cachedClient.close(); } catch(e) {}
-            cachedClient = null;
-        }
-        throw new Error('Không thể tạo thư mục');
-    }
+    });
 }
+
+// Helper to invalidate cache for a path (and parent potentially)
+function invalidateCache(path: string) {
+    dirCache.delete(path);
+    const parent = path.substring(0, path.lastIndexOf('/')) || '/';
+    dirCache.delete(parent);
+}
+

@@ -43,7 +43,13 @@ export default function SharePage() {
 
     const handleNavigate = (item: FileInfo) => {
         if (item.type === 'directory') {
-            setCurrentPath(item.path)
+            // Check if this is a large image directory that would timeout
+            const largeImageDirs = ['database_Images', 'ON_OFF_Images'];
+            if (largeImageDirs.includes(item.name)) {
+                setError(`⚠️ Thư mục "${item.name}" chứa quá nhiều file (hàng ngàn ảnh). Không thể hiển thị danh sách. Các ảnh sẽ tự động load khi xem thông tin khách hàng.`);
+                return;
+            }
+            setCurrentPath(item.path);
         }
     }
 

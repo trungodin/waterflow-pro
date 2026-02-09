@@ -26,6 +26,23 @@ const DEFAULT_COLUMNS = [
   { id: 'kyNam', label: 'Kỳ/Năm', width: 220 },
   { id: 'nhomKhoa', label: 'Nhóm Khóa', width: 110, align: 'center' },
   { id: 'ngayMo', label: 'Ngày Mở', width: 110, align: 'right' },
+  
+  // New Columns
+  { id: 'csKhoa', label: 'CS Khóa', width: 80 },
+  { id: 'maSoChi', label: 'Mã Số Chì', width: 100 },
+  { id: 'kieuKhoa', label: 'Kiểu Khóa', width: 100 },
+  { id: 'hopBaoVe', label: 'Hộp BV', width: 80 },
+  { id: 'maMo', label: 'Mã Mở', width: 100 },
+  { id: 'nvMo', label: 'NV Mở', width: 150 },
+  { id: 'csMo', label: 'CS Mở', width: 80 },
+  { id: 'ghiChuMo', label: 'Ghi Chú Mở', width: 150 },
+  { id: 'hinhMo', label: 'Hình Mở', width: 80, align: 'center' },
+  { id: 'fileCpmn', label: 'File CPMN', width: 80, align: 'center' },
+  { id: 'ngayCpmn', label: 'Ngày CPMN', width: 100 },
+  { id: 'tgCpmn', label: 'TG CPMN', width: 80 },
+  { id: 'hinhTb', label: 'Hình TB', width: 80, align: 'center' },
+  { id: 'ngayTb', label: 'Ngày TB', width: 100 },
+  { id: 'soThan', label: 'Số Thân', width: 100 },
 ]
 
 export default function VirtualDMNTable({
@@ -294,6 +311,41 @@ export default function VirtualDMNTable({
                 else if (hbv === false || String(hbv).toLowerCase() === 'false') hbvDisplay = 'Không';
                 content = <span className="text-gray-700">{hbvDisplay}</span>;
                 break;
+              // New Columns logic
+              case 'csKhoa': content = <span className="text-gray-700">{row.CsKhoa}</span>; break;
+              case 'maSoChi': content = <span className="text-gray-700">{row.MaSoChi}</span>; break;
+              case 'kieuKhoa': content = <span className="text-gray-700">{row.KieuKhoa}</span>; break;
+              case 'maMo': content = <span className="text-gray-700">{row.MaMo}</span>; break;
+              case 'nvMo': content = <span className="text-gray-700">{row.NvMo}</span>; break;
+              case 'csMo': content = <span className="text-gray-700">{row.CsMo}</span>; break;
+              case 'ghiChuMo': content = <span className="text-gray-700 truncate" title={row.GhiChuMo}>{row.GhiChuMo}</span>; break;
+              case 'ngayCpmn': content = <span className="text-gray-700">{row.NgayCpmn}</span>; break;
+              case 'tgCpmn': content = <span className="text-gray-700">{row.TgCpmn}</span>; break;
+              case 'ngayTb': content = <span className="text-gray-700">{row.NgayTb}</span>; break;
+
+              // Image and File Links
+              case 'hinhMo':
+                content = row.HinhMo ? (
+                  <a href={`/api/nas/image?path=${encodeURIComponent(row.HinhMo)}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                    Xem
+                  </a>
+                ) : <span className="text-gray-400">-</span>;
+                break;
+              case 'fileCpmn':
+                content = row.FileCpmn ? (
+                  <a href={`/api/nas/image?path=${encodeURIComponent(row.FileCpmn)}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                    File
+                  </a>
+                ) : <span className="text-gray-400">-</span>;
+                break;
+              case 'hinhTb':
+                content = row.HinhTb ? (
+                  <a href={`/api/nas/image?path=${encodeURIComponent(row.HinhTb)}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                    Xem
+                  </a>
+                ) : <span className="text-gray-400">-</span>;
+                break;
+
               case 'sdt': content = <span className="text-gray-700">{row.SDT}</span>; break;
 
               default: content = <span className="text-gray-700">{row[col.id] || ''}</span>
