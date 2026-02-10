@@ -168,6 +168,14 @@ export async function deleteFile(remotePath: string): Promise<void> {
     });
 }
 
+export async function deleteDirectory(remotePath: string): Promise<void> {
+    return runSerialized(async (client) => {
+        await client.removeDir(remotePath);
+        const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
+        invalidateCache(parentDir);
+    });
+}
+
 export async function createDirectory(remotePath: string): Promise<void> {
     return runSerialized(async (client) => {
         await client.ensureDir(remotePath);

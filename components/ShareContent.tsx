@@ -115,6 +115,30 @@ export default function ShareContent() {
         }
     }
 
+    const handleDelete = async (item: FileInfo) => {
+        if (!confirm(`Bạn có chắc muốn xóa ${item.type === 'directory' ? 'thư mục' : 'file'} "${item.name}" không?`)) return
+        
+        setLoading(true)
+        try {
+            const res = await fetch('/api/ftp/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: item.path, type: item.type })
+            })
+            const data = await res.json()
+            if (data.success) {
+                alert('Đã xóa thành công!')
+                loadFiles(currentPath)
+            } else {
+                alert('Lỗi: ' + (data.error || 'Không thể xóa'))
+            }
+        } catch (e) {
+            alert('Lỗi kết nối khi xóa')
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const formatSize = (bytes: number) => {
         if (bytes === 0) return '-'
         const k = 1024
@@ -294,7 +318,7 @@ export default function ShareContent() {
                                                 {formatDate(item.modifiedAt)}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-right flex justify-end gap-2">
                                             {item.type === 'file' && (
                                                 <button
                                                     onClick={() => handleDownload(item)}
@@ -306,6 +330,13 @@ export default function ShareContent() {
                                                     Tải về
                                                 </button>
                                             )}
+                                            <button
+                                                onClick={() => handleDelete(item)}
+                                                className="inline-flex items-center gap-2 px-3 py-2 bg-white hover:bg-red-50 text-red-500 hover:text-red-600 rounded-xl text-sm font-bold transition-all border border-gray-200 hover:border-red-200 shadow-sm hover:shadow active:scale-95"
+                                                title="Xóa"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
