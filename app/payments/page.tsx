@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
+import { useAuth } from '@/lib/hooks/useAuth'
 import RevenueAnalysis from '@/components/RevenueAnalysis'
 import AgentCollectionAnalysis from '@/components/AgentCollectionAnalysis'
 import CollectionSummaryAnalysis from '@/components/CollectionSummaryAnalysis'
@@ -140,6 +141,8 @@ const MetricCard = ({ label, value, highlight = false, subValue }: { label: stri
 }
 
 export default function PaymentsPage() {
+  const { user } = useAuth()
+  const ALLOWED_EMAILS = ['trungodin@gmail.com', 'trung100982@gmail.com']
 
   const [activeTab, setActiveTab] = useState('doanh_thu')
   const [subTabDoanhThu, setSubTabDoanhThu] = useState('phan_tich_doanh_thu')
@@ -457,7 +460,8 @@ export default function PaymentsPage() {
                   { id: 'phan_tich_thanh_toan', label: 'Phân tích Thanh toán' },
                   { id: 'thong_ke_dmn', label: 'Thống kê Đóng Mở Nước' },
                   { id: 'share', label: '📂 NAS' }
-                ].map(tab => (
+                ].filter(tab => tab.id !== 'share' || (user?.email && ALLOWED_EMAILS.includes(user.email)))
+                 .map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setSubTabDMN(tab.id)}
