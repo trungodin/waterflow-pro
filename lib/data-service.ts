@@ -26,20 +26,39 @@ export function getSupabase() {
 
 export async function getDatabaseData() {
     try {
-        // Fetch all customers logic
-        // Verify if we need all columns. The UI uses quite a few.
-        const { data, error } = await getSupabase()
-            .from('assigned_customers')
-            .select('*');
+        // Fetch all customers using pagination to bypass Supabase 1000 record limit
+        const BATCH_SIZE = 1000;
+        let allData: any[] = [];
+        let offset = 0;
+        let hasMore = true;
 
-        if (error) {
-            console.error('Error fetching assigned_customers:', error);
-            return [];
+        while (hasMore) {
+            const { data, error } = await getSupabase()
+                .from('assigned_customers')
+                .select('*')
+                .range(offset, offset + BATCH_SIZE - 1);
+
+            if (error) {
+                console.error('Error fetching assigned_customers:', error);
+                break;
+            }
+
+            if (!data || data.length === 0) {
+                hasMore = false;
+            } else {
+                allData = allData.concat(data);
+                offset += BATCH_SIZE;
+                
+                // Stop if we got less than BATCH_SIZE (last page)
+                if (data.length < BATCH_SIZE) {
+                    hasMore = false;
+                }
+            }
         }
 
         // Map Supabase columns (snake_case) to App's expected (PascalCase/CamelCase)
         // Previous app expected: DanhBa, TenKH, SoNha, Duong, ...
-        return data.map((item: any) => ({
+        return allData.map((item: any) => ({
             ID: item.ref_id,
             DanhBa: item.danh_bo,
             TenKH: item.ten_kh,
@@ -84,17 +103,37 @@ export async function getDatabaseData() {
 
 export async function getOnOffData() {
     try {
-        // 1. Fetch Water Lock Status (Fetch ALL records)
-        // Order by created_at desc
-        const { data: statusData, error: statusError } = await getSupabase()
-            .from('water_lock_status')
-            .select('*') // This now includes ten_kh, so_nha, duong if migration ran
-            .order('created_at', { ascending: false });
+        // 1. Fetch Water Lock Status using pagination to bypass 1000 record limit
+        const PAGE_SIZE = 1000;
+        let allStatusData: any[] = [];
+        let offset = 0;
+        let hasMore = true;
 
-        if (statusError) {
-            console.error('Error fetching water_lock_status:', statusError);
-            return [];
+        while (hasMore) {
+            const { data, error } = await getSupabase()
+                .from('water_lock_status')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .range(offset, offset + PAGE_SIZE - 1);
+
+            if (error) {
+                console.error('Error fetching water_lock_status:', error);
+                break;
+            }
+
+            if (!data || data.length === 0) {
+                hasMore = false;
+            } else {
+                allStatusData = allStatusData.concat(data);
+                offset += PAGE_SIZE;
+                
+                if (data.length < PAGE_SIZE) {
+                    hasMore = false;
+                }
+            }
         }
+
+        const statusData = allStatusData;
 
         if (!statusData || statusData.length === 0) return [];
 

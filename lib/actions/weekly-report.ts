@@ -3,6 +3,22 @@
 import { fetchSql } from '../soap-api'
 import { getOnOffData, getDatabaseSheetData } from '../googlesheets'
 
+// Helper to parse date flexible formats
+const parseDateLocal = (dateStr: string): Date | null => {
+    if (!dateStr) return null
+    // Handle DD/MM/YYYY
+    if (dateStr.includes('/')) {
+        const parts = dateStr.split('/')
+        if (parts.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]))
+    }
+    // Handle YYYY-MM-DD
+    if (dateStr.includes('-')) {
+        const parts = dateStr.split('T')[0].split('-')
+        if (parts.length === 3) return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
+    }
+    return null
+}
+
 // Types
 export interface WeeklyReportParams {
     startDate: string // YYYY-MM-DD
@@ -54,16 +70,9 @@ export async function runWeeklyReportAnalysis(params: WeeklyReportParams): Promi
         console.log(`[WEEKLY REPORT] Time Window: ${startObj.toLocaleString()} - ${endObj.toLocaleString()}`)
 
         let filteredDB = dbData.filter((row: any) => {
-            if (!row.NgayGiao) return false
-            const parts = row.NgayGiao.split('/')
-            if (parts.length !== 3) return false
-
-            const day = parseInt(parts[0], 10)
-            const month = parseInt(parts[1], 10)
-            const year = parseInt(parts[2], 10)
-
+            const d = parseDateLocal(row.NgayGiao)
+            if (!d) return false
             // Use Local Time to match startObj/endObj
-            const d = new Date(year, month - 1, day)
             return d >= startObj && d <= endObj
         })
 
@@ -72,7 +81,22 @@ export async function runWeeklyReportAnalysis(params: WeeklyReportParams): Promi
         }
 
         if (filteredDB.length === 0) {
-            return { summary: [], stats: [], details: [], pieChartData: {}, notesSummary: {}, error: 'Không có dữ liệu trong khoảng thời gian và nhóm đã chọn' }
+            // Get year range from sample data to help user
+            const sampleYears = dbData.slice(0, 100).map((r: any) => {
+                const d = parseDateLocal(r.NgayGiao)
+                return d ? d.getFullYear() : null
+            }).filter(Boolean)
+            const uniqueYears = [...new Set(sampleYears)].sort()
+            const yearHint = uniqueYears.length > 0 ? ` Dữ liệu hiện có từ năm ${uniqueYears[0]} đến ${uniqueYears[uniqueYears.length - 1]}.` : ''
+            
+            return { 
+                summary: [], 
+                stats: [], 
+                details: [], 
+                pieChartData: {}, 
+                notesSummary: {}, 
+                error: `Không có dữ liệu trong khoảng thời gian và nhóm đã chọn.${yearHint} Vui lòng kiểm tra lại khoảng thời gian hoặc đồng bộ dữ liệu mới.` 
+            }
         }
 
         // 3. Enrich with Debt Data (HoaDon)
@@ -83,6 +107,8 @@ export async function runWeeklyReportAnalysis(params: WeeklyReportParams): Promi
         let hoaDonMap = new Map<string, any[]>()
 
         if (uniqueDanhBa.length > 0) {
+            console.log(`[WEEKLY REPORT] Fetching invoices for ${uniqueDanhBa.length} customers...`)
+            const startTime = Date.now()
             const chunkSize = 200
             for (let i = 0; i < uniqueDanhBa.length; i += chunkSize) {
                 const chunk = uniqueDanhBa.slice(i, i + chunkSize)
@@ -97,6 +123,7 @@ export async function runWeeklyReportAnalysis(params: WeeklyReportParams): Promi
                     })
                 }
             }
+            console.log(`[WEEKLY REPORT] Invoices fetched in ${Date.now() - startTime}ms`)
         }
 
         // 4. Enrich with Banking Data (BGW_HD)
@@ -109,7 +136,9 @@ export async function runWeeklyReportAnalysis(params: WeeklyReportParams): Promi
 
         let bgwMap = new Map<string, string>() // SOHOADON -> NGAYTHANHTOAN
         if (allSoHoaDon.length > 0) {
-            const chunkSize = 500
+            console.log(`[WEEKLY REPORT] Fetching banking data for ${allSoHoaDon.length} invoices...`)
+            const startTime = Date.now()
+            const chunkSize = 2000 // Increased to reduce number of queries
             for (let i = 0; i < allSoHoaDon.length; i += chunkSize) {
                 const chunk = allSoHoaDon.slice(i, i + chunkSize)
                 const listStr = chunk.map(s => `'${s}'`).join(',')
@@ -122,6 +151,7 @@ export async function runWeeklyReportAnalysis(params: WeeklyReportParams): Promi
                     })
                 }
             }
+            console.log(`[WEEKLY REPORT] Banking data fetched in ${Date.now() - startTime}ms`)
         }
 
         // 4. Process Each Row
@@ -246,11 +276,9 @@ export async function runWeeklyReportAnalysis(params: WeeklyReportParams): Promi
 
             // Priority 1: Check "Khóa nước" (Locked)
             // User Request: If locked -> 'Khóa nước' (Red) regardless of reopening status
-            if (isLocked) {
-                status = 'Khóa nước'
-            }
-            // Also check DB sheet TinhTrang column for legacy "KHOÁ NƯỚC"
-            else if (row.TinhTrang?.trim().toUpperCase() === 'KHOÁ NƯỚC') {
+            // Also check text "Khóa" or "Khoá" in TinhTrang column
+            const tinhTrang = (row.TinhTrang || '').trim().toUpperCase()
+            if (isLocked || tinhTrang.includes('KHÓA') || tinhTrang.includes('KHOÁ')) {
                 status = 'Khóa nước'
             }
 
@@ -352,25 +380,10 @@ export async function runWeeklyReportAnalysis(params: WeeklyReportParams): Promi
         })
 
         // 6. Aggregate Summary
-        const deduplicatedDetails: any[] = []
-        const seenCustomers = new Map<string, Set<string>>() // key: group_date, value: Set of DanhBa
-
-        processedDetails.forEach((row: any) => {
-            const dateKey = row.NgayGiao
-            const groupKey = row.Nhom
-            const key = `${groupKey}_${dateKey}`
-            const danhBa = row.DanhBa || row.ID
-
-            if (!seenCustomers.has(key)) {
-                seenCustomers.set(key, new Set())
-            }
-
-            // Only keep FIRST occurrence of each customer per day+group
-            if (!seenCustomers.get(key)!.has(danhBa)) {
-                seenCustomers.get(key)!.add(danhBa)
-                deduplicatedDetails.push(row)
-            }
-        })
+        // 6. Aggregate Summary
+        // User Requirement: NO DEDUPLICATION based on DanhBa. Only filter by Date/Group (already done above).
+        // Keep all records even if duplicate DanhBa exists.
+        const deduplicatedDetails = processedDetails
 
         // Now aggregate the deduplicated data
         const summaryMap = new Map<string, any>()

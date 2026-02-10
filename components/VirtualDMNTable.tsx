@@ -27,22 +27,13 @@ const DEFAULT_COLUMNS = [
   { id: 'nhomKhoa', label: 'Nhóm Khóa', width: 110, align: 'center' },
   { id: 'ngayMo', label: 'Ngày Mở', width: 110, align: 'right' },
   
-  // New Columns
-  { id: 'csKhoa', label: 'CS Khóa', width: 80 },
-  { id: 'maSoChi', label: 'Mã Số Chì', width: 100 },
+  // Columns kept after user request
   { id: 'kieuKhoa', label: 'Kiểu Khóa', width: 100 },
-  { id: 'hopBaoVe', label: 'Hộp BV', width: 80 },
-  { id: 'maMo', label: 'Mã Mở', width: 100 },
   { id: 'nvMo', label: 'NV Mở', width: 150 },
-  { id: 'csMo', label: 'CS Mở', width: 80 },
   { id: 'ghiChuMo', label: 'Ghi Chú Mở', width: 150 },
   { id: 'hinhMo', label: 'Hình Mở', width: 80, align: 'center' },
-  { id: 'fileCpmn', label: 'File CPMN', width: 80, align: 'center' },
-  { id: 'ngayCpmn', label: 'Ngày CPMN', width: 100 },
-  { id: 'tgCpmn', label: 'TG CPMN', width: 80 },
   { id: 'hinhTb', label: 'Hình TB', width: 80, align: 'center' },
   { id: 'ngayTb', label: 'Ngày TB', width: 100 },
-  { id: 'soThan', label: 'Số Thân', width: 100 },
 ]
 
 export default function VirtualDMNTable({
