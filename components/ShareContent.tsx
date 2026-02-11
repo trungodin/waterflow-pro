@@ -86,10 +86,7 @@ export default function ShareContent() {
         }
     }
 
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
-
+    const startUpload = async (file: File, splitMode: boolean = false) => {
         setUploading(true)
         setProgress(0)
         
@@ -99,14 +96,24 @@ export default function ShareContent() {
         
         try {
             let offset = 0;
-            let isAppend = false; // First chunk overwrites, subsequent chunks append
+            let isAppend = false; // First chunk overwrites, subsequent chunks append (unless splitMode)
 
             for (let i = 0; i < totalChunks; i++) {
                 const chunk = file.slice(offset, offset + CHUNK_SIZE);
                 const formData = new FormData();
-                formData.append('file', chunk, file.name); // Keep original name
+                
+                let uploadName = file.name;
+                let currentAppend = isAppend;
+
+                if (splitMode) {
+                    // In split mode, every chunk is a separate file, so NO append, purely overwrite new files
+                    uploadName = `${file.name}.part${String(i + 1).padStart(3, '0')}`;
+                    currentAppend = false; // Always overwrite for new part files
+                }
+
+                formData.append('file', chunk, uploadName);
                 formData.append('path', currentPath);
-                formData.append('isAppend', String(isAppend));
+                formData.append('isAppend', String(currentAppend));
 
                 const res = await fetch('/api/ftp/upload', {
                     method: 'POST',
@@ -119,23 +126,43 @@ export default function ShareContent() {
                 }
 
                 offset += CHUNK_SIZE;
-                isAppend = true;
+                // Only enable append if NOT in split mode
+                if (!splitMode) isAppend = true;
                 
                 // Update progress
                 const percent = Math.min(100, Math.round(((i + 1) / totalChunks) * 100));
                 setProgress(percent);
             }
 
-            alert('Upload thành công!')
+            alert(splitMode ? 'Upload (chia nhỏ) thành công!' : 'Upload thành công!')
             loadFiles(currentPath)
         } catch (err: any) {
             console.error(err)
+            
+            // Handle FTP 451 Append/Restart not permitted
+            if (!splitMode && (err.message?.includes('451') || err.message?.includes('Append'))) {
+                if (confirm(`NAS của bạn chặn nối file (Lỗi 451). \nBạn có muốn tự động chia nhỏ file này thành nhiều phần (.part001, .part002...) để tiếp tục upload không?`)) {
+                    // Retry with split mode
+                    await startUpload(file, true);
+                    return;
+                }
+            }
+
             alert('Lỗi upload file: ' + (err.message || 'Unknown error'))
         } finally {
-            setUploading(false)
-            setProgress(0)
-            e.target.value = ''
+            if (!splitMode) { // Only reset if not retrying
+                 setUploading(false)
+                 setProgress(0)
+            }
         }
+    }
+
+    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        
+        await startUpload(file, false);
+        e.target.value = ''
     }
 
     const handleDelete = async (item: FileInfo) => {
