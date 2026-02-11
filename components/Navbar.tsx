@@ -95,9 +95,11 @@ export default function Navbar() {
   ]
 
   // Filter nav items based on permissions
-  // Show empty array during loading to prevent flash of all items
-  const navItems = permissions.loading || !userProfile 
-    ? [] // Empty during loading - prevents flash
+  // Only hide during initial loading to prevent flash
+  const navItems = permissions.loading 
+    ? [] // Empty only during loading - prevents flash
+    : !userProfile
+    ? rawNavItems.filter(item => item.permission === 'dashboard') // Show only dashboard if no profile
     : rawNavItems.filter(item => {
         const canAccess = permissions.canAccessTab(item.permission as any)
         console.log(`[Navbar] Tab: ${item.name}, Permission: ${item.permission}, Can Access: ${canAccess}, Role: ${userProfile?.role}`)
@@ -106,7 +108,7 @@ export default function Navbar() {
 
   // Filter admin menu items
   const filteredAdminItems = permissions.loading || !userProfile
-    ? [] // Empty during loading - prevents flash
+    ? [] // Empty during loading or no profile
     : adminMenuItems.filter(item => permissions.canAccessTab(item.permission as any))
 
   // Check if user has any admin permissions

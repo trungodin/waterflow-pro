@@ -53,6 +53,8 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // Set loading true during transition to prevent flash
+      setLoading(true)
       setUser(session?.user ?? null)
       
       if (session?.user) {
