@@ -7,6 +7,7 @@ import { Be_Vietnam_Pro } from 'next/font/google'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { usePermissions } from '@/lib/rbac/hooks/usePermissions'
 import { getRoleInfo } from '@/lib/rbac/roles'
+import { supabaseUntyped as supabase } from '@/lib/supabase'
 
 const brandFont = Be_Vietnam_Pro({
   subsets: ['vietnamese'],
@@ -17,8 +18,8 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  // FIX: Get signOut from context
-  const { user, userProfile, loading, signOut } = useAuth()
+  // FIX: Get user and profile from context
+  const { user, userProfile, loading } = useAuth()
   const permissions = usePermissions()
   const [profileOpen, setProfileOpen] = useState(false)
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false)
@@ -37,14 +38,19 @@ export default function Navbar() {
   }, [permissions.loading])
 
   const handleSignOut = () => {
-    // Fire and forget logout
-    signOut().catch(console.error)
+    // 1. Manually clear local storage to prevent stale data on reload
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('waterflow_user_profile_v1')
+    }
     
-    // Force hard reload to login page immediately regardless of signOut status
+    // 2. Fire and forget logout via direct client (bypass context state update to avoid UI flash)
+    supabase.auth.signOut().catch(console.error)
+    
+    // 3. Force hard reload to login page immediately
     // Using setTimeout ensures this runs in the next tick
     setTimeout(() => {
       window.location.href = '/login'
-    }, 100)
+    }, 50)
   }
 
   const rawNavItems = [
