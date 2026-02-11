@@ -39,7 +39,8 @@ export default function Navbar() {
   const handleSignOut = async () => {
     try {
       await signOut()
-      router.push('/login')
+      // Force hard reload to login page to clear all temporary states/cache
+      window.location.href = '/login'
     } catch (error) {
       console.error(error)
     }
