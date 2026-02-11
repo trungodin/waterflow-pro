@@ -18,19 +18,29 @@ export function useAuth() {
     try {
       console.log('[useAuth] Fetching profile for user:', userId)
       
-      const { data, error } = await supabase
+      // Create a timeout promise (5 seconds)
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out')), 5000)
+      )
+
+      // Perform the fetch query with simplified selection
+      const fetchPromise = supabase
         .from('user_profiles')
-        .select('*')
+        .select('user_id, role, status, email, full_name') // Select strict fields only
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
+
+      // Race against timeout
+      const result: any = await Promise.race([fetchPromise, timeoutPromise])
+      const { data, error } = result
 
       if (error) {
         console.error('[useAuth] Error fetching user profile:', error)
-        // If profile doesn't exist, return null but don't throw
-        if (error.code === 'PGRST116') {
-          console.warn('[useAuth] User profile not found for:', userId)
-          return null
-        }
+        return null
+      }
+
+      if (!data) {
+        console.warn('[useAuth] User profile not found (empty result) for:', userId)
         return null
       }
 
