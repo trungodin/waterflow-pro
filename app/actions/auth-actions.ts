@@ -2,17 +2,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-// Chỉ khởi tạo trên Server
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!, 
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-)
+// No global initialization to prevent crash on missing env var
 
 /**
  * Xóa tài khoản Authen của người dùng (vĩnh viễn)
@@ -21,6 +11,25 @@ const supabaseAdmin = createClient(
 export async function deleteAuthUserAction(userId: string) {
   try {
     console.log('[Server Action] Deleting Auth User:', userId)
+
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!serviceRoleKey) {
+       console.error('[Server Action] Missing SUPABASE_SERVICE_ROLE_KEY env var')
+       return { success: false, error: 'Server configuration error: Missing Admin Key' }
+    }
+    
+    // Initialize admin client only when needed
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      serviceRoleKey, 
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
     
     // Validate inputs
     if (!userId) {

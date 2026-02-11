@@ -84,7 +84,13 @@ export async function createUserProfile(data: {
 
 // Get all users (admin only)
 export async function getAllUsers() {
+  console.log('[getAllUsers] Starting fetch...')
   try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+       console.error('[getAllUsers] Missing env vars')
+       return { success: false, error: 'Server configuration error' }
+    }
+
     const supabase = await createClient()
     
     // Revert to SELECT * to avoid 500 error if specific columns are missing in DB
@@ -98,6 +104,7 @@ export async function getAllUsers() {
       return { success: false, error: 'Failed to fetch users: ' + error.message }
     }
 
+    console.log(`[getAllUsers] Successfully fetched ${data?.length} users`)
     return { success: true, users: data as UserProfile[] }
   } catch (error) {
     console.error('[getAllUsers] Unexpected error:', error)
