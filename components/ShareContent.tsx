@@ -21,6 +21,7 @@ export default function ShareContent() {
     const [uploading, setUploading] = useState(false)
     const [blindMode, setBlindMode] = useState(false)
     const [progress, setProgress] = useState(0)
+    const [uploadInfo, setUploadInfo] = useState<{ current: number, total: number, filename: string } | null>(null)
     const [error, setError] = useState('')
 
     useEffect(() => {
@@ -97,7 +98,7 @@ export default function ShareContent() {
         }
     }
 
-    const startUpload = async (file: File, splitMode: boolean = false) => {
+    const startUpload = async (file: File, splitMode: boolean = false, destPath: string = currentPath) => {
         setUploading(true)
         setProgress(0)
         
@@ -123,7 +124,7 @@ export default function ShareContent() {
                 }
 
                 formData.append('file', chunk, uploadName);
-                formData.append('path', currentPath);
+                formData.append('path', destPath);
                 formData.append('isAppend', String(currentAppend));
 
                 const res = await fetch('/api/ftp/upload', {
@@ -145,35 +146,82 @@ export default function ShareContent() {
                 setProgress(percent);
             }
 
-            alert(splitMode ? 'Upload (chia nhỏ) thành công!' : 'Upload thành công!')
-            if (!blindMode) loadFiles(currentPath)
+            // If part of batch (uploadInfo set), don't alert or reload yet
+            if (!uploadInfo) {
+                alert(splitMode ? 'Upload (chia nhỏ) thành công!' : 'Upload thành công!')
+                if (!blindMode) loadFiles(currentPath)
+            }
         } catch (err: any) {
             console.error(err)
             
             // Handle FTP 451 Append/Restart not permitted
             if (!splitMode && (err.message?.includes('451') || err.message?.includes('Append'))) {
-                if (confirm(`NAS của bạn chặn nối file (Lỗi 451). \nBạn có muốn tự động chia nhỏ file này thành nhiều phần (.part001, .part002...) để tiếp tục upload không?`)) {
+                // Determine if we should prompt or automate?
+                // For batch upload, confirming every file is annoying.
+                // But for safety, let's keep it. Or maybe auto-split for batch?
+                // Let's assume manual confirmation for now.
+                if (confirm(`NAS của bạn chặn nối file (Lỗi 451) với file ${file.name}. \nBạn có muốn tự động chia nhỏ file này?`)) {
                     // Retry with split mode
-                    await startUpload(file, true);
+                    await startUpload(file, true, destPath);
                     return;
                 }
             }
 
-            alert('Lỗi upload file: ' + (err.message || 'Unknown error'))
+            // Only alert if executing single file or critical error
+            if (!uploadInfo) {
+                 alert('Lỗi upload file: ' + (err.message || 'Unknown error'))
+            } else {
+                 console.error('Batch upload error for ' + file.name + ': ' + err.message);
+                 // We continue batch? Yes, ideally.
+            }
+            throw err; // Re-throw to caller
         } finally {
-            if (!splitMode) { // Only reset if not retrying
+            if (!splitMode && !uploadInfo) { // Only reset if not retrying and not in batch
                  setUploading(false)
                  setProgress(0)
             }
         }
     }
 
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (!file) return
+    const handleUploadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || [])
+        if (files.length === 0) return
+
+        setUploading(true)
         
-        await startUpload(file, false);
-        e.target.value = ''
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                setUploadInfo({ current: i + 1, total: files.length, filename: file.name });
+                
+                // Determine path.
+                // If it looks like a directory upload (webkitRelativePath), use it.
+                // Otherwise use currentPath.
+                let destPath = currentPath;
+                if (file.webkitRelativePath) {
+                    const relativeDir = file.webkitRelativePath.substring(0, file.webkitRelativePath.lastIndexOf('/'));
+                     if (relativeDir) {
+                        destPath = `${currentPath}/${relativeDir}`.replace(/\/+/g, '/');
+                    }
+                }
+                
+                try {
+                    await startUpload(file, false, destPath);
+                } catch (e: any) {
+                    console.error('Failed to upload ' + file.name, e);
+                    // Continue to next file? Yes.
+                }
+            }
+            alert('Hoàn tất upload toàn bộ danh sách!');
+            if (!blindMode) loadFiles(currentPath)
+        } catch (e) {
+            alert('Có lỗi xảy ra trong quá trình upload')
+        } finally {
+            setUploading(false)
+            setUploadInfo(null)
+            setProgress(0)
+            e.target.value = ''
+        }
     }
 
     const handleDelete = async (item: FileInfo) => {
@@ -262,18 +310,40 @@ export default function ShareContent() {
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-bold cursor-pointer transition-all shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 hover:-translate-y-0.5">
+                        <label className={`flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-bold cursor-pointer transition-all shadow-lg shadow-blue-200 hover:shadow-xl hover:shadow-blue-300 hover:-translate-y-0.5 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
-                            {uploading ? `Đang tải ${progress}%` : 'Upload File'}
+                            {uploading ? (
+                                uploadInfo ? 
+                                `${uploadInfo.current}/${uploadInfo.total} (${progress}%)` 
+                                : `Đang tải ${progress}%`
+                            ) : 'Upload File'}
                             <input
                                 type="file"
-                                onChange={handleUpload}
+                                onChange={handleUploadFiles}
                                 disabled={uploading}
                                 className="hidden"
+                                multiple
                             />
                         </label>
+
+                        <label className={`flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-sm font-bold cursor-pointer transition-all shadow-lg shadow-emerald-200 hover:shadow-xl hover:shadow-emerald-300 hover:-translate-y-0.5 ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 11v6m0-6l-3 3m3-3l3 3" />
+                            </svg>
+                            Upload Folder
+                            <input
+                                type="file"
+                                onChange={handleUploadFiles}
+                                disabled={uploading}
+                                className="hidden"
+                                multiple
+                                {...({ webkitdirectory: "", directory: "" } as any)}
+                            />
+                        </label>
+
                         <button
                             onClick={() => loadFiles(currentPath)}
                             disabled={loading}

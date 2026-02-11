@@ -153,9 +153,16 @@ export async function uploadFile(
     return runSerialized(async (client) => {
         const { Readable } = require('stream');
         const stream = Readable.from(localBuffer);
+
+        // Ensure parent directory exists (critical for folder uploads)
+        const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
+        if (parentDir !== '/' && parentDir !== '') {
+             // Use ensureDir to recursively create directories
+             await client.ensureDir(parentDir);
+        }
+
         await withTimeout(client.uploadFrom(stream, remotePath), 60000);
 
-        const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
         invalidateCache(parentDir);
     });
 }
