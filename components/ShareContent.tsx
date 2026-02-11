@@ -98,7 +98,7 @@ export default function ShareContent() {
         }
     }
 
-    const startUpload = async (file: File, splitMode: boolean = false, destPath: string = currentPath) => {
+    const startUpload = async (file: File, splitMode: boolean = false, destPath: string = currentPath, isBatch: boolean = false) => {
         setUploading(true)
         setProgress(0)
         
@@ -146,8 +146,8 @@ export default function ShareContent() {
                 setProgress(percent);
             }
 
-            // If part of batch (uploadInfo set), don't alert or reload yet
-            if (!uploadInfo) {
+            // If part of batch (isBatch true), don't alert or reload yet
+            if (!isBatch) {
                 alert(splitMode ? 'Upload (chia nhỏ) thành công!' : 'Upload thành công!')
                 if (!blindMode) loadFiles(currentPath)
             }
@@ -162,21 +162,24 @@ export default function ShareContent() {
                 // Let's assume manual confirmation for now.
                 if (confirm(`NAS của bạn chặn nối file (Lỗi 451) với file ${file.name}. \nBạn có muốn tự động chia nhỏ file này?`)) {
                     // Retry with split mode
-                    await startUpload(file, true, destPath);
+                    await startUpload(file, true, destPath, isBatch);
                     return;
                 }
             }
 
             // Only alert if executing single file or critical error
-            if (!uploadInfo) {
+            if (!isBatch) {
                  alert('Lỗi upload file: ' + (err.message || 'Unknown error'))
             } else {
                  console.error('Batch upload error for ' + file.name + ': ' + err.message);
-                 // We continue batch? Yes, ideally.
+                 if (!confirm(`Lỗi upload file ${file.name}. Bạn có muốn tiếp tục các file còn lại không?`)) {
+                     throw new Error('BATCH_STOPPED'); // Stop batch if user says No
+                 }
             }
-            throw err; // Re-throw to caller
+            // Pass error up (if we continue, we still want to log/track failure of this file)
+            throw err; 
         } finally {
-            if (!splitMode && !uploadInfo) { // Only reset if not retrying and not in batch
+            if (!splitMode && !isBatch) { // Only reset if not retrying and not in batch
                  setUploading(false)
                  setProgress(0)
             }
@@ -206,16 +209,22 @@ export default function ShareContent() {
                 }
                 
                 try {
-                    await startUpload(file, false, destPath);
+                    await startUpload(file, false, destPath, true);
                 } catch (e: any) {
+                    if (e.message === 'BATCH_STOPPED') throw e;
                     console.error('Failed to upload ' + file.name, e);
                     // Continue to next file? Yes.
                 }
             }
             alert('Hoàn tất upload toàn bộ danh sách!');
             if (!blindMode) loadFiles(currentPath)
-        } catch (e) {
-            alert('Có lỗi xảy ra trong quá trình upload')
+        } catch (e: any) {
+            if (e.message !== 'BATCH_STOPPED') {
+                alert('Có lỗi xảy ra trong quá trình upload')
+            } else {
+                alert('Đã dừng upload theo yêu cầu.')
+                if (!blindMode) loadFiles(currentPath)
+            }
         } finally {
             setUploading(false)
             setUploadInfo(null)
