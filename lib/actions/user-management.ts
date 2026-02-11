@@ -1,7 +1,9 @@
 'use server'
 
 import { supabaseUntyped as supabase } from '@/lib/supabase'
-import { UserRole, UserStatus, UserProfile, ADMIN_EMAILS } from '@/lib/rbac/roles'
+import { UserRole, UserStatus, UserProfile } from '@/lib/rbac/roles'
+import { ADMIN_EMAILS } from '@/lib/rbac/roles'
+import { deleteAuthUserAction } from '@/app/actions/auth-actions'
 
 // Get user profile by user_id
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
@@ -248,37 +250,33 @@ export async function reactivateUser(userId: string) {
 // Delete user (admin only - soft delete by setting status)
 export async function deleteUser(userId: string) {
   try {
-    const { supabaseAdmin } = await import('@/lib/supabase-admin')
-
     console.log('[deleteUser] Starting delete for userId:', userId)
 
-    // 1. Delete from user_profiles (removes app data)
-    const { error: profileError } = await supabase
+    // 1. Delete App Data (Profile)
+    // @ts-ignore
+    const { error } = await supabase
       .from('user_profiles')
       .delete()
       .eq('user_id', userId)
+
+    if (error) {
+      console.error('Error deleting user profile:', error)
+      return { success: false, error: 'Failed to delete user data' }
+    }
+
+    // 2. Delete Auth Account (via Server Action)
+    const authRes = await deleteAuthUserAction(userId)
     
-    if (profileError) {
-      console.error('[deleteUser] Error deleting profile:', profileError)
-      return { success: false, error: profileError.message }
+    if (!authRes.success) {
+       console.warn('[deleteUser] Profile deleted but Auth User failed:', authRes.error)
+       // Still return success because profile (main app view) is gone
+       return { success: true, warning: 'User data deleted but login account removal failed (check server keys)' }
     }
 
-    // 2. Delete from Supabase Auth (removes login ability)
-    // This requires Service Role Key via supabaseAdmin
-    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(
-      userId
-    )
-
-    if (authError) {
-      console.error('[deleteUser] Error deleting auth user:', authError)
-      // Profile deleted but auth failed - still partial success
-      return { success: true, warning: 'Profile deleted but Auth user removal failed' }
-    }
-
-    console.log('[deleteUser] Successfully deleted user and auth account')
+    console.log('[deleteUser] Completely deleted user (Profile + Auth)')
     return { success: true }
   } catch (error) {
-    console.error('Error deleting user:', error)
+    console.error('Error in deleteUser:', error)
     return { success: false, error: 'Failed to delete user' }
   }
 }
