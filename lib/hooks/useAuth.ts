@@ -13,49 +13,73 @@ export function useAuth() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Cache key for user profile
+  const PROFILE_CACHE_KEY = 'waterflow_user_profile_v1'
+
   // Fetch user profile from user_profiles table
   const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
     try {
-      console.log(`[useAuth] Fetching profile for user: ${userId} (Attempt ${retryCount + 1})`)
+      // 1. Try to load from Cache first (Instant UI)
+      if (retryCount === 0 && typeof window !== 'undefined') {
+        const cached = localStorage.getItem(PROFILE_CACHE_KEY)
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached)
+            if (parsed.user_id === userId) {
+              console.log('[useAuth] Loaded profile from CACHE (Instant UI)')
+              // Update state immediately with cached data
+              setUserProfile(parsed)
+              setLoading(false) // Stop loading spinner immediately
+            }
+          } catch (e) {
+            console.warn('[useAuth] Invalid cache, clearing')
+            localStorage.removeItem(PROFILE_CACHE_KEY)
+          }
+        }
+      }
+
+      console.log(`[useAuth] Fetching profile from SERVER for user: ${userId} (Attempt ${retryCount + 1})`)
       
-      // Create a timeout promise (5 seconds)
+      // 2. Fetch from Server (Background Update)
+      // Increase timeout to 15s for slower production networks
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Request timed out')), 5000)
+        setTimeout(() => reject(new Error('Request timed out')), 15000)
       )
 
-      // Perform the fetch query with simplified selection
       const fetchPromise = supabase
         .from('user_profiles')
-        .select('user_id, role, status, email, full_name') // Select strict fields only
+        .select('user_id, role, status, email, full_name')
         .eq('user_id', userId)
         .maybeSingle()
 
-      // Race against timeout
       const result: any = await Promise.race([fetchPromise, timeoutPromise])
       const { data, error } = result
 
       if (error) {
         console.error('[useAuth] Error fetching user profile:', error)
-        // Retry logic for connection issues
         if (retryCount < 2) {
-          console.log(`[useAuth] Retrying fetch... (${retryCount + 1}/2)`)
-          await new Promise(r => setTimeout(r, 1000)) // Wait 1s
+          await new Promise(r => setTimeout(r, 1000))
           return fetchUserProfile(userId, retryCount + 1)
         }
         return null
       }
 
       if (!data) {
-        console.warn('[useAuth] User profile not found for:', userId)
+        console.warn('[useAuth] User profile not found on server')
         return null
       }
 
-      console.log('[useAuth] Profile fetched successfully:', data)
+      console.log('[useAuth] Server profile fetched successfully')
+      
+      // 3. Save to Cache for next time
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data))
+      }
+      
       return data as UserProfile
     } catch (error) {
       console.error('[useAuth] Exception in fetchUserProfile:', error)
       if (retryCount < 2) {
-          console.log(`[useAuth] Retrying fetch after exception... (${retryCount + 1}/2)`)
           await new Promise(r => setTimeout(r, 1000))
           return fetchUserProfile(userId, retryCount + 1)
       }
@@ -69,13 +93,14 @@ export function useAuth() {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
-      console.log('[useAuth] Initial session check:', session?.user?.id)
       
       if (session?.user) {
         setUser(session.user)
-        // Only fetch if we don't have a profile yet or it's a different user
         const profile = await fetchUserProfile(session.user.id)
         if (mounted && profile) setUserProfile(profile)
+      } else {
+         // Clear cache on logout
+         if (typeof window !== 'undefined') localStorage.removeItem(PROFILE_CACHE_KEY)
       }
       setLoading(false)
     })
@@ -85,37 +110,26 @@ export function useAuth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-      console.log('[useAuth] Auth event:', event, 'User:', session?.user?.id)
 
-      // Ignore token refreshes to prevent redundant fetching
-      if (event === 'TOKEN_REFRESHED') {
-        return;
-      }
+      if (event === 'TOKEN_REFRESHED') return;
 
       if (event === 'SIGNED_OUT') {
         setUser(null)
         setUserProfile(null)
         setLoading(false)
+        if (typeof window !== 'undefined') localStorage.removeItem(PROFILE_CACHE_KEY)
         return;
       }
       
-      // Update logic
       setUser(session?.user ?? null)
       
       if (session?.user) {
-        // Optimistic check: if we already have the correct profile, verify if we really need to fetch
-        // But for safety, we usually trigger a fetch. To avoid flicker, we set loading true only if we don't have a profile.
-        if (!userProfile) setLoading(true)
-
+        // Optimistic loading logic handled inside fetchUserProfile (via cache)
         const profile = await fetchUserProfile(session.user.id)
         
         if (mounted) {
           if (profile) {
              setUserProfile(profile)
-          } else {
-             // If fetch failed but we have a session, DO NOT wipe existing profile if it belongs to same user
-             // This prevents flickering on intermittent errors
-             console.warn('[useAuth] Fetch failed, keeping existing state if valid')
           }
         }
       } else {
