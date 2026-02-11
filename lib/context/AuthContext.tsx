@@ -29,16 +29,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ... fetchUserProfile ...
 
   const signOut = async () => {
-    try {
-        await supabase.auth.signOut()
-        // Force state cleanup immediately
-        setUser(null)
-        setUserProfile(null)
-        setLoading(false)
-        if (typeof window !== 'undefined') localStorage.removeItem(PROFILE_CACHE_KEY)
-    } catch (error) {
-        console.error('Logout error:', error)
-    }
+    // 1. Optimistic Logout: Clear local state IMMEDIATELY
+    setUser(null)
+    setUserProfile(null)
+    setLoading(false)
+    if (typeof window !== 'undefined') localStorage.removeItem(PROFILE_CACHE_KEY)
+
+    // 2. Call Supabase API in background (Fire-and-forget)
+    // We don't await this because we want immediate UI transition
+    supabase.auth.signOut().catch(err => console.error('Logout API error:', err))
   }
 
 
