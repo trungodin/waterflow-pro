@@ -19,6 +19,7 @@ export default function ShareContent() {
     const [currentPath, setCurrentPath] = useState('/G')
     const [loading, setLoading] = useState(false)
     const [uploading, setUploading] = useState(false)
+    const [progress, setProgress] = useState(0)
     const [error, setError] = useState('')
 
     useEffect(() => {
@@ -90,27 +91,49 @@ export default function ShareContent() {
         if (!file) return
 
         setUploading(true)
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('path', currentPath)
-
+        setProgress(0)
+        
+        // Chunk size: 3MB (safe for Vercel 4.5MB limit)
+        const CHUNK_SIZE = 3 * 1024 * 1024; 
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        
         try {
-            const res = await fetch('/api/ftp/upload', {
-                method: 'POST',
-                body: formData
-            })
-            const data = await res.json()
+            let offset = 0;
+            let isAppend = false; // First chunk overwrites, subsequent chunks append
 
-            if (data.success) {
-                alert('Upload thành công!')
-                loadFiles(currentPath)
-            } else {
-                alert(data.error || 'Lỗi upload')
+            for (let i = 0; i < totalChunks; i++) {
+                const chunk = file.slice(offset, offset + CHUNK_SIZE);
+                const formData = new FormData();
+                formData.append('file', chunk, file.name); // Keep original name
+                formData.append('path', currentPath);
+                formData.append('isAppend', String(isAppend));
+
+                const res = await fetch('/api/ftp/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await res.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Lỗi từ server');
+                }
+
+                offset += CHUNK_SIZE;
+                isAppend = true;
+                
+                // Update progress
+                const percent = Math.min(100, Math.round(((i + 1) / totalChunks) * 100));
+                setProgress(percent);
             }
-        } catch (err) {
-            alert('Lỗi upload file')
+
+            alert('Upload thành công!')
+            loadFiles(currentPath)
+        } catch (err: any) {
+            console.error(err)
+            alert('Lỗi upload file: ' + (err.message || 'Unknown error'))
         } finally {
             setUploading(false)
+            setProgress(0)
             e.target.value = ''
         }
     }
@@ -205,7 +228,7 @@ export default function ShareContent() {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                             </svg>
-                            {uploading ? 'Đang tải...' : 'Upload File'}
+                            {uploading ? `Đang tải ${progress}%` : 'Upload File'}
                             <input
                                 type="file"
                                 onChange={handleUpload}

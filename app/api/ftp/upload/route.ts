@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { uploadFile } from '@/lib/ftp';
+import { uploadFile, appendFile } from '@/lib/ftp';
 
 export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData();
         const file = formData.get('file') as File;
         const path = formData.get('path') as string;
+        const isAppend = formData.get('isAppend') === 'true';
 
         if (!file || !path) {
             return NextResponse.json(
@@ -17,11 +18,15 @@ export async function POST(request: NextRequest) {
         const buffer = Buffer.from(await file.arrayBuffer());
         const remotePath = `${path}/${file.name}`.replace('//', '/');
 
-        await uploadFile(buffer, remotePath);
+        if (isAppend) {
+            await appendFile(buffer, remotePath);
+        } else {
+            await uploadFile(buffer, remotePath);
+        }
 
         return NextResponse.json({
             success: true,
-            message: 'Upload thành công',
+            message: isAppend ? 'Append successful' : 'Upload successful',
             path: remotePath
         });
     } catch (error: any) {

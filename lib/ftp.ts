@@ -160,6 +160,22 @@ export async function uploadFile(
     });
 }
 
+export async function appendFile(
+    localBuffer: Buffer,
+    remotePath: string
+): Promise<void> {
+    return runSerialized(async (client) => {
+        const { Readable } = require('stream');
+        const stream = Readable.from(localBuffer);
+        // Use appendFrom to append data to existing file
+        await withTimeout(client.appendFrom(stream, remotePath), 60000);
+
+        // No need to invalidate cache if checking size immediately, but good practice
+        const parentDir = remotePath.substring(0, remotePath.lastIndexOf('/')) || '/';
+        invalidateCache(parentDir);
+    });
+}
+
 export async function deleteFile(remotePath: string): Promise<void> {
     return runSerialized(async (client) => {
         await client.remove(remotePath);
