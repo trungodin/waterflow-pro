@@ -153,7 +153,7 @@ export default function LoginPage() {
             {/* Sign Up Link */}
             <p className="mt-6 text-center text-sm text-gray-600">
               Chưa có tài khoản?{' '}
-              <a href="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+              <a href="/auth/signup" className="text-blue-600 hover:text-blue-700 font-medium">
                 Đăng ký ngay
               </a>
             </p>

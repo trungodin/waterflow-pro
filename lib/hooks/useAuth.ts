@@ -6,40 +6,80 @@
 import { useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { supabase } from '../supabase'
+import { UserProfile } from '../rbac/roles'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Fetch user profile from user_profiles table
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+
+      if (error) {
+        console.error('Error fetching user profile:', error)
+        return null
+      }
+
+      return data as UserProfile
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error)
+      return null
+    }
+  }
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null)
+      
+      if (session?.user) {
+        const profile = await fetchUserProfile(session.user.id)
+        setUserProfile(profile)
+      } else {
+        setUserProfile(null)
+      }
+      
       setLoading(false)
     })
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null)
+      
+      if (session?.user) {
+        const profile = await fetchUserProfile(session.user.id)
+        setUserProfile(profile)
+      } else {
+        setUserProfile(null)
+      }
+      
       setLoading(false)
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  return { user, loading }
+  return { user, userProfile, loading }
 }
 
 // Sign up
-export async function signUp(email: string, password: string, fullName?: string) {
+export async function signUp(email: string, password: string, fullName?: string, metadata?: any) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         full_name: fullName,
+        ...metadata, // Include additional metadata (requested_role, phone, department)
       },
     },
   })

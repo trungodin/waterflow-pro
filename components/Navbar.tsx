@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Be_Vietnam_Pro } from 'next/font/google'
 import { useAuth, signOut } from '@/lib/hooks/useAuth'
+import { usePermissions } from '@/lib/rbac/hooks/usePermissions'
+import { getRoleInfo } from '@/lib/rbac/roles'
 
 const brandFont = Be_Vietnam_Pro({
   subsets: ['vietnamese'],
@@ -15,8 +17,10 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const { user, loading } = useAuth()
+  const { user, userProfile, loading } = useAuth()
+  const permissions = usePermissions()
   const [profileOpen, setProfileOpen] = useState(false)
+  const [adminDropdownOpen, setAdminDropdownOpen] = useState(false)
 
   const handleSignOut = async () => {
     try {
@@ -27,42 +31,97 @@ export default function Navbar() {
     }
   }
 
-  const ALLOWED_EMAILS = ['trungodin@gmail.com', 'trung100982@gmail.com']
   const rawNavItems = [
     {
-      name: 'Dashboard', path: '/dashboard', icon: (
+      name: 'Dashboard', 
+      path: '/dashboard', 
+      permission: 'dashboard',
+      icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
       )
     },
     {
-      name: 'Tra cứu KH', path: '/customers/search', icon: (
+      name: 'Tra cứu KH', 
+      path: '/customers/search', 
+      permission: 'customer',
+      icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
       )
     },
     {
-      name: 'Đọc Số', path: '/readings', icon: (
+      name: 'Đọc Số', 
+      path: '/readings', 
+      permission: 'ghi',
+      icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
       )
     },
     {
-      name: 'Thu Tiền', path: '/payments', icon: (
+      name: 'Thu Tiền', 
+      path: '/payments', 
+      permission: 'payments',
+      icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
       )
     },
+  ]
+
+  // Admin dropdown items
+  const adminMenuItems = [
     {
-      name: 'Cập nhật DL', path: '/admin/sync', icon: (
+      name: 'Cập nhật DL',
+      path: '/admin/sync',
+      permission: 'sync',
+      icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
       )
     },
-
+    {
+      name: 'Quản lý Users',
+      path: '/admin/users',
+      permission: 'users',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+      )
+    },
+    {
+      name: 'NAS',
+      path: '/admin/nas',
+      permission: 'sync', // Use sync permission for now (admin only)
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
+      )
+    },
   ]
 
-  const navItems = rawNavItems.filter(item => {
-    if (item.path === '/admin/sync') {
-      return user?.email && ALLOWED_EMAILS.includes(user.email)
-    }
-    return true
+  // Filter nav items based on permissions
+  // Show empty array during loading to prevent flash of all items
+  const navItems = permissions.loading || !userProfile 
+    ? [] // Empty during loading - prevents flash
+    : rawNavItems.filter(item => {
+        const canAccess = permissions.canAccessTab(item.permission as any)
+        console.log(`[Navbar] Tab: ${item.name}, Permission: ${item.permission}, Can Access: ${canAccess}, Role: ${userProfile?.role}`)
+        return canAccess
+      })
+
+  // Filter admin menu items
+  const filteredAdminItems = permissions.loading || !userProfile
+    ? [] // Empty during loading - prevents flash
+    : adminMenuItems.filter(item => permissions.canAccessTab(item.permission as any))
+
+  // Check if user has any admin permissions
+  const hasAdminAccess = filteredAdminItems.length > 0
+
+  // Debug log
+  console.log('[Navbar] User Profile:', userProfile)
+  console.log('[Navbar] Permissions:', { 
+    loading: permissions.loading, 
+    role: permissions.role, 
+    isActive: permissions.isActive,
+    allowedTabs: permissions.allowedTabs 
   })
+  console.log('[Navbar] Nav Items Count:', navItems.length)
+  console.log('[Navbar] Admin Items Count:', filteredAdminItems.length)
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-sm transition-all duration-300">
@@ -101,6 +160,51 @@ export default function Navbar() {
                   </Link>
                 )
               })}
+              
+              {/* Admin Dropdown */}
+              {hasAdminAccess && (
+                <div className="relative">
+                  <button
+                    onClick={() => setAdminDropdownOpen(!adminDropdownOpen)}
+                    className={`
+                      flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300
+                      ${pathname.startsWith('/admin')
+                        ? 'bg-white text-blue-600 shadow-md shadow-blue-100 scale-105'
+                        : 'text-slate-500 hover:text-blue-600 hover:bg-white hover:shadow-lg hover:shadow-blue-100/50 hover:scale-105 hover:-translate-y-1'
+                      }
+                    `}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    Admin
+                    <svg className={`w-4 h-4 transition-transform ${adminDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  
+                  {adminDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50">
+                      {filteredAdminItems.map((item) => {
+                        const isActive = pathname === item.path
+                        return (
+                          <Link
+                            key={item.path}
+                            href={item.path}
+                            onClick={() => setAdminDropdownOpen(false)}
+                            className={`
+                              flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all
+                              ${isActive
+                                ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
+                                : 'text-slate-700 hover:bg-slate-50 hover:text-blue-600'
+                              }
+                            `}
+                          >
+                            {item.icon}
+                            {item.name}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Login/Profile Action */}
@@ -120,10 +224,12 @@ export default function Navbar() {
                       <span className="text-xs font-bold text-slate-700 max-w-[140px] truncate">
                         {(() => {
                         console.log('User Metadata:', user.user_metadata) 
-                        return user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.display_name || user.email?.split('@')[0]
+                        return userProfile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.display_name || user.email?.split('@')[0]
                       })()}
                       </span>
-                      <span className="text-[10px] text-slate-400 font-bold">Thành viên</span>
+                      <span className="text-[10px] text-slate-400 font-bold">
+                        {userProfile ? getRoleInfo(userProfile.role).label : 'Thành viên'}
+                      </span>
                     </div>
                     <svg className={`w-4 h-4 text-slate-400 transition-transform ${profileOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                   </button>

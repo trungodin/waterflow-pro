@@ -14,7 +14,6 @@ import { getOnOffData, getDriveImageLink } from '@/lib/googlesheets'
 import LatenessAnalysisMain from '@/components/lateness-analysis/LatenessAnalysisMain'
 import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
 import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
-import ShareContent from '@/components/ShareContent'
 import { getDmnCache, setDmnCache } from '@/lib/dmn-cache'
 
 import Modal from '@/components/ui/Modal'
@@ -458,10 +457,8 @@ export default function PaymentsPage() {
                   { id: 'bao_cao_tuan', label: 'Báo cáo tuần' },
                   { id: 'phan_tich_hd_no', label: 'Phân tích Hóa đơn nợ' },
                   { id: 'phan_tich_thanh_toan', label: 'Phân tích Thanh toán' },
-                  { id: 'thong_ke_dmn', label: 'Thống kê Đóng Mở Nước' },
-                  { id: 'share', label: '📂 NAS' }
-                ].filter(tab => tab.id !== 'share' || (user?.email && ALLOWED_EMAILS.includes(user.email)))
-                 .map(tab => (
+                  { id: 'thong_ke_dmn', label: 'Thống kê Đóng Mở Nước' }
+                ].map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setSubTabDMN(tab.id)}
@@ -489,8 +486,6 @@ export default function PaymentsPage() {
                 <DebtAnalysisMain />
               ) : subTabDMN === 'phan_tich_thanh_toan' ? (
                 <LatenessAnalysisMain />
-              ) : subTabDMN === 'share' ? (
-                <ShareContent />
               ) : (
                 <div className="p-12 text-center text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
                   <p className="text-xl">Chức năng <b>{subTabDMN}</b> đang được phát triển.</p>
