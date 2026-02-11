@@ -18,3 +18,9 @@ export const supabase = createBrowserClient<Database>(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder'
 )
+
+// Untyped client for operations with incomplete type definitions
+export const supabaseUntyped = createBrowserClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder'
+)
