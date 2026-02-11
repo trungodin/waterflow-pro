@@ -19,14 +19,17 @@ export default function ShareContent() {
     const [currentPath, setCurrentPath] = useState('/G')
     const [loading, setLoading] = useState(false)
     const [uploading, setUploading] = useState(false)
+    const [blindMode, setBlindMode] = useState(false)
     const [progress, setProgress] = useState(0)
     const [error, setError] = useState('')
 
     useEffect(() => {
         if (!authLoading && user?.email && ALLOWED_EMAILS.includes(user.email)) {
-            loadFiles(currentPath)
+            if (!blindMode) {
+                loadFiles(currentPath)
+            }
         }
-    }, [currentPath, user, authLoading])
+    }, [currentPath, user, authLoading, blindMode])
 
     const loadFiles = async (path: string) => {
         setLoading(true)
@@ -52,14 +55,22 @@ export default function ShareContent() {
             // Check if this is a large image directory that would timeout
             const largeImageDirs = ['database_Images', 'ON_OFF_Images'];
             if (largeImageDirs.includes(item.name)) {
-                setError(`⚠️ Thư mục "${item.name}" chứa quá nhiều file (hàng ngàn ảnh). Không thể hiển thị danh sách. Các ảnh sẽ tự động load khi xem thông tin khách hàng.`);
-                return;
+                if (confirm(`⚠️ Thư mục "${item.name}" chứa quá nhiều file (hàng ngàn ảnh).\n\nBạn có muốn vào "Chế độ Upload" (không tải danh sách file) để tránh bị treo không?`)) {
+                    setBlindMode(true);
+                    setCurrentPath(item.path);
+                    setFiles([]);
+                    return;
+                } else {
+                     return; // Cancel navigation if they don't want blind mode
+                }
             }
+            setBlindMode(false);
             setCurrentPath(item.path);
         }
     }
 
     const handleGoBack = () => {
+        setBlindMode(false);
         const parts = currentPath.split('/').filter(Boolean)
         if (parts.length > 1) {
             parts.pop()
@@ -135,7 +146,7 @@ export default function ShareContent() {
             }
 
             alert(splitMode ? 'Upload (chia nhỏ) thành công!' : 'Upload thành công!')
-            loadFiles(currentPath)
+            if (!blindMode) loadFiles(currentPath)
         } catch (err: any) {
             console.error(err)
             
@@ -287,6 +298,22 @@ export default function ShareContent() {
                 </div>
             )}
 
+            {/* Blind Mode Message */}
+            {blindMode && (
+                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 text-yellow-800 px-5 py-4 rounded-2xl mb-6 flex items-center gap-3 shadow-lg shadow-yellow-100">
+                    <svg className="w-6 h-6 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p className="font-bold text-lg">Đang ở chế độ UPLOAD (Không hiện danh sách file)</p>
+                        <p className="text-sm text-yellow-700 mt-1">
+                            Thư mục này chứa quá nhiều file nên danh sách đã được ẩn đi để tránh làm treo trình duyệt. 
+                            Bạn vẫn có thể upload file bình thường.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* File List */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
                 {loading ? (
@@ -298,6 +325,16 @@ export default function ShareContent() {
                         </div>
                         <p className="text-gray-700 font-bold text-lg mb-2">Đang kết nối tới NAS...</p>
                         <p className="text-gray-500 text-sm">Vui lòng đợi, kết nối qua internet có thể mất vài giây</p>
+                    </div>
+                ) : blindMode ? (
+                     <div className="p-16 text-center opacity-75">
+                        <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 rounded-2xl mb-4">
+                            <svg className="w-10 h-10 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </div>
+                        <p className="text-gray-600 font-bold text-lg">Danh sách file đã bị ẩn</p>
+                        <p className="text-gray-500">Để xem file, vui lòng truy cập qua File Explorer trên máy tính.</p>
                     </div>
                 ) : files.length === 0 ? (
                     <div className="p-16 text-center">
