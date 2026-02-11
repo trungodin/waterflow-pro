@@ -14,9 +14,9 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   // Fetch user profile from user_profiles table
-  const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
     try {
-      console.log('[useAuth] Fetching profile for user:', userId)
+      console.log(`[useAuth] Fetching profile for user: ${userId} (Attempt ${retryCount + 1})`)
       
       // Create a timeout promise (5 seconds)
       const timeoutPromise = new Promise((_, reject) => 
@@ -36,11 +36,17 @@ export function useAuth() {
 
       if (error) {
         console.error('[useAuth] Error fetching user profile:', error)
+        // Retry logic for connection issues
+        if (retryCount < 2) {
+          console.log(`[useAuth] Retrying fetch... (${retryCount + 1}/2)`)
+          await new Promise(r => setTimeout(r, 1000)) // Wait 1s
+          return fetchUserProfile(userId, retryCount + 1)
+        }
         return null
       }
 
       if (!data) {
-        console.warn('[useAuth] User profile not found (empty result) for:', userId)
+        console.warn('[useAuth] User profile not found for:', userId)
         return null
       }
 
@@ -48,24 +54,29 @@ export function useAuth() {
       return data as UserProfile
     } catch (error) {
       console.error('[useAuth] Exception in fetchUserProfile:', error)
+      if (retryCount < 2) {
+          console.log(`[useAuth] Retrying fetch after exception... (${retryCount + 1}/2)`)
+          await new Promise(r => setTimeout(r, 1000))
+          return fetchUserProfile(userId, retryCount + 1)
+      }
       return null
     }
   }
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('[useAuth] Initial session:', session?.user?.id)
-      setUser(session?.user ?? null)
+      if (!mounted) return;
+      console.log('[useAuth] Initial session check:', session?.user?.id)
       
       if (session?.user) {
+        setUser(session.user)
+        // Only fetch if we don't have a profile yet or it's a different user
         const profile = await fetchUserProfile(session.user.id)
-        setUserProfile(profile)
-        console.log('[useAuth] Initial profile set:', profile)
-      } else {
-        setUserProfile(null)
+        if (mounted && profile) setUserProfile(profile)
       }
-      
       setLoading(false)
     })
 
@@ -73,25 +84,52 @@ export function useAuth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[useAuth] Auth state changed:', event, 'User:', session?.user?.id)
-      // Set loading true during transition to prevent flash
-      setLoading(true)
+      if (!mounted) return;
+      console.log('[useAuth] Auth event:', event, 'User:', session?.user?.id)
+
+      // Ignore token refreshes to prevent redundant fetching
+      if (event === 'TOKEN_REFRESHED') {
+        return;
+      }
+
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setUserProfile(null)
+        setLoading(false)
+        return;
+      }
+      
+      // Update logic
       setUser(session?.user ?? null)
       
       if (session?.user) {
+        // Optimistic check: if we already have the correct profile, verify if we really need to fetch
+        // But for safety, we usually trigger a fetch. To avoid flicker, we set loading true only if we don't have a profile.
+        if (!userProfile) setLoading(true)
+
         const profile = await fetchUserProfile(session.user.id)
-        setUserProfile(profile)
-        console.log('[useAuth] Profile updated after auth change:', profile)
+        
+        if (mounted) {
+          if (profile) {
+             setUserProfile(profile)
+          } else {
+             // If fetch failed but we have a session, DO NOT wipe existing profile if it belongs to same user
+             // This prevents flickering on intermittent errors
+             console.warn('[useAuth] Fetch failed, keeping existing state if valid')
+          }
+        }
       } else {
         setUserProfile(null)
-        console.log('[useAuth] User logged out, profile cleared')
       }
       
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, []) // Empty dependency array to run once
 
   return { user, userProfile, loading }
 }

@@ -248,20 +248,37 @@ export async function reactivateUser(userId: string) {
 // Delete user (admin only - soft delete by setting status)
 export async function deleteUser(userId: string) {
   try {
-    // Actually delete from database
-    const { error } = await supabase
+    const { supabaseAdmin } = await import('@/lib/supabase-admin')
+
+    console.log('[deleteUser] Starting delete for userId:', userId)
+
+    // 1. Delete from user_profiles (removes app data)
+    const { error: profileError } = await supabase
       .from('user_profiles')
       .delete()
       .eq('user_id', userId)
-
-    if (error) {
-      console.error('Error deleting user:', error)
-      return { success: false, error: 'Failed to delete user' }
+    
+    if (profileError) {
+      console.error('[deleteUser] Error deleting profile:', profileError)
+      return { success: false, error: profileError.message }
     }
 
+    // 2. Delete from Supabase Auth (removes login ability)
+    // This requires Service Role Key via supabaseAdmin
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(
+      userId
+    )
+
+    if (authError) {
+      console.error('[deleteUser] Error deleting auth user:', authError)
+      // Profile deleted but auth failed - still partial success
+      return { success: true, warning: 'Profile deleted but Auth user removal failed' }
+    }
+
+    console.log('[deleteUser] Successfully deleted user and auth account')
     return { success: true }
   } catch (error) {
-    console.error('Error in deleteUser:', error)
+    console.error('Error deleting user:', error)
     return { success: false, error: 'Failed to delete user' }
   }
 }
