@@ -36,14 +36,15 @@ export default function Navbar() {
     return () => clearTimeout(timer)
   }, [permissions.loading])
 
-  const handleSignOut = async () => {
-    try {
-      await signOut()
-      // Force hard reload to login page to clear all temporary states/cache
+  const handleSignOut = () => {
+    // Fire and forget logout
+    signOut().catch(console.error)
+    
+    // Force hard reload to login page immediately regardless of signOut status
+    // Using setTimeout ensures this runs in the next tick
+    setTimeout(() => {
       window.location.href = '/login'
-    } catch (error) {
-      console.error(error)
-    }
+    }, 100)
   }
 
   const rawNavItems = [
