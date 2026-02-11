@@ -86,20 +86,22 @@ export async function createUserProfile(data: {
 export async function getAllUsers() {
   try {
     const supabase = await createClient()
+    
+    // Select specific columns to prevent potential data issues/hanging
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('*')
+      .select('id, user_id, email, full_name, role, status, created_at, updated_at, phone, department, notes, approved_at, approved_by, last_sign_in_at')
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching users:', error)
-      return { success: false, error: 'Failed to fetch users' }
+      console.error('[getAllUsers] Error fetching users:', error)
+      return { success: false, error: 'Failed to fetch users: ' + error.message }
     }
 
     return { success: true, users: data as UserProfile[] }
   } catch (error) {
-    console.error('Error in getAllUsers:', error)
-    return { success: false, error: 'Failed to fetch users' }
+    console.error('[getAllUsers] Unexpected error:', error)
+    return { success: false, error: 'Internal server error while fetching users' }
   }
 }
 
