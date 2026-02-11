@@ -1,6 +1,6 @@
 'use server'
 
-import { supabaseUntyped as supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase-server'
 import { UserRole, UserStatus, UserProfile } from '@/lib/rbac/roles'
 import { ADMIN_EMAILS } from '@/lib/rbac/roles'
 import { deleteAuthUserAction } from '@/app/actions/auth-actions'
@@ -8,6 +8,7 @@ import { deleteAuthUserAction } from '@/app/actions/auth-actions'
 // Get user profile by user_id
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
   try {
+    const supabase = await createClient()
     const { data, error } = await supabase
       .from('user_profiles')
       .select('*')
@@ -36,6 +37,7 @@ export async function createUserProfile(data: {
   department?: string
 }) {
   try {
+    const supabase = await createClient()
     // Check if user is admin by email
     const isAdmin = ADMIN_EMAILS.includes(data.email.toLowerCase())
     
@@ -83,6 +85,7 @@ export async function createUserProfile(data: {
 // Get all users (admin only)
 export async function getAllUsers() {
   try {
+    const supabase = await createClient()
     const { data, error } = await supabase
       .from('user_profiles')
       .select('*')
@@ -103,6 +106,7 @@ export async function getAllUsers() {
 // Get pending users (admin only)
 export async function getPendingUsers() {
   try {
+    const supabase = await createClient()
     const { data, error } = await supabase
       .from('user_profiles')
       .select('*')
@@ -124,6 +128,7 @@ export async function getPendingUsers() {
 // Approve user (admin only)
 export async function approveUser(userId: string, role: UserRole, adminId: string) {
   try {
+    const supabase = await createClient()
     // @ts-ignore - Supabase type generation issue
     const { data, error } = await supabase
       .from('user_profiles')
@@ -152,6 +157,7 @@ export async function approveUser(userId: string, role: UserRole, adminId: strin
 // Reject user (admin only)
 export async function rejectUser(userId: string, notes?: string) {
   try {
+    const supabase = await createClient()
     // @ts-ignore - Supabase type generation issue
     const { data, error } = await supabase
       .from('user_profiles')
@@ -178,6 +184,7 @@ export async function rejectUser(userId: string, notes?: string) {
 // Update user role (admin only)
 export async function updateUserRole(userId: string, newRole: UserRole) {
   try {
+    const supabase = await createClient()
     // @ts-ignore - Supabase type generation issue
     const { data, error } = await supabase
       .from('user_profiles')
@@ -201,6 +208,7 @@ export async function updateUserRole(userId: string, newRole: UserRole) {
 // Suspend user (admin only)
 export async function suspendUser(userId: string, notes?: string) {
   try {
+    const supabase = await createClient()
     // @ts-ignore - Supabase type generation issue
     const { data, error } = await supabase
       .from('user_profiles')
@@ -227,6 +235,7 @@ export async function suspendUser(userId: string, notes?: string) {
 // Reactivate user (admin only)
 export async function reactivateUser(userId: string) {
   try {
+    const supabase = await createClient()
     // @ts-ignore - Supabase type generation issue
     const { data, error } = await supabase
       .from('user_profiles')
@@ -250,6 +259,7 @@ export async function reactivateUser(userId: string) {
 // Delete user (admin only - soft delete by setting status)
 export async function deleteUser(userId: string) {
   try {
+    const supabase = await createClient()
     console.log('[deleteUser] Starting delete for userId:', userId)
 
     // 1. Delete App Data (Profile)
@@ -290,6 +300,7 @@ export async function logActivity(data: {
   ip_address?: string
 }) {
   try {
+    const supabase = await createClient()
     // @ts-ignore - Supabase type generation issue
     await supabase
       .from('user_activity_logs')
