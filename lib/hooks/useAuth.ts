@@ -14,8 +14,10 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   // Fetch user profile from user_profiles table
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
+      console.log('[useAuth] Fetching profile for user:', userId)
+      
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -23,13 +25,19 @@ export function useAuth() {
         .single()
 
       if (error) {
-        console.error('Error fetching user profile:', error)
+        console.error('[useAuth] Error fetching user profile:', error)
+        // If profile doesn't exist, return null but don't throw
+        if (error.code === 'PGRST116') {
+          console.warn('[useAuth] User profile not found for:', userId)
+          return null
+        }
         return null
       }
 
+      console.log('[useAuth] Profile fetched successfully:', data)
       return data as UserProfile
     } catch (error) {
-      console.error('Error in fetchUserProfile:', error)
+      console.error('[useAuth] Exception in fetchUserProfile:', error)
       return null
     }
   }
@@ -37,11 +45,13 @@ export function useAuth() {
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log('[useAuth] Initial session:', session?.user?.id)
       setUser(session?.user ?? null)
       
       if (session?.user) {
         const profile = await fetchUserProfile(session.user.id)
         setUserProfile(profile)
+        console.log('[useAuth] Initial profile set:', profile)
       } else {
         setUserProfile(null)
       }
@@ -52,7 +62,8 @@ export function useAuth() {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[useAuth] Auth state changed:', event, 'User:', session?.user?.id)
       // Set loading true during transition to prevent flash
       setLoading(true)
       setUser(session?.user ?? null)
@@ -60,8 +71,10 @@ export function useAuth() {
       if (session?.user) {
         const profile = await fetchUserProfile(session.user.id)
         setUserProfile(profile)
+        console.log('[useAuth] Profile updated after auth change:', profile)
       } else {
         setUserProfile(null)
+        console.log('[useAuth] User logged out, profile cleared')
       }
       
       setLoading(false)
