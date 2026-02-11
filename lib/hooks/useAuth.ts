@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import { supabase } from '../supabase'
+import { supabaseUntyped as supabase } from '../supabase'
 import { UserProfile } from '../rbac/roles'
 
 export function useAuth() {
