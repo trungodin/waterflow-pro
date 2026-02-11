@@ -87,10 +87,10 @@ export async function getAllUsers() {
   try {
     const supabase = await createClient()
     
-    // Select specific columns to prevent potential data issues/hanging
+    // Revert to SELECT * to avoid 500 error if specific columns are missing in DB
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('id, user_id, email, full_name, role, status, created_at, updated_at, phone, department, notes, approved_at, approved_by, last_sign_in_at')
+      .select('*')
       .order('created_at', { ascending: false })
 
     if (error) {
