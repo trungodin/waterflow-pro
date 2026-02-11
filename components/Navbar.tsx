@@ -21,6 +21,19 @@ export default function Navbar() {
   const permissions = usePermissions()
   const [profileOpen, setProfileOpen] = useState(false)
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false)
+  const [forceShowMenu, setForceShowMenu] = useState(false)
+
+  // Fallback: Force show menu after 2 seconds if still loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (permissions.loading) {
+        console.warn('[Navbar] Loading timeout - forcing menu display')
+        setForceShowMenu(true)
+      }
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [permissions.loading])
 
   const handleSignOut = async () => {
     try {
@@ -95,11 +108,15 @@ export default function Navbar() {
   ]
 
   // Filter nav items based on permissions
-  // Only hide during initial loading to prevent flash
-  const navItems = permissions.loading 
+  // Priority: loading (unless forced) > no user > has permissions
+  const isLoading = permissions.loading && !forceShowMenu
+  
+  const navItems = isLoading
     ? [] // Empty only during loading - prevents flash
-    : !userProfile
-    ? rawNavItems.filter(item => item.permission === 'dashboard') // Show only dashboard if no profile
+    : !user // No authenticated user
+    ? rawNavItems.filter(item => item.permission === 'dashboard') // Show only dashboard if not logged in
+    : !userProfile // User logged in but no profile yet
+    ? rawNavItems.filter(item => item.permission === 'dashboard') // Show only dashboard while profile loads
     : rawNavItems.filter(item => {
         const canAccess = permissions.canAccessTab(item.permission as any)
         console.log(`[Navbar] Tab: ${item.name}, Permission: ${item.permission}, Can Access: ${canAccess}, Role: ${userProfile?.role}`)
@@ -107,8 +124,8 @@ export default function Navbar() {
       })
 
   // Filter admin menu items
-  const filteredAdminItems = permissions.loading || !userProfile
-    ? [] // Empty during loading or no profile
+  const filteredAdminItems = !user || !userProfile
+    ? [] // Empty if no user or no profile
     : adminMenuItems.filter(item => permissions.canAccessTab(item.permission as any))
 
   // Check if user has any admin permissions
