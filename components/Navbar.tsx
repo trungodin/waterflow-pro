@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Be_Vietnam_Pro } from 'next/font/google'
-import { useAuth, signOut } from '@/lib/hooks/useAuth'
+import { useAuth } from '@/lib/hooks/useAuth'
 import { usePermissions } from '@/lib/rbac/hooks/usePermissions'
 import { getRoleInfo } from '@/lib/rbac/roles'
 
@@ -17,7 +17,8 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const { user, userProfile, loading } = useAuth()
+  // FIX: Get signOut from context
+  const { user, userProfile, loading, signOut } = useAuth()
   const permissions = usePermissions()
   const [profileOpen, setProfileOpen] = useState(false)
   const [adminDropdownOpen, setAdminDropdownOpen] = useState(false)
@@ -108,7 +109,6 @@ export default function Navbar() {
   ]
 
   // Filter nav items based on permissions
-  // Priority: loading (unless forced) > no user > has permissions
   const isLoading = permissions.loading && !forceShowMenu
   
   const navItems = isLoading
@@ -130,17 +130,6 @@ export default function Navbar() {
 
   // Check if user has any admin permissions
   const hasAdminAccess = filteredAdminItems.length > 0
-
-  // Debug log
-  console.log('[Navbar] User Profile:', userProfile)
-  console.log('[Navbar] Permissions:', { 
-    loading: permissions.loading, 
-    role: permissions.role, 
-    isActive: permissions.isActive,
-    allowedTabs: permissions.allowedTabs 
-  })
-  console.log('[Navbar] Nav Items Count:', navItems.length)
-  console.log('[Navbar] Admin Items Count:', filteredAdminItems.length)
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/60 shadow-sm transition-all duration-300">

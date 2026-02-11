@@ -9,12 +9,14 @@ interface AuthContextType {
   user: User | null
   userProfile: UserProfile | null
   loading: boolean
+  signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   userProfile: null,
-  loading: true
+  loading: true,
+  signOut: async () => {}
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -23,6 +25,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const PROFILE_CACHE_KEY = 'waterflow_user_profile_v1'
+
+  // ... fetchUserProfile ...
+
+  const signOut = async () => {
+    try {
+        await supabase.auth.signOut()
+        // Force state cleanup immediately
+        setUser(null)
+        setUserProfile(null)
+        setLoading(false)
+        if (typeof window !== 'undefined') localStorage.removeItem(PROFILE_CACHE_KEY)
+    } catch (error) {
+        console.error('Logout error:', error)
+    }
+  }
+
 
   const fetchUserProfile = async (userId: string, retryCount = 0): Promise<UserProfile | null> => {
     try {
@@ -144,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   )
