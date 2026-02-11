@@ -38,19 +38,33 @@ export default function Navbar() {
   }, [permissions.loading])
 
   const handleSignOut = () => {
-    // 1. Manually clear local storage to prevent stale data on reload
+    // 1. Clear Local Storage
     if (typeof window !== 'undefined') {
         localStorage.removeItem('waterflow_user_profile_v1')
+        // Force clear any supabase auth token from local storage if any (though SSR uses cookies)
+        localStorage.removeItem('sb-' + process.env.NEXT_PUBLIC_SUPABASE_REF_ID + '-auth-token')
+    }
+
+    // 2. Aggressively Clear Cookies (Crucial for Middleware)
+    // This prevents the middleware from seeing an active session and redirecting back to dashboard
+    if (typeof document !== 'undefined') {
+      const cookies = document.cookie.split(";")
+      for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i]
+          const eqPos = cookie.indexOf("=")
+          const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
+          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
+      }
     }
     
-    // 2. Fire and forget logout via direct client (bypass context state update to avoid UI flash)
+    // 3. Fire and forget Supabase logout
     supabase.auth.signOut().catch(console.error)
     
-    // 3. Force hard reload to login page immediately
-    // Using setTimeout ensures this runs in the next tick
+    // 4. Force hard reload to login page
+    // Small delay to ensure cookie clearing takes effect in browser
     setTimeout(() => {
       window.location.href = '/login'
-    }, 50)
+    }, 100)
   }
 
   const rawNavItems = [
