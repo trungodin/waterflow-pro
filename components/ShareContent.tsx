@@ -102,8 +102,8 @@ export default function ShareContent() {
         setUploading(true)
         setProgress(0)
         
-        // Chunk size: 3MB (safe for Vercel 4.5MB limit)
-        const CHUNK_SIZE = 3 * 1024 * 1024; 
+        // Chunk size: 4MB (safe for Vercel 4.5MB limit)
+        const CHUNK_SIZE = 4 * 1024 * 1024; 
         const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
         
         try {
