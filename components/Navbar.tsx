@@ -344,6 +344,32 @@ export default function Navbar() {
               {item.name}
             </Link>
           ))}
+          
+          {/* Admin Items for Mobile */}
+          {hasAdminAccess && (
+            <>
+              <div className="px-4 py-2 mt-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-t border-slate-100 pt-4">
+                Quản trị viên
+              </div>
+              {filteredAdminItems.map((item) => (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`
+                      flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all
+                      ${pathname === item.path
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                    }
+                    `}
+                >
+                  {item.icon}
+                  {item.name}
+                </Link>
+              ))}
+            </>
+          )}
           <div className="pt-4 mt-2 border-t border-slate-100 p-4">
             {loading ? null : user ? (
               <div className="space-y-4">
