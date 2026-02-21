@@ -81,7 +81,8 @@ export async function getDatabaseSheetDataForMigration() {
       userSua: findIndex(['user_sua', 'user_sửa']),
       dauTG: findIndex(['dau_tg', 'đầu_tg']),
       dem: findIndex(['dem_', 'đêm']), 
-      kieuKhoa: findIndex(['kieu_khoa', 'kiểu_khóa'])
+      kieuKhoa: findIndex(['kieu_khoa', 'kiểu_khóa']),
+      stt: findIndex(['stt', 'số_thứ_tự', 'so_thu_tu'])
     }
 
     const data = rows.slice(1).map((row: any[]) => ({
@@ -118,7 +119,8 @@ export async function getDatabaseSheetDataForMigration() {
       UserSua: colIndices.userSua !== -1 ? row[colIndices.userSua] : '',
       DauTG: colIndices.dauTG !== -1 ? row[colIndices.dauTG] : '',
       Dem: colIndices.dem !== -1 ? row[colIndices.dem] : '',
-      KieuKhoa: colIndices.kieuKhoa !== -1 ? row[colIndices.kieuKhoa] : ''
+      KieuKhoa: colIndices.kieuKhoa !== -1 ? row[colIndices.kieuKhoa] : '',
+      STT: colIndices.stt !== -1 ? row[colIndices.stt] : ''
     }))
 
     return data

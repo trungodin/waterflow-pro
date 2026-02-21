@@ -10,7 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 export async function syncGoogleSheetsToSupabase() {
     try {
         console.log('🚀 Starting sync from Google Sheets to Supabase...')
-        
+
         const results = {
             success: true,
             customersProcessed: 0,
@@ -27,12 +27,12 @@ export async function syncGoogleSheetsToSupabase() {
                 .from('assigned_customers')
                 .delete()
                 .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all
-            
+
             const { error: deleteLockStatusError } = await supabase
                 .from('water_lock_status')
                 .delete()
                 .neq('id', '00000000-0000-0000-0000-000000000000') // Delete all
-            
+
             if (deleteCustomersError) {
                 console.error('⚠️  Error deleting customers:', deleteCustomersError)
                 results.errors.push(`Delete customers: ${deleteCustomersError.message}`)
@@ -51,13 +51,13 @@ export async function syncGoogleSheetsToSupabase() {
         console.log('📥 Fetching Database/Assigned Customers...')
         const customerData = await getDatabaseSheetDataForMigration()
         console.log(`✅ Found ${customerData.length} customers.`)
-        
+
         if (customerData.length > 0) {
             console.log('📤 Uploading to Supabase (assigned_customers)...')
             console.log('⚠️  Note: Syncing ALL records, including duplicates (danh_bo can repeat)')
-            
+
             const BATCH_SIZE = 100
-            
+
             for (let i = 0; i < customerData.length; i += BATCH_SIZE) {
                 const batch = customerData.slice(i, i + BATCH_SIZE)
                 const mapped = batch.map((d: any) => ({
@@ -93,7 +93,8 @@ export async function syncGoogleSheetsToSupabase() {
                     user_sua: d.UserSua,
                     dau_tg: d.DauTG,
                     dem: d.Dem,
-                    kieu_khoa: d.KieuKhoa
+                    kieu_khoa: d.KieuKhoa,
+                    stt: d.STT ? parseInt(String(d.STT).replace(/\\D/g, '')) || null : null
                 }))
 
                 // Upsert by ref_id (unique), not danh_bo (can have duplicates)
@@ -116,13 +117,13 @@ export async function syncGoogleSheetsToSupabase() {
         if (onOffData.length > 0) {
             console.log('📤 Uploading to Supabase (water_lock_status)...')
             console.log('⚠️  Note: Inserting ALL records (no deduplication, no upsert)')
-            
+
             const BATCH_SIZE = 100
             for (let i = 0; i < onOffData.length; i += BATCH_SIZE) {
                 const batch = onOffData.slice(i, i + BATCH_SIZE)
                 const mapped = batch.map((d: any, batchIndex: number) => {
                     const idTb = d.IdTB || `${d.DanhBa}_${Date.now()}_${i + batchIndex}`
-                    
+
                     return {
                         id_tb: idTb,
                         danh_bo: d.DanhBa,
@@ -171,11 +172,11 @@ export async function syncGoogleSheetsToSupabase() {
         }
 
         console.log('🎉 Sync Complete!')
-        
+
         if (results.errors.length > 0) {
             results.success = false
         }
-        
+
         return results
 
     } catch (error: any) {
