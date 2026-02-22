@@ -35,9 +35,9 @@ export async function uploadProposalAndSave(formData: FormData) {
         const now = new Date()
         const year = now.getFullYear()
         const month = String(now.getMonth() + 1).padStart(2, '0')
-        
-        // Structure: /waterflow-pro/proposals/2024/02/
-        const baseDir = `/waterflow-pro/proposals/${year}/${month}`
+
+        // Structure: /G/waterflow-pro/proposals/2024/02/
+        const baseDir = `/G/waterflow-pro/proposals/${year}/${month}`
         const fullPath = `${baseDir}/${fileName}`
 
         const arrayBuffer = await file.arrayBuffer()
@@ -49,7 +49,7 @@ export async function uploadProposalAndSave(formData: FormData) {
         // Let's try to upload. If it fails due to directory, create it.
         // But `basic-ftp` ensureDir is recursive usually.
         // Let's just call createDirectory on the parent.
-        
+
         try {
             await createDirectory(baseDir)
         } catch (e) {
@@ -61,12 +61,16 @@ export async function uploadProposalAndSave(formData: FormData) {
 
         // --- B. Update Supabase Database ---
         const supabase = getSupabaseAdmin()
+        const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`
+        const formattedTime = `${formattedDate} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
 
         const { error: dbError } = await supabase
             .from('water_lock_status')
-            .update({ 
-                file_de_nghi: fullPath,
-                updated_at: new Date().toISOString()
+            .update({
+                file_cpmn: fullPath,
+                ngay_cpmn: formattedDate,
+                tg_cpmn: formattedTime,
+                updated_at: now.toISOString()
             })
             .eq('id_tb', idTB)
 
@@ -75,7 +79,7 @@ export async function uploadProposalAndSave(formData: FormData) {
             throw new Error(`Database Update Failed: ${dbError.message}`)
         }
 
-        return { success: true, url: fullPath } // Frontend will use this path via proxy
+        return { success: true, url: fullPath, ngay_cpmn: formattedDate, tg_cpmn: formattedTime } // Frontend will use this path via proxy
 
     } catch (error: any) {
         console.error('[Action Error]', error)

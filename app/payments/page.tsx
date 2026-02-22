@@ -227,8 +227,8 @@ export default function PaymentsPage() {
           alert(`✅ Đã tạo và lưu file thành công!\nLink: ${uploadRes.url}`)
 
           const newUrl = uploadRes.url
-          setSelectedCustomer((prev: any) => ({ ...prev, FileDeNghi: newUrl }))
-          setDmnData(prev => prev.map(item => item.IdTB === selectedCustomer.IdTB ? { ...item, FileDeNghi: newUrl } : item))
+          setSelectedCustomer((prev: any) => ({ ...prev, FileCpmn: newUrl, NgayCpmn: uploadRes.ngay_cpmn, TgCpmn: uploadRes.tg_cpmn }))
+          setDmnData(prev => prev.map(item => item.IdTB === selectedCustomer.IdTB ? { ...item, FileCpmn: newUrl, NgayCpmn: uploadRes.ngay_cpmn, TgCpmn: uploadRes.tg_cpmn } : item))
         } else {
           alert(`⚠️ Đã tải file về máy, nhưng lỗi lưu hệ thống: ${uploadRes.error}`)
         }
@@ -609,9 +609,9 @@ export default function PaymentsPage() {
               </div>
               <div className="flex items-center gap-3">
                 {/* Action Buttons */}
-                {selectedCustomer.FileDeNghi && (
+                {selectedCustomer.FileCpmn && (
                   <a
-                    href={selectedCustomer.FileDeNghi}
+                    href={selectedCustomer.FileCpmn.startsWith('http') ? selectedCustomer.FileCpmn : `/api/nas/image?path=${encodeURIComponent(selectedCustomer.FileCpmn)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors shadow-sm"
@@ -623,7 +623,7 @@ export default function PaymentsPage() {
                   </a>
                 )}
 
-                {!selectedCustomer.FileDeNghi && (
+                {!selectedCustomer.FileCpmn && (
                   <button
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-sm hover:shadow active:scale-95 transition-all text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleCreateProposal}
