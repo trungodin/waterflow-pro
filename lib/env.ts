@@ -44,6 +44,19 @@ export const googleSheetsConfig = {
   )
 }
 
+// Google Drive Configuration (for PDFs/Images)
+export const googleDriveConfig = {
+  proposalsFolderId: process.env.GOOGLE_DRIVE_PROPOSALS_FOLDER_ID || '',
+  isConfigured: Boolean(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY) // minimum required for Drive API
+}
+
+// Admin Configuration
+export const adminConfig = {
+  emails: (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
+    .split(',').map(e => e.trim().toLowerCase()).filter(Boolean),
+  isConfigured: Boolean(process.env.NEXT_PUBLIC_ADMIN_EMAILS)
+}
+
 /**
  * Check if app is running in demo mode
  */
@@ -65,6 +78,10 @@ export function validateEnv() {
 
   if (!googleSheetsConfig.isConfigured) {
     warnings.push('⚠️  Google Sheets not configured - customer status will use defaults')
+  }
+
+  if (!adminConfig.isConfigured) {
+    warnings.push('⚠️  NEXT_PUBLIC_ADMIN_EMAILS not configured - no users will have admin access')
   }
 
   if (warnings.length > 0) {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { usePermissions } from '@/lib/rbac/hooks/usePermissions'
 import RevenueAnalysis from '@/components/RevenueAnalysis'
 import AgentCollectionAnalysis from '@/components/AgentCollectionAnalysis'
 import CollectionSummaryAnalysis from '@/components/CollectionSummaryAnalysis'
@@ -15,6 +16,7 @@ import LatenessAnalysisMain from '@/components/lateness-analysis/LatenessAnalysi
 import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
 import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
 import { getDmnCache, setDmnCache } from '@/lib/dmn-cache'
+import AddCustomerModal from '@/components/AddCustomerModal'
 
 import Modal from '@/components/ui/Modal'
 import { formatCurrency } from '@/lib/utils'
@@ -42,60 +44,38 @@ const getDirectImageUrl = (url: string) => {
   return cleanUrl
 }
 
+// Build URL /api/drive/image ngay tại client (không cần async server action)
+function buildDriveProxyUrl(rawPath: string): string {
+  if (!rawPath) return ''
+  // Nếu đã là full URL (http/https) → trả thẳng
+  if (rawPath.startsWith('http')) return rawPath
+  // Strip AppSheet prefix
+  let clean = rawPath
+    .replace('database::database_Images/', 'database_Images/')
+    .replace('database::ON_OFF_Images/', 'ON_OFF_Images/')
+    .replace(/^database::/, '')
+  // Thêm folder mặc định nếu chưa có
+  if (!clean.includes('/')) clean = `database_Images/${clean}`
+  return `/api/drive/image?path=${encodeURIComponent(clean)}`
+}
+
 // Helper to render Detail Row: Label - Value
 const DetailRow = ({ label, value, isImage = false, isLink = false, className = '' }: { label: string, value: any, isImage?: boolean, isLink?: boolean, className?: string }) => {
-  const [resolvedUrl, setResolvedUrl] = useState<string>('')
-  const [isLoading, setIsLoading] = useState(false)
+  const [imgError, setImgError] = useState(false)
 
-  useEffect(() => {
-    if (!isImage || !value) {
-      setResolvedUrl('')
-      return
-    }
+  // Reset lỗi khi value thay đổi
+  useEffect(() => { setImgError(false) }, [value])
 
-    const resolve = async () => {
-      // If it looks like a relative path from AppSheet/Drive folder
-      // Support both "database_Images/..." and "database::database_Images/..."
-      if (value.includes('database_Images/') || !value.match(/^https?:\/\//)) {
-        setIsLoading(true)
-        try {
-          const link = await getDriveImageLink(value)
-          if (link) {
-            setResolvedUrl(link)
-          } else {
-            setResolvedUrl(value)
-          }
-        } catch (e) {
-          setResolvedUrl(value)
-        } finally {
-          setIsLoading(false)
-        }
-      } else {
-        setResolvedUrl(getDirectImageUrl(value))
-      }
-    }
-    resolve()
-  }, [value, isImage])
-
-  // Hide if empty value
+  // Ẩn nếu giá trị rỗng
   if (!value || value === '-' || value === '0' || value === 'Chưa xác định') return null
-  if (isImage && !resolvedUrl && !isLoading && !value) return null
 
-  // Use resolved URL for display, but fallback to raw value for link if needed
-  const displayUrl = resolvedUrl
-  const openUrl = resolvedUrl || (value && !value.match(/^https?:\/\//i) ? `https://${value}` : value)
+  const displayUrl = isImage ? buildDriveProxyUrl(value) : ''
+  const openUrl = displayUrl || value
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const target = e.target as HTMLImageElement;
-    target.style.display = 'none';
-    if (target.parentElement && !target.parentElement.querySelector('.fallback-btn')) {
-      const btn = document.createElement('a');
-      btn.href = openUrl;
-      btn.target = '_blank';
-      btn.className = 'fallback-btn inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm mt-1 px-3 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200';
-      btn.innerHTML = '<span>⚠️ Không thể tải (Click mở link) ↗</span>';
-      target.parentElement.appendChild(btn);
-    }
+    const target = e.target as HTMLImageElement
+    target.style.display = 'none'
+    setImgError(true)
   }
 
   return (
@@ -103,21 +83,27 @@ const DetailRow = ({ label, value, isImage = false, isLink = false, className = 
       <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 opacity-75">{label}</span>
       {isImage ? (
         <div className="mt-2 group relative inline-block min-h-[40px]">
-          {isLoading ? (
-            <div className="flex items-center gap-2 text-blue-500 bg-blue-50 px-3 py-2 rounded-lg text-xs font-medium">
-              <span className="animate-spin">⏳</span> Đang tải ảnh...
-            </div>
+          {displayUrl && !imgError ? (
+            <img
+              src={displayUrl}
+              alt={label}
+              referrerPolicy="no-referrer"
+              loading="lazy"
+              className="rounded-lg border border-gray-200 shadow-sm max-h-72 w-full object-contain bg-gray-50 hover:bg-white transition-colors cursor-zoom-in"
+              onClick={() => window.open(openUrl, '_blank')}
+              onError={handleImageError}
+            />
+          ) : imgError ? (
+            <a
+              href={openUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm mt-1 px-3 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200"
+            >
+              <span>↗ Mở ảnh trên Drive</span>
+            </a>
           ) : (
-            displayUrl ? (
-              <img
-                src={displayUrl}
-                alt={label}
-                referrerPolicy="no-referrer"
-                className="rounded-lg border border-gray-200 shadow-sm max-h-72 w-full object-contain bg-gray-50 hover:bg-white transition-colors cursor-zoom-in"
-                onClick={() => window.open(openUrl, '_blank')}
-                onError={handleImageError}
-              />
-            ) : <span className="text-sm text-gray-400 italic">Không có ảnh hiển thị</span>
+            <span className="text-sm text-gray-400 italic">Không có ảnh</span>
           )}
         </div>
       ) : (
@@ -141,11 +127,24 @@ const MetricCard = ({ label, value, highlight = false, subValue }: { label: stri
 
 export default function PaymentsPage() {
   const { user } = useAuth()
-  const ALLOWED_EMAILS = ['trungodin@gmail.com', 'trung100982@gmail.com']
+  const { canViewDoanhThu, canViewDongMoNuoc, canViewTraCuuDMN } = usePermissions()
 
-  const [activeTab, setActiveTab] = useState('doanh_thu')
+  // Evaluate default active tab based on permissions
+  const defaultTab = canViewDoanhThu ? 'doanh_thu' 
+    : canViewDongMoNuoc ? 'dong_mo_nuoc' 
+    : canViewTraCuuDMN ? 'tra_cuu_dmn' 
+    : ''
+
+  const [activeTab, setActiveTab] = useState(defaultTab)
   const [subTabDoanhThu, setSubTabDoanhThu] = useState('phan_tich_doanh_thu')
   const [subTabDMN, setSubTabDMN] = useState('loc_du_lieu_ton')
+  
+  // Refresh activeTab if permissions finish loading later
+  useEffect(() => {
+    if (!activeTab && defaultTab) {
+      setActiveTab(defaultTab)
+    }
+  }, [defaultTab, activeTab])
 
   // Data states for Tra Cuu DMN
   const [dmnData, setDmnData] = useState<any[]>([])
@@ -160,6 +159,7 @@ export default function PaymentsPage() {
   // State for Modal
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
   const handleRowClick = (item: any) => {
     setSelectedCustomer(item)
@@ -375,42 +375,54 @@ export default function PaymentsPage() {
 
         {/* Main Tab Navigation */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2 mb-6 inline-flex flex-wrap gap-2">
-          <button
-            onClick={() => setActiveTab('doanh_thu')}
-            className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'doanh_thu'
-              ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
-              } active:shadow-none active:translate-y-[1px]`}
-          >
-            💰 Doanh Thu
-          </button>
-          <button
-            onClick={() => setActiveTab('dong_mo_nuoc')}
-            className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'dong_mo_nuoc'
-              ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
-              } active:shadow-none active:translate-y-[1px]`}
-          >
-            💧 Đóng Mở Nước
-          </button>
-          <button
-            onClick={() => setActiveTab('tra_cuu_dmn')}
-            className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'tra_cuu_dmn'
-              ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
-              } active:shadow-none active:translate-y-[1px]`}
-          >
-            🔍 Tra Cứu ĐMN
-          </button>
+          {canViewDoanhThu && (
+            <button
+              onClick={() => setActiveTab('doanh_thu')}
+              className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'doanh_thu'
+                ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                } active:shadow-none active:translate-y-[1px]`}
+            >
+              💰 Doanh Thu
+            </button>
+          )}
+          {canViewDongMoNuoc && (
+            <button
+              onClick={() => setActiveTab('dong_mo_nuoc')}
+              className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'dong_mo_nuoc'
+                ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                } active:shadow-none active:translate-y-[1px]`}
+            >
+              💧 Đóng Mở Nước
+            </button>
+          )}
+          {canViewTraCuuDMN && (
+            <button
+              onClick={() => setActiveTab('tra_cuu_dmn')}
+              className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'tra_cuu_dmn'
+                ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                } active:shadow-none active:translate-y-[1px]`}
+            >
+              🔍 Tra Cứu ĐMN
+            </button>
+          )}
         </div>
 
         {/* Content Area */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[500px] p-6">
+          {!activeTab && (
+            <div className="p-12 text-center text-gray-500">
+              <p className="text-xl font-medium">Bạn không có quyền truy cập các chức năng trong trang này.</p>
+              <p className="mt-2 text-sm">Vui lòng liên hệ Admin để xin cấp quyền.</p>
+            </div>
+          )}
 
 
 
           {/* TAB: DOANH THU */}
-          {activeTab === 'doanh_thu' && (
+          {activeTab === 'doanh_thu' && canViewDoanhThu && (
             <div>
               <div className="flex gap-4 border-b border-gray-200 pb-4 mb-6 overflow-x-auto">
                 {[
@@ -449,7 +461,7 @@ export default function PaymentsPage() {
           )}
 
           {/* TAB: ĐÓNG MỞ NƯỚC */}
-          {activeTab === 'dong_mo_nuoc' && (
+          {activeTab === 'dong_mo_nuoc' && canViewDongMoNuoc && (
             <div>
               <div className="flex gap-4 border-b border-gray-200 pb-4 mb-6 overflow-x-auto">
                 {[
@@ -495,7 +507,7 @@ export default function PaymentsPage() {
           )}
 
           {/* TAB: TRA CỨU ĐMN */}
-          {activeTab === 'tra_cuu_dmn' && (
+          {activeTab === 'tra_cuu_dmn' && canViewTraCuuDMN && (
             <div>
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div className="w-full md:w-2/3 flex gap-2">
@@ -550,6 +562,13 @@ export default function PaymentsPage() {
                         </button>
                       )}
                     </div>
+
+                    <button
+                      onClick={() => setIsAddModalOpen(true)}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 font-bold whitespace-nowrap flex items-center gap-2 shadow-[0_3px_0_rgb(21,128,61)] active:shadow-none active:translate-y-[3px] transition-all"
+                    >
+                      ➕ Thêm KH
+                    </button>
 
                     <button
                       onClick={() => fetchData(true)}
@@ -611,7 +630,7 @@ export default function PaymentsPage() {
                 {/* Action Buttons */}
                 {selectedCustomer.FileCpmn && (
                   <a
-                    href={selectedCustomer.FileCpmn.startsWith('http') ? selectedCustomer.FileCpmn : `/api/nas/image?path=${encodeURIComponent(selectedCustomer.FileCpmn)}`}
+                    href={selectedCustomer.FileCpmn.startsWith('http') ? selectedCustomer.FileCpmn : `/api/drive/image?path=${encodeURIComponent(selectedCustomer.FileCpmn)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors shadow-sm"
@@ -722,7 +741,13 @@ export default function PaymentsPage() {
         )
         }
       </Modal >
-
+        
+        {/* Add Customer Modal */}
+        <AddCustomerModal 
+          isOpen={isAddModalOpen} 
+          onClose={() => setIsAddModalOpen(false)} 
+          onAdded={() => fetchData(true)} 
+        />
     </div >
   )
 }

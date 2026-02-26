@@ -137,20 +137,20 @@ export async function getOnOffData() {
 
         if (!statusData || statusData.length === 0) return [];
 
-        // 2. Extract Unique DanhBos for fallback join
-        const uniqueDanhBos = Array.from(new Set(statusData.map((item: any) => item.danh_bo).filter(Boolean)));
+        // 2. Extract Unique IdTbs for join
+        const uniqueIdTbs = Array.from(new Set(statusData.map((item: any) => item.id_tb).filter(Boolean)));
 
-        // 3. Fetch Matching Customers (Fallback only)
+        // 3. Fetch Matching Customers
         let customerData: any[] = [];
         const BATCH_SIZE = 1000;
         
         try {
-             for (let i = 0; i < uniqueDanhBos.length; i += BATCH_SIZE) {
-                const batch = uniqueDanhBos.slice(i, i + BATCH_SIZE);
+             for (let i = 0; i < uniqueIdTbs.length; i += BATCH_SIZE) {
+                const batch = uniqueIdTbs.slice(i, i + BATCH_SIZE);
                 const { data, error } = await getSupabase()
                     .from('assigned_customers')
-                    .select('danh_bo, ten_kh, so_nha, duong, ky_nam, so_than, hop_bv') 
-                    .in('danh_bo', batch);
+                    .select('ref_id, danh_bo, ten_kh, so_nha, duong, ky_nam, so_than, hop_bv') 
+                    .in('ref_id', batch);
                 
                 if (!error && data) {
                     customerData.push(...data);
@@ -160,14 +160,14 @@ export async function getOnOffData() {
             console.error('Error fetching customer join data:', e);
         }
 
-        // 4. Create Map
+        // 4. Create Map using ref_id
         const customerMap = new Map();
         customerData.forEach((c: any) => {
-            if (c.danh_bo) customerMap.set(c.danh_bo, c);
+            if (c.ref_id) customerMap.set(c.ref_id, c);
         });
 
         const result = statusData.map((item: any) => {
-            const customer = customerMap.get(item.danh_bo) || {};
+            const customer = customerMap.get(item.id_tb) || {};
             
             // PRIORITY: water_lock_status -> assigned_customers -> Empty
             const tenKF = item.ten_kh || customer.ten_kh || '';
@@ -241,38 +241,40 @@ export async function getOnOffData() {
 function normalizeImagePath(path: string, defaultFolder: string) {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    if (path.includes('/')) return path; // Already has folder probably
+    // Strip AppSheet prefix: "database::database_Images/..."
+    if (path.startsWith('database::')) {
+        path = path.replace('database::database_Images/', 'database_Images/')
+                   .replace('database::ON_OFF_Images/', 'ON_OFF_Images/')
+                   .replace(/^database::/, '');
+    }
+    if (path.includes('/')) return path; // Already has folder
     return `${defaultFolder}/${path}`;
 }
 
-// --- 3. Image Link Resolver (NAS Proxy) ---
+// --- 3. Image Link Resolver (Google Drive Proxy) ---
+// Ảnh lưu trên Google Drive, truy cập qua /api/drive/image?path=...
+// Flutter lưu path dưới dạng: "database_Images/filename.jpg" hoặc "ON_OFF_Images/filename.jpg"
 
-export async function getNasImageLink(pathOrUrl: string) {
+export async function getDriveImageUrl(pathOrUrl: string): Promise<string> {
     if (!pathOrUrl) return '';
-    
-    // If it's already a full URL (e.g. Supabase Storage link or HTTP link), keep it
+
+    // Full URL (http/https) → trả thẳng
     if (pathOrUrl.startsWith('http')) return pathOrUrl;
 
-    // If it's a NAS path (e.g. "database_Images/IMG_001.jpg" or just "IMG_001.jpg")
-    // We construct a proxy URL
-    // Assume paths in DB are relative to "/waterflow-pro/" or just filenames in specific folders
-    
-    let fullPath = pathOrUrl;
-    
-    // Heuristic: If it doesn't have a folder, guess based on context? 
-    // Or maybe the data migration kept the full path like "database_Images/..."?
-    // Let's assume the migration imported whatever was in the cell.
-    // If it's just filename "abc.jpg", we might need to know which folder.
-    // But commonly in the Sheet it was "database_Images/..."
-    
-    // If it doesn't start with /G, prepend /waterflow-pro/ (where we migrated files)
-    // Actually user said: "Folder trên NAS : waterflow-pro, bên trong database_Images..."
-    // So root is /waterflow-pro/
-    
-    // If path is "database_Images/abc.jpg" -> "/G/waterflow-pro/database_Images/abc.jpg"
-    if (!fullPath.startsWith('/')) {
-        fullPath = `/G/waterflow-pro/${fullPath}`;
+    // Strip AppSheet prefix nếu còn sót
+    let cleanPath = pathOrUrl;
+    if (cleanPath.startsWith('database::')) {
+        cleanPath = cleanPath.replace('database::database_Images/', 'database_Images/')
+                             .replace('database::ON_OFF_Images/', 'ON_OFF_Images/')
+                             .replace(/^database::/, '');
     }
 
-    return `/api/nas/image?path=${encodeURIComponent(fullPath)}`;
+    // Nếu path không có folder prefix → giả sử database_Images
+    if (!cleanPath.includes('/')) {
+        cleanPath = `database_Images/${cleanPath}`;
+    }
+
+    // Build Google Drive proxy URL
+    return `/api/drive/image?path=${encodeURIComponent(cleanPath)}`;
 }
+

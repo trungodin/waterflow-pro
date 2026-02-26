@@ -428,6 +428,7 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
                   >
                     <option value="reader">📖 Đọc số - Nhân viên đọc số đồng hồ</option>
                     <option value="collector">💰 Thu tiền - Nhân viên thu tiền</option>
+                    <option value="dmn_staff">💧 Đóng mở nước - Nhân viên cắt mở nước</option>
                     <option value="manager">📊 Quản lý - Xem tất cả dữ liệu (trừ quản trị)</option>
                     <option value="admin">👑 Admin - Toàn quyền hệ thống</option>
                   </select>
@@ -467,6 +468,7 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
                     >
                       <option value="reader">📖 Đọc số</option>
                       <option value="collector">💰 Thu tiền</option>
+                      <option value="dmn_staff">💧 Đóng mở nước</option>
                       <option value="manager">📊 Quản lý</option>
                       <option value="admin">👑 Admin</option>
                     </select>

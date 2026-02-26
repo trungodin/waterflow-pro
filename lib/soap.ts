@@ -1,10 +1,20 @@
 import { XMLParser } from 'fast-xml-parser'
 import { logger } from './logger'
 
-const API_URL = process.env.SOAP_API_URL || 'http://14.161.13.194:8065/ws_Banggia.asmx'
-const API_USER = process.env.SOAP_API_USER || 'BENTHANH@194'
+const API_URL = process.env.SOAP_API_URL
+const API_USER = process.env.SOAP_API_USER
+
+if (!API_URL || !API_USER) {
+  logger.warn('⚠️ SOAP_API_URL hoặc SOAP_API_USER chưa được cấu hình trong .env.local')
+}
 
 export async function executeSqlQuery(functionName: string, sqlQuery: string) {
+  // Guard: Không thực thi nếu thiếu cấu hình SOAP
+  if (!API_URL || !API_USER) {
+    logger.error('executeSqlQuery: SOAP_API_URL hoặc SOAP_API_USER chưa được cấu hình.')
+    return []
+  }
+
   const soapBody = `<?xml version="1.0" encoding="utf-8"?>
     <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
       <s:Body>

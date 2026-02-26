@@ -1,7 +1,7 @@
 // Role-based Access Control (RBAC) System
 // Defines roles, permissions, and access rules
 
-export type UserRole = 'admin' | 'manager' | 'reader' | 'collector' | 'pending'
+export type UserRole = 'admin' | 'manager' | 'reader' | 'collector' | 'dmn_staff' | 'pending'
 export type UserStatus = 'active' | 'pending' | 'rejected' | 'suspended'
 
 export interface UserProfile {
@@ -21,11 +21,21 @@ export interface UserProfile {
   updated_at: string
 }
 
-// Admin emails (hardcoded for security)
-export const ADMIN_EMAILS = [
-  'trungodin@gmail.com',
-  'trung100982@gmail.com'
-]
+// Admin emails – đọc từ env variable ADMIN_EMAILS (phân cách bằng dấu phẩy)
+// Ví dụ: ADMIN_EMAILS=admin@gmail.com,manager@gmail.com
+function parseAdminEmails(): string[] {
+  const raw = process.env.NEXT_PUBLIC_ADMIN_EMAILS || ''
+  if (!raw) {
+    // Chỉ cảnh báo ở server-side để tránh lộ thông tin ra browser
+    if (typeof window === 'undefined') {
+      console.warn('[RBAC] ⚠️ NEXT_PUBLIC_ADMIN_EMAILS chưa được cấu hình trong .env.local')
+    }
+    return []
+  }
+  return raw.split(',').map(e => e.trim().toLowerCase()).filter(Boolean)
+}
+
+export const ADMIN_EMAILS = parseAdminEmails()
 
 // Role metadata
 export const ROLE_INFO = {
@@ -53,6 +63,12 @@ export const ROLE_INFO = {
     color: 'green',
     icon: '💰'
   },
+  dmn_staff: {
+    label: 'Đóng mở nước',
+    description: 'Nhân viên chuyên xử lý Đóng Mở Nước',
+    color: 'teal',
+    icon: '💧'
+  },
   pending: {
     label: 'Chờ duyệt',
     description: 'Tài khoản đang chờ phê duyệt',
@@ -77,15 +93,18 @@ export const ROLE_PERMISSIONS: Record<UserRole, TabPermission[]> = {
   manager: ['dashboard', 'ghi', 'payments', 'customer'],
   reader: ['dashboard', 'ghi', 'customer'],
   collector: ['dashboard', 'payments', 'customer'],
+  dmn_staff: ['dashboard', 'payments', 'customer'],
   pending: [] // No access until approved
 }
 
-// Action permissions (for fine-grained control)
 export type ActionPermission =
   | 'view_dashboard'
   | 'view_ghi'
   | 'edit_ghi'
   | 'view_payments'
+  | 'view_doanh_thu' // Sub-tab 1 của Thu Tiền
+  | 'view_dong_mo_nuoc' // Sub-tab 2 của Thu Tiền
+  | 'view_tra_cuu_dmn'  // Sub-tab 3 của Thu Tiền
   | 'edit_payments'
   | 'view_customer'
   | 'export_data'
@@ -98,7 +117,7 @@ export const ROLE_ACTIONS: Record<UserRole, ActionPermission[]> = {
   admin: [
     'view_dashboard',
     'view_ghi', 'edit_ghi',
-    'view_payments', 'edit_payments',
+    'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'edit_payments',
     'view_customer',
     'export_data',
     'sync_data',
@@ -109,7 +128,7 @@ export const ROLE_ACTIONS: Record<UserRole, ActionPermission[]> = {
   manager: [
     'view_dashboard',
     'view_ghi', 'edit_ghi',
-    'view_payments', 'edit_payments',
+    'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'edit_payments',
     'view_customer',
     'export_data'
   ],
@@ -120,7 +139,12 @@ export const ROLE_ACTIONS: Record<UserRole, ActionPermission[]> = {
   ],
   collector: [
     'view_dashboard',
-    'view_payments', 'edit_payments',
+    'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'edit_payments',
+    'view_customer'
+  ],
+  dmn_staff: [
+    'view_dashboard',
+    'view_payments', 'view_tra_cuu_dmn', 'edit_payments', // Only DMN specific tabs
     'view_customer'
   ],
   pending: []

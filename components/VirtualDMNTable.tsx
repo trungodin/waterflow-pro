@@ -227,15 +227,24 @@ export default function VirtualDMNTable({
     if (isKhoa) statusClass = "bg-red-50 text-red-700 border border-red-200 font-bold"
     if (isMo && !isKhoa) statusClass = "bg-green-50 text-green-700 border border-green-200 font-bold"
 
+    // Manual Add highlights (IdTB starts with MKD_)
+    const isManualAdd = row.IdTB && String(row.IdTB).startsWith('MKD_')
+
     // Zebra striping: bg-white for odd, bg-gray-50 for even (or vice versa based on index logic)
-    const rowBgClass = item.isEven ? 'bg-white' : 'bg-[#f4f7f9]'
+    let rowBgClass = item.isEven ? 'bg-white' : 'bg-[#f4f7f9]'
+    let rowHoverAndTextClass = 'hover:bg-yellow-50'
+
+    if (isManualAdd) {
+        rowBgClass = item.isEven ? 'bg-orange-50' : 'bg-orange-100/60'
+        rowHoverAndTextClass = 'hover:bg-orange-200 [&_.text-gray-900]:!text-orange-900 [&_.text-gray-800]:!text-orange-900 [&_.text-gray-700]:!text-orange-800 [&_.text-gray-500]:!text-orange-600'
+    }
 
     return (
       <div
         key={index}
         style={style}
         onClick={() => onRowClick && onRowClick(row)}
-        className={`border-b border-gray-300 hover:bg-yellow-50 transition-colors flex items-center ${rowBgClass} ${onRowClick ? 'cursor-pointer' : ''}`}
+        className={`border-b border-gray-300 transition-colors flex items-center ${rowBgClass} ${rowHoverAndTextClass} ${onRowClick ? 'cursor-pointer' : ''}`}
       >
         <div
           className="grid items-center h-full"
@@ -317,21 +326,21 @@ export default function VirtualDMNTable({
               // Image and File Links
               case 'hinhMo':
                 content = row.HinhMo ? (
-                  <a href={`/api/nas/image?path=${encodeURIComponent(row.HinhMo)}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                  <a href={`/api/drive/image?path=${encodeURIComponent(row.HinhMo)}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
                     Xem
                   </a>
                 ) : <span className="text-gray-400">-</span>;
                 break;
               case 'fileCpmn':
                 content = row.FileCpmn ? (
-                  <a href={`/api/nas/image?path=${encodeURIComponent(row.FileCpmn)}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                  <a href={`/api/drive/image?path=${encodeURIComponent(row.FileCpmn)}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
                     File
                   </a>
                 ) : <span className="text-gray-400">-</span>;
                 break;
               case 'hinhTb':
                 content = row.HinhTb ? (
-                  <a href={`/api/nas/image?path=${encodeURIComponent(row.HinhTb)}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
+                  <a href={`/api/drive/image?path=${encodeURIComponent(row.HinhTb)}`} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
                     Xem
                   </a>
                 ) : <span className="text-gray-400">-</span>;

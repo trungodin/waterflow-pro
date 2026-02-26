@@ -24,11 +24,16 @@
 .DS_Store
 *.pem
 
+# debug/temp scripts
+check_may_dot.js
+
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+debug_output*.json
+*_debug.json
 
 # env files (can opt-in for committing if needed)
 .env*

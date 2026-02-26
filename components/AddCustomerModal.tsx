@@ -1,260 +1,163 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import type { CustomerInsert } from '@/lib/database.types'
+import { fetchCustomerFromLegacy, insertWaterLockStatus } from '@/app/payments/customer-actions'
 
-interface AddCustomerModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: () => void
-}
+export default function AddCustomerModal({ isOpen, onClose, onAdded }: { isOpen: boolean, onClose: () => void, onAdded: () => void }) {
+    const [danhBo, setDanhBo] = useState('')
+    const [tenKH, setTenKH] = useState('')
+    const [soNha, setSoNha] = useState('')
+    const [duong, setDuong] = useState('')
+    const [isFetching, setIsFetching] = useState(false)
+    const [isSaving, setIsSaving] = useState(false)
+    const [error, setError] = useState('')
 
-export default function AddCustomerModal({ isOpen, onClose, onSuccess }: AddCustomerModalProps) {
-  const [formData, setFormData] = useState<CustomerInsert>({
-    customer_code: '',
-    full_name: '',
-    phone: '',
-    email: '',
-    address: '',
-    ward: '',
-    district: '',
-    city: 'TP. HCM',
-    meter_number: '',
-    status: 'active'
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+    if (!isOpen) return null;
 
-  if (!isOpen) return null
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    // Simple validation
-    if (!formData.customer_code || !formData.full_name) {
-       setError('Vui lòng điền Mã KH và Tên Khách hàng')
-       setLoading(false)
-       return
-    }
-
-    try {
-      const { error } = await supabase
-        .from('customers')
-        .insert([formData] as any)
-
-      if (error) {
-        if (error.code === '23505') { // Unique violation
-            throw new Error('Mã khách hàng đã tồn tại!')
+    const handleFetchInfo = async () => {
+        if (!danhBo) {
+            setError('Vui lòng nhập Danh bộ để tìm kiếm!');
+            return;
         }
-        throw error
-      }
 
-      onSuccess()
-      onClose()
-      // Reset form
-      setFormData({
-        customer_code: '',
-        full_name: '',
-        phone: '',
-        email: '',
-        address: '',
-        ward: '',
-        district: '',
-        city: 'TP. HCM',
-        meter_number: '',
-        status: 'active'
-      })
-    } catch (err: any) {
-      setError(err.message || 'Có lỗi xảy ra khi thêm khách hàng')
-    } finally {
-      setLoading(false)
+        setError('');
+        setIsFetching(true);
+        try {
+            const result = await fetchCustomerFromLegacy(danhBo);
+            if (result.success && result.data) {
+                setTenKH(result.data.ten_kh || '');
+                setSoNha(result.data.so_nha || '');
+                setDuong(result.data.duong || '');
+                setError('');
+            } else {
+                setError(result.error || 'Không tìm thấy khách hàng. Bạn có thể tự nhập tay!');
+            }
+        } catch (e: any) {
+            setError('Lỗi khi tải dữ liệu: ' + e.message);
+        } finally {
+            setIsFetching(false);
+        }
     }
-  }
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        
-        {/* Background overlay */}
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onClick={onClose}></div>
+    const handleSave = async () => {
+        if (!danhBo || !tenKH || !soNha || !duong) {
+            setError('Vui lòng điền đầy đủ các mục bắt buộc!');
+            return;
+        }
 
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        setError('');
+        setIsSaving(true);
+        try {
+            const result = await insertWaterLockStatus({
+                danh_bo: danhBo,
+                ten_kh: tenKH,
+                so_nha: soNha,
+                duong: duong
+            });
 
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <div className="sm:flex sm:items-start">
-              <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                <svg className="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-              </div>
-              <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                  Thêm Khách hàng mới
-                </h3>
-                
-                {error && (
-                  <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
-                    {error}
-                  </div>
-                )}
+            if (result.success) {
+                alert('Đã thêm khách hàng vào hệ thống ĐMN thành công!');
+                setDanhBo(''); setTenKH(''); setSoNha(''); setDuong(''); // Reset form
+                onAdded(); // Reload background
+                onClose(); // Close modal
+            } else {
+                setError('Lỗi khi lưu bảng: ' + result.error);
+            }
+        } catch (e: any) {
+            setError('Có lỗi ứng dụng: ' + e.message);
+        } finally {
+            setIsSaving(false);
+        }
+    }
 
-                <div className="mt-4 grid grid-cols-1 gap-y-4 gap-x-4 sm:grid-cols-6">
-                  {/* Mã KH */}
-                  <div className="sm:col-span-3">
-                    <label htmlFor="customer_code" className="block text-sm font-medium text-gray-700">Mã KH <span className="text-red-500">*</span></label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="customer_code"
-                        id="customer_code"
-                        required
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                        placeholder="VD: KH0001"
-                        value={formData.customer_code}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                   {/* Tên KH */}
-                   <div className="sm:col-span-3">
-                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">Họ và tên <span className="text-red-500">*</span></label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="full_name"
-                        id="full_name"
-                        required
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                        value={formData.full_name}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div className="sm:col-span-3">
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="phone"
-                        id="phone"
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                        value={formData.phone || ''}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Meter Number */}
-                  <div className="sm:col-span-3">
-                    <label htmlFor="meter_number" className="block text-sm font-medium text-gray-700">Số đồng hồ</label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="meter_number"
-                        id="meter_number"
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                        value={formData.meter_number || ''}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Address */}
-                  <div className="sm:col-span-6">
-                    <label htmlFor="address" className="block text-sm font-medium text-gray-700">Địa chỉ</label>
-                    <div className="mt-1">
-                      <input
-                        type="text"
-                        name="address"
-                        id="address"
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                        value={formData.address || ''}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Ward & District */}
-                  <div className="sm:col-span-3">
-                    <label htmlFor="ward" className="block text-sm font-medium text-gray-700">Phường/Xã</label>
-                    <div className="mt-1">
-                       <input
-                        type="text"
-                        name="ward"
-                        id="ward"
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                        value={formData.ward || ''}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="sm:col-span-3">
-                    <label htmlFor="district" className="block text-sm font-medium text-gray-700">Quận/Huyện</label>
-                    <div className="mt-1">
-                       <input
-                        type="text"
-                        name="district"
-                        id="district"
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                        value={formData.district || ''}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="sm:col-span-3">
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-700">Trạng thái</label>
-                    <div className="mt-1">
-                      <select
-                        id="status"
-                        name="status"
-                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                        value={formData.status}
-                        onChange={handleChange}
-                      >
-                        <option value="active">Hoạt động</option>
-                        <option value="suspended">Tạm ngưng</option>
-                        <option value="inactive">Ngừng hoạt động</option>
-                      </select>
-                    </div>
-                  </div>
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[60] backdrop-blur-sm">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100">
+                <div className="bg-blue-600 p-4 shrink-0 flex items-center justify-between text-white">
+                    <h3 className="font-bold text-lg">➕ THÊM KHÁCH HÀNG ĐMN</h3>
+                    <button onClick={onClose} className="hover:bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center transition-colors font-bold text-xl leading-none">
+                        ×
+                    </button>
                 </div>
-              </div>
+                
+                <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                    {error && (
+                        <div className="p-3 bg-red-50 text-red-700 text-sm font-bold border border-red-200 rounded-lg">
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">🔍 Nhập Danh Bộ <span className="text-red-500">*</span></label>
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text"
+                                    value={danhBo}
+                                    onChange={(e) => setDanhBo(e.target.value)}
+                                    placeholder="Ví dụ: 01010101011"
+                                    className="flex-1 px-4 py-2 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase font-mono font-semibold"
+                                />
+                                <button 
+                                    onClick={handleFetchInfo}
+                                    disabled={isFetching || !danhBo}
+                                    className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 whitespace-nowrap transition-colors"
+                                >
+                                    {isFetching ? '⏳ Đang tìm...' : '🔎 Tìm'}
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1 italic">*Nhập danh bộ để tìm kiếm</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">Tên khách hàng <span className="text-red-500">*</span></label>
+                            <input 
+                                type="text"
+                                value={tenKH}
+                                onChange={(e) => setTenKH(e.target.value)}
+                                className="w-full px-4 py-2 text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Số nhà <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text"
+                                    value={soNha}
+                                    onChange={(e) => setSoNha(e.target.value)}
+                                    className="w-full px-4 py-2 text-gray-900 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Đường <span className="text-red-500">*</span></label>
+                                <input 
+                                    type="text"
+                                    value={duong}
+                                    onChange={(e) => setDuong(e.target.value)}
+                                    className="w-full px-4 py-2 text-gray-900 font-semibold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 uppercase"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3 rounded-b-xl">
+                    <button 
+                        onClick={onClose}
+                        className="px-6 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50"
+                    >
+                        Hủy
+                    </button>
+                    <button 
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        className="px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 disabled:opacity-50 shadow-[0_3px_0_rgb(21,128,61)] active:shadow-none active:translate-y-[3px] flex items-center gap-2 transition-all"
+                    >
+                        {isSaving ? '⏳ Đang lưu...' : '💾 Lưu'}
+                    </button>
+                </div>
             </div>
-          </div>
-          <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={loading}
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-blue-300"
-            >
-              {loading ? 'Đang lưu...' : 'Lưu khách hàng'}
-            </button>
-            <button
-              type="button"
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-              onClick={onClose}
-            >
-              Hủy
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
-  )
+    )
 }

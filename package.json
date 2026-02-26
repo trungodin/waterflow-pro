@@ -18,7 +18,6 @@
     "@types/file-saver": "^2.0.7",
     "@types/react-window": "^1.8.8",
     "@xmldom/xmldom": "^0.8.11",
-    "basic-ftp": "^5.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

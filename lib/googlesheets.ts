@@ -1,10 +1,10 @@
 'use server'
 
-import { getDatabaseData, getOnOffData as getOnOffDataService, getNasImageLink, getSupabase } from './data-service'
+import { getDatabaseData, getOnOffData as getOnOffDataService, getDriveImageUrl, getSupabase } from './data-service'
 
 // --- 1. Image Link ---
 export async function getDriveImageLink(fullPath: string) {
-    return getNasImageLink(fullPath);
+    return getDriveImageUrl(fullPath);
 }
 
 // --- 2. Data Fetching ---
