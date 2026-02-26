@@ -56,7 +56,7 @@ export async function sendToListSheet(selectedData: any[], assignGroup: string, 
         })
 
         const supabase = getSupabaseAdmin()
-        const { error } = await supabase.from('assigned_customers').upsert(upsertData, { onConflict: 'danh_bo' })
+        const { error } = await supabase.from('assigned_customers').upsert(upsertData, { onConflict: 'ref_id' })
 
         if (error) {
             console.error('Supabase Error:', error)
