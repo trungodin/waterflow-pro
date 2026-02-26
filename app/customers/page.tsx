@@ -186,7 +186,7 @@ export default function CustomersPage() {
         <AddCustomerModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSuccess={fetchCustomers}
+          onAdded={fetchCustomers}
         />
       </main>
     </div>
