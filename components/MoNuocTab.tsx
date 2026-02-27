@@ -30,16 +30,25 @@ interface MoNuocRow {
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 const isLocked = (t: string) => {
+    if (!t) return false
     const u = t.toUpperCase()
-    return u.includes('ĐANG KH') || u.includes('ĐANG KHOÁ') || u.includes('KHÓA')
+        .normalize('NFC')  // normalize Unicode diacritics
+    return u.includes('KHOÁ') || u.includes('KHÓA') || u.includes('KHÓA')
 }
-const isOpened = (t: string) => t.toUpperCase().includes('ĐÃ MỞ')
+const isOpened = (t: string) => {
+    if (!t) return false
+    const u = t.toUpperCase().normalize('NFC')
+    return u.includes('ĐÃ MỞ') || u.includes('ĐA MO')
+}
 
 function fmtDate(raw: string) {
     if (!raw) return ''
+    // Already DD/MM/YYYY format from DB — return as-is (may have time)
+    if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(raw)) return raw
+    // ISO timestamp
     try {
         const d = new Date(raw)
-        if (!isNaN(d.getTime()) && raw.includes('T')) {
+        if (!isNaN(d.getTime())) {
             return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
         }
     } catch {}
@@ -55,7 +64,6 @@ function fmtCurrency(n: number | string) {
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 function DetailModal({ row, onClose, onOpenMoNuoc }: { row: MoNuocRow; onClose: () => void; onOpenMoNuoc: () => void }) {
     const proxyUrl = (path: string) => path ? `/api/drive/image?path=${encodeURIComponent(path)}` : ''
-    const u = row.TinhTrang.toUpperCase()
 
     const infoRows = [
         { label: 'Danh bạ', value: row.DanhBa },
@@ -173,14 +181,19 @@ function MoNuocModal({ row, userEmail, onClose, onSuccess }: {
         setIsSaving(true)
 
         try {
-            // Upload ảnh trước
-            let hinhMoPath = ''
-            const uploadRes = await uploadHinhMo(row.id, row.DanhBa, imageDataUrl, 'image/jpeg')
-            if (uploadRes.success && uploadRes.path) hinhMoPath = uploadRes.path
+            // Upload ảnh và lưu DB song song để tăng tốc
+            const [uploadRes, saveRes] = await Promise.all([
+                uploadHinhMo(row.id, row.DanhBa, imageDataUrl, 'image/jpeg'),
+                saveMoNuoc(row.id, ghiChu, userEmail, ''), // save DB ngay (không cần path)
+            ])
 
-            // Lưu DB
-            const saveRes = await saveMoNuoc(row.id, ghiChu, userEmail, hinhMoPath)
             if (!saveRes.success) throw new Error(saveRes.error || 'Lỗi lưu dữ liệu')
+
+            // Nếu upload xong và có path, cập nhật thêm path ảnh
+            const hinhMoPath = uploadRes.success && uploadRes.path ? uploadRes.path : ''
+            if (hinhMoPath) {
+                await saveMoNuoc(row.id, ghiChu, userEmail, hinhMoPath)
+            }
 
             onSuccess({
                 TinhTrang: 'Đã mở',

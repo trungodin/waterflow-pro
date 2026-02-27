@@ -61,7 +61,7 @@ export async function fetchTodayMoNuocData() {
         while (hasMore) {
             const { data, error } = await supabase
                 .from('water_lock_status')
-                .select('*')
+                .select('id,id_tb,danh_bo,ten_kh,so_nha,duong,ky_nam,tinh_trang,ngay_cpmn,tg_cpmn,ngay_mo,nv_mo,ghi_chu_mo,hinh_khoa,hinh_mo,tong_ky,tong_no,nhom_khoa,kieu_khoa,ngay_khoa')
                 .range(offset, offset + PAGE_SIZE - 1)
 
             if (error) throw error
