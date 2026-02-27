@@ -61,7 +61,7 @@ export async function fetchThongBaoByDate(targetDate?: string) {
         while (hasMore) {
             const { data, error } = await supabase
                 .from('assigned_customers')
-                .select('id,ref_id,ky_nam,danh_bo,ten_kh,so_nha,duong,tong_tien,tong_ky,hop_bv,hinh_tb,ngay_goi_tb,tinh_trang,hinh_anh,nhom_giao')
+                .select('id,ref_id,ky_nam,danh_bo,ten_kh,so_nha,duong,tong_tien,tong_ky,hop_bv,hinh_tb,ngay_giao,ngay_goi_tb,tinh_trang,hinh_anh,nhom')
                 .range(offset, offset + PAGE_SIZE - 1)
 
             if (error) throw error
@@ -76,9 +76,9 @@ export async function fetchThongBaoByDate(targetDate?: string) {
 
         if (!allData || allData.length === 0) return []
 
-        // Filter client-side: ngay_goi_tb matches target date
+        // Filter client-side: ngay_giao matches target date (thay vì ngay_tb)
         let filtered = allData.filter((row: any) => {
-            const raw = row.ngay_goi_tb?.toString().trim() || ''
+            const raw = row.ngay_giao?.toString().trim() || ''
             if (!raw) return false
             const parsed = parseDateFlexible(raw)
             return parsed ? isSameDay(parsed, target) : false
@@ -86,8 +86,8 @@ export async function fetchThongBaoByDate(targetDate?: string) {
 
         // Sắp xếp
         filtered.sort((a, b) => {
-            const nhomA = (a.nhom_giao || '').toLowerCase()
-            const nhomB = (b.nhom_giao || '').toLowerCase()
+            const nhomA = (a.nhom || '').toLowerCase()
+            const nhomB = (b.nhom || '').toLowerCase()
             if (nhomA !== nhomB) return nhomA.localeCompare(nhomB)
             return (a.danh_bo || '').localeCompare(b.danh_bo || '')
         })
