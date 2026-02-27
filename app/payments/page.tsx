@@ -18,7 +18,9 @@ import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
 import { getDmnCache, setDmnCache } from '@/lib/dmn-cache'
 import AddCustomerModal from '@/components/AddCustomerModal'
 import MoNuocTab from '@/components/MoNuocTab'
+import ThongBaoTab from '@/components/ThongBaoTab'
 
+const MIGRATION_DONE = true
 import Modal from '@/components/ui/Modal'
 import { formatCurrency } from '@/lib/utils'
 import { generateProposalPDF } from '@/lib/utils/pdfGenerator'
@@ -128,13 +130,14 @@ const MetricCard = ({ label, value, highlight = false, subValue }: { label: stri
 
 export default function PaymentsPage() {
   const { user } = useAuth()
-  const { canViewDoanhThu, canViewDongMoNuoc, canViewTraCuuDMN, canViewMoNuoc } = usePermissions()
+  const { canViewDoanhThu, canViewDongMoNuoc, canViewTraCuuDMN, canViewMoNuoc, canViewThongBao } = usePermissions()
 
   // Evaluate default active tab based on permissions
   const defaultTab = canViewDoanhThu ? 'doanh_thu'
     : canViewDongMoNuoc ? 'dong_mo_nuoc'
     : canViewTraCuuDMN ? 'tra_cuu_dmn'
     : canViewMoNuoc ? 'mo_nuoc'
+    : canViewThongBao ? 'thong_bao'
     : ''
 
   const [activeTab, setActiveTab] = useState(defaultTab)
@@ -421,6 +424,17 @@ export default function PaymentsPage() {
               💧 Mở Nước
             </button>
           )}
+          {canViewThongBao && (
+            <button
+              onClick={() => setActiveTab('thong_bao')}
+              className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'thong_bao'
+                ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                } active:shadow-none active:translate-y-[1px]`}
+            >
+              📢 Thông Báo
+            </button>
+          )}
         </div>
 
 
@@ -523,6 +537,11 @@ export default function PaymentsPage() {
           {/* TAB: MỞ NƯỚC */}
           {activeTab === 'mo_nuoc' && canViewMoNuoc && (
             <MoNuocTab />
+          )}
+
+          {/* TAB: THÔNG BÁO */}
+          {activeTab === 'thong_bao' && canViewThongBao && (
+            <ThongBaoTab />
           )}
 
           {/* TAB: TRA CỨU ĐMN */}
