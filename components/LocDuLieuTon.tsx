@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import VirtualDMNTable from './VirtualDMNTable'
 import { getDebtData } from '../lib/actions/loc-du-lieu-ton'
 import { sendToListSheet, sendToNhacNoSheet } from '../lib/actions/send-data'
-import { generateWordNotice } from '../lib/client-utils'
+import { generateWordNotice, mergeWordFiles } from '../lib/client-utils'
 
 interface LocDuLieuTonProps {
     formatCurrency: (val: string | number) => string | number
@@ -92,6 +92,8 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
     const [noticeDate, setNoticeDate] = useState(new Date().toISOString().split('T')[0])
     const [deadline1Ky, setDeadline1Ky] = useState(2)
     const [deadline2Ky, setDeadline2Ky] = useState(5)
+    const [isMerging, setIsMerging] = useState(false)
+    const mergeInputRef = useRef<HTMLInputElement>(null)
 
     // Client-side visual filtering (Moved up for dependencies)
     const filteredData = useMemo(() => {
@@ -231,6 +233,26 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
 
         if (!res.success) {
             setError(res.error || "Lỗi tạo file Word")
+        }
+    }
+
+    const handleMergeWord = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || [])
+        if (files.length < 2) {
+            alert('Vui lòng chọn ít nhất 2 file Word để ghép!')
+            return
+        }
+        setIsMerging(true)
+        try {
+            const result = await mergeWordFiles(files)
+            if (result.success) {
+                alert(`Đã ghép ${files.length} file Word thành công!`)
+            } else {
+                alert('Lỗi khi ghép: ' + result.error)
+            }
+        } finally {
+            setIsMerging(false)
+            if (mergeInputRef.current) mergeInputRef.current.value = ''
         }
     }
 
@@ -684,13 +706,33 @@ export default function LocDuLieuTon({ formatCurrency }: LocDuLieuTonProps) {
                         </div>
                     </div>
 
-                    <button
-                        onClick={handleCreateWord}
-                        disabled={loading || filteredData.length === 0}
-                        className="w-full px-5 py-2 bg-blue-600 text-white border border-blue-600 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm flex justify-center items-center gap-2 mt-auto disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <span>📝</span> Tạo {selectedIds.size > 0 ? selectedIds.size : filteredData.length} Thông Báo Word
-                    </button>
+                    <div className="flex gap-2 mt-auto">
+                        <button
+                            onClick={handleCreateWord}
+                            disabled={loading || filteredData.length === 0}
+                            className="flex-1 px-5 py-2 bg-blue-600 text-white border border-blue-600 rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm flex justify-center items-center gap-2 disabled:bg-gray-400 disabled:border-gray-400 disabled:cursor-not-allowed"
+                        >
+                            <span>📝</span> Tạo {selectedIds.size > 0 ? selectedIds.size : filteredData.length} Thông Báo Word
+                        </button>
+
+                        {/* Merge Button */}
+                        <input
+                            ref={mergeInputRef}
+                            type="file"
+                            accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            multiple
+                            className="hidden"
+                            onChange={handleMergeWord}
+                        />
+                        <button
+                            onClick={() => mergeInputRef.current?.click()}
+                            disabled={isMerging}
+                            className="flex-1 px-5 py-2 bg-purple-600 text-white border border-purple-600 rounded-lg text-sm font-bold hover:bg-purple-700 transition-all shadow-sm flex justify-center items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                            {isMerging ? '⏳ Đang ghép...' : '🔗 Ghép File Word'}
+                        </button>
+                    </div>
+
                 </div>
 
             </div>

@@ -5,6 +5,112 @@ import PizZip from 'pizzip'
 import Docxtemplater from 'docxtemplater'
 import { saveAs } from 'file-saver'
 
+const PAGE_BREAK_XML = `<w:p><w:r><w:br w:type="page"/></w:r></w:p>`
+
+/**
+ * Ghép nhiều file .docx thành 1 file duy nhất (nối tiếp, không trang trắng, không corrupt)
+ * Giữ nguyên cấu trúc file gốc, chỉ chèn content vào đúng vị trí
+ */
+export async function mergeWordFiles(files: File[]): Promise<{ success: boolean; error?: string }> {
+    try {
+        if (!files || files.length === 0) return { success: false, error: 'Không có file để ghép' }
+        if (files.length === 1) {
+            saveAs(files[0], files[0].name)
+            return { success: true }
+        }
+
+        // Helper: read file to ArrayBuffer
+        const readFile = (file: File): Promise<ArrayBuffer> =>
+            new Promise((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onload = (e) => resolve(e.target!.result as ArrayBuffer)
+                reader.onerror = reject
+                reader.readAsArrayBuffer(file)
+            })
+
+        // Helper: extract <w:sectPr ...>...</w:sectPr>
+        const extractSectPr = (xml: string): string => {
+            const idx = xml.lastIndexOf('<w:sectPr')
+            if (idx === -1) return ''
+            const endIdx = xml.indexOf('</w:sectPr>', idx)
+            if (endIdx === -1) return ''
+            return xml.substring(idx, endIdx + '</w:sectPr>'.length)
+        }
+
+        // Helper: extract body content between <w:body> and the last <w:sectPr>
+        const extractBody = (xml: string): string => {
+            const start = xml.indexOf('<w:body>') + '<w:body>'.length
+            const end = xml.lastIndexOf('<w:sectPr') !== -1
+                ? xml.lastIndexOf('<w:sectPr')
+                : xml.lastIndexOf('</w:body>')
+            if (start <= 0 || end <= start) return ''
+            return xml.substring(start, end)
+        }
+
+        // Read all files
+        const buffers = await Promise.all(files.map(readFile))
+
+        // Parse all XMLs
+        const xmlDocs = buffers.map((buf) => {
+            const zip = new PizZip(buf)
+            return zip.file('word/document.xml')?.asText() || ''
+        })
+
+        // Use file 1 as base - insert extra content before its <w:sectPr>
+        const baseZip = new PizZip(buffers[0])
+        let baseXml = baseZip.file('word/document.xml')?.asText() || ''
+
+        const insertBeforeIdx = baseXml.lastIndexOf('<w:sectPr') !== -1
+            ? baseXml.lastIndexOf('<w:sectPr')
+            : baseXml.lastIndexOf('</w:body>')
+
+        // Build content to insert from files 2..N
+        // sectPr from file 1 is used as the section-break paragraph separator
+        const baseSectPr = extractSectPr(xmlDocs[0])
+        let insertContent = ''
+
+        for (let i = 1; i < xmlDocs.length; i++) {
+            const bodyContent = extractBody(xmlDocs[i])
+            if (!bodyContent.trim()) continue
+
+            // Use paragraph-level sectPr (from previous file) as section break separator
+            // This is how Word internally handles multi-section docs — no blank pages
+            const prevSectPr = extractSectPr(xmlDocs[i - 1])
+            const sectionBreakPara = prevSectPr
+                ? `<w:p><w:pPr>${prevSectPr}</w:pPr></w:p>`
+                : `<w:p><w:r><w:br w:type="page"/></w:r></w:p>`
+
+            insertContent += sectionBreakPara + bodyContent
+        }
+
+        // Insert before base file's sectPr (safe, structural insert)
+        baseXml =
+            baseXml.substring(0, insertBeforeIdx) +
+            insertContent +
+            baseXml.substring(insertBeforeIdx)
+
+        baseZip.file('word/document.xml', baseXml)
+
+        const blob = baseZip.generate({
+            type: 'blob',
+            mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        })
+
+        const today = new Date()
+        const dd = String(today.getDate()).padStart(2, '0')
+        const mm = String(today.getMonth() + 1).padStart(2, '0')
+        const yyyy = today.getFullYear()
+        saveAs(blob, `ThongBao_GHEP_${files.length}file_${dd}${mm}${yyyy}.docx`)
+
+        return { success: true }
+    } catch (error: any) {
+        console.error('Merge Word Error:', error)
+        return { success: false, error: error.message }
+    }
+
+}
+
+
 function formatDate(date: Date): string {
     const d = new Date(date)
     return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`

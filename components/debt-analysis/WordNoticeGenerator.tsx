@@ -1,14 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { format } from 'date-fns'
-import { Loader2, FileText, Download } from 'lucide-react'
-import { generateWordNotice } from '@/lib/client-utils'
+import { Loader2, FileText, Download, Merge } from 'lucide-react'
+import { generateWordNotice, mergeWordFiles } from '@/lib/client-utils'
 import { toast } from 'sonner'
 
 
@@ -23,6 +23,8 @@ export function WordNoticeGenerator({ data, selectedIds }: WordNoticeGeneratorPr
     const [deadline2Ky, setDeadline2Ky] = useState<number>(5)
     const [targetMode, setTargetMode] = useState<'all' | 'selected'>('all')
     const [isGenerating, setIsGenerating] = useState(false)
+    const [isMerging, setIsMerging] = useState(false)
+    const mergeInputRef = useRef<HTMLInputElement>(null)
 
     const handleGenerate = async () => {
         setIsGenerating(true)
@@ -78,11 +80,57 @@ export function WordNoticeGenerator({ data, selectedIds }: WordNoticeGeneratorPr
     const targetCount = targetMode === 'selected' ? selectedCount : totalCount
     const isDisabled = targetCount === 0
 
+    const handleMerge = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || [])
+        if (files.length === 0) return
+        if (files.length < 2) {
+            toast.error('Vui lòng chọn ít nhất 2 file Word để ghép!')
+            return
+        }
+        setIsMerging(true)
+        try {
+            const result = await mergeWordFiles(files)
+            if (result.success) {
+                toast.success(`Đã ghép ${files.length} file Word thành công!`)
+            } else {
+                toast.error('Lỗi khi ghép: ' + result.error)
+            }
+        } finally {
+            setIsMerging(false)
+            if (mergeInputRef.current) mergeInputRef.current.value = ''
+        }
+    }
+
     return (
         <Card className="p-6 mt-8 border-t bg-white/50 backdrop-blur-sm shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-800">Tạo Thông báo Tạm ngưng cung cấp nước (Word)</h3>
+            <div className="flex items-center justify-between gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-800">Tạo Thông báo Tạm ngưng cung cấp nước (Word)</h3>
+                </div>
+                {/* Merge Button */}
+                <div>
+                    <input
+                        ref={mergeInputRef}
+                        type="file"
+                        accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        multiple
+                        className="hidden"
+                        onChange={handleMerge}
+                    />
+                    <Button
+                        variant="outline"
+                        onClick={() => mergeInputRef.current?.click()}
+                        disabled={isMerging}
+                        className="border-purple-400 text-purple-700 hover:bg-purple-50 font-semibold"
+                    >
+                        {isMerging ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Đang ghép...</>
+                        ) : (
+                            <><Merge className="w-4 h-4 mr-2" />Ghép File Word</>
+                        )}
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
