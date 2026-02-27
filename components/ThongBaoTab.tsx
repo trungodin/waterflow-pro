@@ -20,7 +20,7 @@ interface ThongBaoRow {
     ngay_goi_tb: string
     tinh_trang: string
     hinh_anh: string
-    nhom_giao: string
+    nhom: string
 }
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
@@ -306,9 +306,27 @@ export default function ThongBaoTab() {
     }
 
     const filtered = rows.filter(r => {
-        if (!searchTerm) return true
-        const term = searchTerm.toLowerCase()
-        return `${r.danh_bo} ${r.ten_kh} ${r.so_nha} ${r.duong}`.toLowerCase().includes(term)
+        // Filter theo Search Term
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase()
+            if (!`${r.danh_bo} ${r.ten_kh} ${r.so_nha} ${r.duong}`.toLowerCase().includes(term)) {
+                return false
+            }
+        }
+        
+        // Filter theo Quyền (Admin Manager thì xem được hết, còn dmn_staff/collector chỉ thấy nhóm của họ)
+        if (user && user.role !== 'admin' && user.role !== 'manager') {
+            // @ts-ignore
+            const userNhom = (user.groups || []).map((g: any) => String(g).toLowerCase())
+            const rowNhom = (r.nhom || '').toLowerCase()
+            
+            // Nếu user có group thì chỉ thấy group đó.
+            if (userNhom.length > 0) {
+                if (!userNhom.includes(rowNhom)) return false
+            }
+        }
+
+        return true
     })
 
     const unpaidCount = filtered.filter(r => isUnpaid(r.tinh_trang)).length
