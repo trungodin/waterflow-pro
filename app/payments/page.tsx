@@ -563,12 +563,7 @@ export default function PaymentsPage() {
                       )}
                     </div>
 
-                    <button
-                      onClick={() => setIsAddModalOpen(true)}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 font-bold whitespace-nowrap flex items-center gap-2 shadow-[0_3px_0_rgb(21,128,61)] active:shadow-none active:translate-y-[3px] transition-all"
-                    >
-                      ➕ Thêm KH
-                    </button>
+
 
                     <button
                       onClick={() => fetchData(true)}
@@ -579,8 +574,16 @@ export default function PaymentsPage() {
                     </button>
                   </div>
                 </div>
-                <div className="text-sm text-gray-500 text-right">
-                  {lastRefreshed && <span>Cập nhật: {lastRefreshed.toLocaleTimeString()}</span>}
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 font-bold whitespace-nowrap flex items-center gap-2 shadow-[0_3px_0_rgb(21,128,61)] active:shadow-none active:translate-y-[3px] transition-all"
+                  >
+                    ➕ Thêm KH
+                  </button>
+                  <div className="text-sm text-gray-500 text-right">
+                    {lastRefreshed && <span>Cập nhật: {lastRefreshed.toLocaleTimeString()}</span>}
+                  </div>
                 </div>
               </div>
 

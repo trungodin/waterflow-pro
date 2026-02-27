@@ -227,24 +227,22 @@ export default function VirtualDMNTable({
     if (isKhoa) statusClass = "bg-red-50 text-red-700 border border-red-200 font-bold"
     if (isMo && !isKhoa) statusClass = "bg-green-50 text-green-700 border border-green-200 font-bold"
 
-    // Manual Add highlights (IdTB starts with MKD_)
-    const isManualAdd = row.IdTB && String(row.IdTB).startsWith('MKD_')
+    // Manual Add highlights (IdTB starts with MKD or MKD_)
+    const isManualAdd = row.IdTB && /^MKD/i.test(String(row.IdTB))
 
-    // Zebra striping: bg-white for odd, bg-gray-50 for even (or vice versa based on index logic)
+    // Zebra striping
     let rowBgClass = item.isEven ? 'bg-white' : 'bg-[#f4f7f9]'
-    let rowHoverAndTextClass = 'hover:bg-yellow-50'
-
-    if (isManualAdd) {
-        rowBgClass = item.isEven ? 'bg-orange-50' : 'bg-orange-100/60'
-        rowHoverAndTextClass = 'hover:bg-orange-200 [&_.text-gray-900]:!text-orange-900 [&_.text-gray-800]:!text-orange-900 [&_.text-gray-700]:!text-orange-800 [&_.text-gray-500]:!text-orange-600'
-    }
+    let rowHoverClass = 'hover:bg-yellow-50'
+    const manualRowStyle: React.CSSProperties = isManualAdd
+      ? { backgroundColor: item.isEven ? '#fff7ed' : '#fed7aa66', color: '#7c2d12' }
+      : {}
 
     return (
       <div
         key={index}
-        style={style}
+        style={{ ...style, ...manualRowStyle }}
         onClick={() => onRowClick && onRowClick(row)}
-        className={`border-b border-gray-300 transition-colors flex items-center ${rowBgClass} ${rowHoverAndTextClass} ${onRowClick ? 'cursor-pointer' : ''}`}
+        className={`border-b border-gray-300 transition-colors flex items-center ${!isManualAdd ? rowBgClass : ''} ${!isManualAdd ? rowHoverClass : 'hover:brightness-95'} ${onRowClick ? 'cursor-pointer' : ''}`}
       >
         <div
           className="grid items-center h-full"
@@ -257,12 +255,14 @@ export default function VirtualDMNTable({
             // Add vertical borders between columns
             const cellStyle = "px-2 truncate text-xs " + (col.align === 'center' ? 'text-center' : col.align === 'right' ? 'text-right' : 'text-left')
             const borderR = idx !== columns.length - 1 ? " border-r border-gray-300" : ""
+            // Text color for manual rows (overrides Tailwind gray classes)
+            const tc: React.CSSProperties = isManualAdd ? { color: '#9a3412' } : { color: '#1f2937' } // orange-800 or gray-800
 
             let content = null
 
             // Handle Special Columns based on ID
             switch (col.id) {
-              case 'stt': content = <span className="text-gray-500 font-medium">{index + 1}</span>; break;
+              case 'stt': content = <span style={tc} className="font-medium">{index + 1}</span>; break;
               case 'select':
                 content = (
                   <input
@@ -274,12 +274,11 @@ export default function VirtualDMNTable({
                 );
                 break;
 
-              case 'danhBa': content = <span className="font-mono font-bold text-gray-900">{row.DanhBa}</span>; break;
-              case 'tenKH': content = <span className="font-semibold text-gray-900" title={row.TenKH}>{row.TenKH}</span>; break;
-              case 'soNha': content = <span className="text-gray-800" title={row.SoNha}>{row.SoNha}</span>; break;
-              case 'duong': content = <span className="text-gray-800" title={row.Duong}>{row.Duong}</span>; break;
-              case 'gb': content = <span className="text-center block font-bold text-gray-700">{row.GB}</span>; break;
-
+              case 'danhBa': content = <span style={tc} className="font-mono font-bold">{row.DanhBa}</span>; break;
+              case 'tenKH': content = <span style={tc} className="font-semibold" title={row.TenKH}>{row.TenKH}</span>; break;
+              case 'soNha': content = <span style={tc} title={row.SoNha}>{row.SoNha}</span>; break;
+              case 'duong': content = <span style={tc} title={row.Duong}>{row.Duong}</span>; break;
+              case 'gb': content = <span style={tc} className="text-center block font-bold">{row.GB}</span>; break;
 
               case 'tinhTrang':
                 content = (
@@ -289,39 +288,39 @@ export default function VirtualDMNTable({
                 )
                 break;
 
-              case 'tongKy': content = <span className="font-bold text-gray-900">{row.TongKy || '0'}</span>; break;
-              case 'tongNo': content = <span className="font-bold text-black">{formatCurrency(row.TongNo)}</span>; break;
-              case 'kyNam': content = <span className="text-gray-600 font-medium text-[11px]" title={row.KyNam}>{row.KyNam || 'N/A'}</span>; break;
+              case 'tongKy': content = <span style={tc} className="font-bold">{row.TongKy || '0'}</span>; break;
+              case 'tongNo': content = <span style={tc} className="font-bold">{formatCurrency(row.TongNo)}</span>; break;
+              case 'kyNam': content = <span style={tc} className="font-medium text-[11px]" title={row.KyNam}>{row.KyNam || 'N/A'}</span>; break;
 
               // New Columns for Report
-              case 'mlt2': content = <span className="font-mono text-gray-700">{row.MLT2}</span>; break;
-              case 'soMoi': content = <span className="text-gray-600 italic">{row.SoMoi}</span>; break;
-              case 'soThan': content = <span className="text-gray-600 font-medium text-[13px]">{row.SoThan}</span>; break;
+              case 'mlt2': content = <span style={tc} className="font-mono">{row.MLT2}</span>; break;
+              case 'soMoi': content = <span style={tc} className="italic">{row.SoMoi}</span>; break;
+              case 'soThan': content = <span style={tc} className="font-medium text-[13px]">{row.SoThan}</span>; break;
 
-              case 'nhomKhoa': content = <span className="text-gray-700 font-medium">{row.NhomKhoa || '-'}</span>; break;
-              case 'ngayMo': content = <span className="text-gray-700">{row.NgayMo || '-'}</span>; break;
+              case 'nhomKhoa': content = <span style={tc} className="font-medium">{row.NhomKhoa || '-'}</span>; break;
+              case 'ngayMo': content = <span style={tc}>{row.NgayMo || '-'}</span>; break;
 
               // Hidden columns by default
-              case 'hieu': content = <span className="text-gray-700">{row.Hieu}</span>; break;
-              case 'coCu': content = <span className="text-gray-700">{row.CoCu}</span>; break;
+              case 'hieu': content = <span style={tc}>{row.Hieu}</span>; break;
+              case 'coCu': content = <span style={tc}>{row.CoCu}</span>; break;
               case 'hopBaoVe':
                 const hbv = row.HopBaoVe;
                 let hbvDisplay = hbv;
                 if (hbv === true || String(hbv).toLowerCase() === 'true') hbvDisplay = 'Có';
                 else if (hbv === false || String(hbv).toLowerCase() === 'false') hbvDisplay = 'Không';
-                content = <span className="text-gray-700">{hbvDisplay}</span>;
+                content = <span style={tc}>{hbvDisplay}</span>;
                 break;
               // New Columns logic
-              case 'csKhoa': content = <span className="text-gray-700">{row.CsKhoa}</span>; break;
-              case 'maSoChi': content = <span className="text-gray-700">{row.MaSoChi}</span>; break;
-              case 'kieuKhoa': content = <span className="text-gray-700">{row.KieuKhoa}</span>; break;
-              case 'maMo': content = <span className="text-gray-700">{row.MaMo}</span>; break;
-              case 'nvMo': content = <span className="text-gray-700">{row.NvMo}</span>; break;
-              case 'csMo': content = <span className="text-gray-700">{row.CsMo}</span>; break;
-              case 'ghiChuMo': content = <span className="text-gray-700 truncate" title={row.GhiChuMo}>{row.GhiChuMo}</span>; break;
-              case 'ngayCpmn': content = <span className="text-gray-700">{row.NgayCpmn}</span>; break;
-              case 'tgCpmn': content = <span className="text-gray-700">{row.TgCpmn}</span>; break;
-              case 'ngayTb': content = <span className="text-gray-700">{row.NgayTb}</span>; break;
+              case 'csKhoa': content = <span style={tc}>{row.CsKhoa}</span>; break;
+              case 'maSoChi': content = <span style={tc}>{row.MaSoChi}</span>; break;
+              case 'kieuKhoa': content = <span style={tc}>{row.KieuKhoa}</span>; break;
+              case 'maMo': content = <span style={tc}>{row.MaMo}</span>; break;
+              case 'nvMo': content = <span style={tc}>{row.NvMo}</span>; break;
+              case 'csMo': content = <span style={tc}>{row.CsMo}</span>; break;
+              case 'ghiChuMo': content = <span style={tc} className="truncate" title={row.GhiChuMo}>{row.GhiChuMo}</span>; break;
+              case 'ngayCpmn': content = <span style={tc}>{row.NgayCpmn}</span>; break;
+              case 'tgCpmn': content = <span style={tc}>{row.TgCpmn}</span>; break;
+              case 'ngayTb': content = <span style={tc}>{row.NgayTb}</span>; break;
 
               // Image and File Links
               case 'hinhMo':
