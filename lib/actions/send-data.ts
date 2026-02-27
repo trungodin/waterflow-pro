@@ -110,6 +110,7 @@ export async function sendToNhacNoSheet(selectedData: any[], assignDate: string)
             const nhanVien = MAY_TO_NHAN_VIEN[may] || ''
 
             return {
+                id: `${danhBa}-${idSuffix}`,
                 stt: stt,
                 danh_bo: danhBa,
                 so_nha: item.SoNha || '',
