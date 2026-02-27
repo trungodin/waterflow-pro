@@ -46,11 +46,15 @@ function isSameDay(a: Date, b: Date): boolean {
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
-// Lấy danh sách mở nước hôm nay (ngay_cpmn = hôm nay)
-export async function fetchTodayMoNuocData() {
+// Lấy danh sách mở nước theo ngày (mặc định hôm nay)
+// targetDate: YYYY-MM-DD string hoặc undefined (= hôm nay)
+export async function fetchMoNuocByDate(targetDate?: string) {
     try {
         const supabase = getSupabase()
-        const today = new Date()
+        // Ngày cần lọc: ưu tiên tham số, fallback hôm nay
+        const today = targetDate
+            ? (() => { const [y, m, d] = targetDate.split('-').map(Number); return new Date(y, m - 1, d) })()
+            : new Date()
 
         // Fetch ALL records with pagination (bypass Supabase 1000-row default limit)
         const PAGE_SIZE = 1000

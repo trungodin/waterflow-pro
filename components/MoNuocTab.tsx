@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { fetchTodayMoNuocData, saveMoNuoc, uploadHinhMo } from '@/app/payments/mo-nuoc-actions'
+import { fetchMoNuocByDate, saveMoNuoc, uploadHinhMo } from '@/app/payments/mo-nuoc-actions'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -359,23 +359,34 @@ export default function MoNuocTab() {
     const [searchTerm, setSearchTerm] = useState('')
     const [detailRow, setDetailRow] = useState<MoNuocRow | null>(null)
     const [moNuocRow, setMoNuocRow] = useState<MoNuocRow | null>(null)
+    // Date filter — default today in YYYY-MM-DD
+    const todayStr = new Date().toISOString().split('T')[0]
+    const [selectedDate, setSelectedDate] = useState(todayStr)
 
     const userEmail = user?.email || ''
 
-    const load = useCallback(async () => {
+    const load = useCallback(async (date: string) => {
         setLoading(true)
         setError(null)
         try {
-            const data = await fetchTodayMoNuocData()
+            const data = await fetchMoNuocByDate(date || todayStr)
             setRows(data as MoNuocRow[])
         } catch (err: any) {
             setError(err.message)
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [todayStr])
 
-    useEffect(() => { load() }, [load])
+    useEffect(() => { load(selectedDate) }, [load, selectedDate])
+
+    const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSelectedDate(e.target.value)
+    }
+
+    const resetToToday = () => setSelectedDate(todayStr)
+
+    const isToday = selectedDate === todayStr
 
     const filtered = rows.filter(r => {
         if (!searchTerm) return true
@@ -394,35 +405,59 @@ export default function MoNuocTab() {
     return (
         <div className="flex flex-col gap-4 animate-in fade-in duration-500">
             {/* Header Stats */}
-            <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-4 rounded-xl border border-teal-100 flex flex-wrap gap-4 items-center justify-between">
-                <div>
-                    <h2 className="text-base font-bold text-teal-800 flex items-center gap-2">
-                        💧 Danh sách Mở nước hôm nay
-                    </h2>
-                    <p className="text-xs text-teal-600 mt-0.5">
-                        {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
-                    </p>
-                </div>
-                <div className="flex gap-3 flex-wrap">
-                    <div className="bg-white px-3 py-2 rounded-lg border border-teal-100 text-center">
-                        <div className="text-xl font-bold text-teal-700">{filtered.length}</div>
-                        <div className="text-xs text-gray-500">Tổng</div>
+            <div className="bg-gradient-to-r from-teal-50 to-cyan-50 p-4 rounded-xl border border-teal-100">
+                <div className="flex flex-wrap gap-4 items-center justify-between">
+                    <div>
+                        <h2 className="text-base font-bold text-teal-800 flex items-center gap-2">
+                            💧 Danh sách Mở nước
+                        </h2>
+                        <p className="text-xs text-teal-600 mt-0.5">
+                            {isToday
+                                ? `Hôm nay – ${new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}`
+                                : new Date(selectedDate + 'T00:00:00').toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })
+                            }
+                        </p>
                     </div>
-                    <div className="bg-white px-3 py-2 rounded-lg border border-red-100 text-center">
-                        <div className="text-xl font-bold text-red-600">{lockedCount}</div>
-                        <div className="text-xs text-gray-500">Đang khóa</div>
+                    <div className="flex gap-3 flex-wrap items-center">
+                        {/* Date picker */}
+                        <div className="flex items-center gap-2">
+                            <label className="text-xs font-bold text-teal-700 whitespace-nowrap">📅 Ngày CPMN:</label>
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={handleDateChange}
+                                className="px-3 py-1.5 border border-teal-200 rounded-lg text-sm font-bold text-gray-700 bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none cursor-pointer"
+                            />
+                            {!isToday && (
+                                <button
+                                    onClick={resetToToday}
+                                    className="px-3 py-1.5 text-xs font-bold text-teal-700 border border-teal-300 rounded-lg hover:bg-teal-50 transition-colors whitespace-nowrap"
+                                >
+                                    ↩ Hôm nay
+                                </button>
+                            )}
+                        </div>
+                        {/* Stats badges */}
+                        <div className="bg-white px-3 py-2 rounded-lg border border-teal-100 text-center">
+                            <div className="text-xl font-bold text-teal-700">{filtered.length}</div>
+                            <div className="text-xs text-gray-500">Tổng</div>
+                        </div>
+                        <div className="bg-white px-3 py-2 rounded-lg border border-red-100 text-center">
+                            <div className="text-xl font-bold text-red-600">{lockedCount}</div>
+                            <div className="text-xs text-gray-500">Đang khóa</div>
+                        </div>
+                        <div className="bg-white px-3 py-2 rounded-lg border border-blue-100 text-center">
+                            <div className="text-xl font-bold text-blue-600">{openedCount}</div>
+                            <div className="text-xs text-gray-500">Đã mở</div>
+                        </div>
+                        <button
+                            onClick={() => load(selectedDate)}
+                            disabled={loading}
+                            className="px-4 py-2 bg-teal-600 text-white text-sm font-bold rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+                        >
+                            {loading ? '⏳' : '🔄'} Làm mới
+                        </button>
                     </div>
-                    <div className="bg-white px-3 py-2 rounded-lg border border-blue-100 text-center">
-                        <div className="text-xl font-bold text-blue-600">{openedCount}</div>
-                        <div className="text-xs text-gray-500">Đã mở</div>
-                    </div>
-                    <button
-                        onClick={load}
-                        disabled={loading}
-                        className="px-4 py-2 bg-teal-600 text-white text-sm font-bold rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
-                    >
-                        {loading ? '⏳' : '🔄'} Làm mới
-                    </button>
                 </div>
             </div>
 
