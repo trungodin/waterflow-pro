@@ -35,6 +35,7 @@ export async function sendToListSheet(selectedData: any[], assignGroup: string, 
             const tongTien = item.TongNo ? parseFloat(item.TongNo.toString().replace(/,/g, '')) : null
 
             return {
+                stt: index + 1,
                 ref_id: id,
                 danh_bo: danhBa,
                 so_nha: item.SoNha || '',
