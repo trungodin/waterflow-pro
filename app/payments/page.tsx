@@ -17,6 +17,7 @@ import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
 import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
 import { getDmnCache, setDmnCache } from '@/lib/dmn-cache'
 import AddCustomerModal from '@/components/AddCustomerModal'
+import MoNuocTab from '@/components/MoNuocTab'
 
 import Modal from '@/components/ui/Modal'
 import { formatCurrency } from '@/lib/utils'
@@ -127,12 +128,13 @@ const MetricCard = ({ label, value, highlight = false, subValue }: { label: stri
 
 export default function PaymentsPage() {
   const { user } = useAuth()
-  const { canViewDoanhThu, canViewDongMoNuoc, canViewTraCuuDMN } = usePermissions()
+  const { canViewDoanhThu, canViewDongMoNuoc, canViewTraCuuDMN, canViewMoNuoc } = usePermissions()
 
   // Evaluate default active tab based on permissions
-  const defaultTab = canViewDoanhThu ? 'doanh_thu' 
-    : canViewDongMoNuoc ? 'dong_mo_nuoc' 
-    : canViewTraCuuDMN ? 'tra_cuu_dmn' 
+  const defaultTab = canViewDoanhThu ? 'doanh_thu'
+    : canViewDongMoNuoc ? 'dong_mo_nuoc'
+    : canViewTraCuuDMN ? 'tra_cuu_dmn'
+    : canViewMoNuoc ? 'mo_nuoc'
     : ''
 
   const [activeTab, setActiveTab] = useState(defaultTab)
@@ -408,7 +410,19 @@ export default function PaymentsPage() {
               🔍 Tra Cứu ĐMN
             </button>
           )}
+          {canViewMoNuoc && (
+            <button
+              onClick={() => setActiveTab('mo_nuoc')}
+              className={`px-6 py-2.5 rounded-lg font-bold transition-all ${activeTab === 'mo_nuoc'
+                ? 'bg-blue-600 text-white shadow-[0_3px_0_rgb(29,78,216)] translate-y-[-2px]'
+                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
+                } active:shadow-none active:translate-y-[1px]`}
+            >
+              💧 Mở Nước
+            </button>
+          )}
         </div>
+
 
         {/* Content Area */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[500px] p-6">
@@ -504,6 +518,11 @@ export default function PaymentsPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* TAB: MỞ NƯỚC */}
+          {activeTab === 'mo_nuoc' && canViewMoNuoc && (
+            <MoNuocTab />
           )}
 
           {/* TAB: TRA CỨU ĐMN */}

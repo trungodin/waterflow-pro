@@ -105,6 +105,7 @@ export type ActionPermission =
   | 'view_doanh_thu' // Sub-tab 1 của Thu Tiền
   | 'view_dong_mo_nuoc' // Sub-tab 2 của Thu Tiền
   | 'view_tra_cuu_dmn'  // Sub-tab 3 của Thu Tiền
+  | 'view_mo_nuoc'      // Sub-tab Mở nước
   | 'edit_payments'
   | 'view_customer'
   | 'export_data'
@@ -117,7 +118,7 @@ export const ROLE_ACTIONS: Record<UserRole, ActionPermission[]> = {
   admin: [
     'view_dashboard',
     'view_ghi', 'edit_ghi',
-    'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'edit_payments',
+    'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'edit_payments',
     'view_customer',
     'export_data',
     'sync_data',
@@ -128,7 +129,7 @@ export const ROLE_ACTIONS: Record<UserRole, ActionPermission[]> = {
   manager: [
     'view_dashboard',
     'view_ghi', 'edit_ghi',
-    'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'edit_payments',
+    'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'edit_payments',
     'view_customer',
     'export_data'
   ],
@@ -139,12 +140,12 @@ export const ROLE_ACTIONS: Record<UserRole, ActionPermission[]> = {
   ],
   collector: [
     'view_dashboard',
-    'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'edit_payments',
+    'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'edit_payments',
     'view_customer'
   ],
   dmn_staff: [
     'view_dashboard',
-    'view_payments', 'view_tra_cuu_dmn', 'edit_payments', // Only DMN specific tabs
+    'view_payments', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'edit_payments', // Only DMN specific tabs
     'view_customer'
   ],
   pending: []

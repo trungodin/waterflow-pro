@@ -41,6 +41,7 @@ export function usePermissions() {
     canViewDoanhThu: canPerformAction('view_doanh_thu'),
     canViewDongMoNuoc: canPerformAction('view_dong_mo_nuoc'),
     canViewTraCuuDMN: canPerformAction('view_tra_cuu_dmn'),
+    canViewMoNuoc: canPerformAction('view_mo_nuoc'),
     canViewCustomer: canAccessTab('customer'),
     canSync: canAccessTab('sync'),
     canAccessNAS: canAccessTab('share'),
