@@ -76,3 +76,32 @@ body {
 .animate-slide-up-delay {
   animation: slideUp 0.8s ease-out 0.3s both;
 }
+
+/* Date DD/MM/YYYY formatting fix for webkit browsers */
+input.date-input-ddmmyyyy {
+  position: relative;
+}
+
+input.date-input-ddmmyyyy::-webkit-datetime-edit {
+  color: transparent;
+}
+
+input.date-input-ddmmyyyy::before {
+  color: #374151; /* gray-700 to match */
+  content: attr(data-date-format);
+  position: absolute;
+  top: 50%;
+  left: 0.75rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+input.date-input-ddmmyyyy.has-value::before,
+input.date-input-ddmmyyyy:focus::before {
+  content: "" !important;
+}
+
+input.date-input-ddmmyyyy.has-value::-webkit-datetime-edit,
+input.date-input-ddmmyyyy:focus::-webkit-datetime-edit {
+  color: #374151;
+}
