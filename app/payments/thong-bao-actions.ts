@@ -52,9 +52,9 @@ export async function fetchThongBaoByDate(targetDate?: string) {
     const supabase = getSupabase();
     const target = targetDate
       ? (() => {
-          const [y, m, d] = targetDate.split("-").map(Number);
-          return new Date(y, m - 1, d);
-        })()
+        const [y, m, d] = targetDate.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      })()
       : new Date();
 
     // Tạo chuỗi lọc ngày (Hỗ trợ các dạng DD/MM/YYYY, YYYY-MM-DD, D/M/YYYY...)
@@ -76,7 +76,7 @@ export async function fetchThongBaoByDate(targetDate?: string) {
     const { data: dbData, error } = await supabase
       .from("assigned_customers")
       .select(
-        "id,ref_id,ky_nam,danh_bo,ten_kh,so_nha,duong,tong_tien,tong_ky,hop_bv,hinh_tb,ngay_giao,ngay_goi_tb,tinh_trang,hinh_anh,nhom,stt,dot,gb,so_than,dia_chi",
+        "id,ref_id,ky_nam,danh_bo,ten_kh,so_nha,duong,tong_tien,tong_ky,hop_bv,hinh_tb,ngay_giao,ngay_goi_tb,tinh_trang,nhom,stt,dot,gb,so_than,dia_chi,mlt2",
       )
       .or(filterString);
 

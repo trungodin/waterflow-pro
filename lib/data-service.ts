@@ -6,18 +6,18 @@ let supabaseInstance: ReturnType<typeof createClient> | null = null;
 
 export function getSupabase() {
     if (supabaseInstance) return supabaseInstance;
-    
+
     // Check if we are in a browser or server environment where env vars might be available differently?
     // In Next.js, process.env should work.
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
+
     if (!supabaseUrl || !supabaseKey) {
         // Warning or throw? For script it might throw if not loaded, but we want it to fail gracefully if imported but not used.
         // Valid for Next.js build time too.
-         throw new Error('Supabase URL/Key missing. Check .env');
+        throw new Error('Supabase URL/Key missing. Check .env');
     }
-    
+
     supabaseInstance = createClient(supabaseUrl, supabaseKey);
     return supabaseInstance;
 }
@@ -48,7 +48,7 @@ export async function getDatabaseData() {
             } else {
                 allData = allData.concat(data);
                 offset += BATCH_SIZE;
-                
+
                 // Stop if we got less than BATCH_SIZE (last page)
                 if (data.length < BATCH_SIZE) {
                     hasMore = false;
@@ -126,7 +126,7 @@ export async function getOnOffData() {
             } else {
                 allStatusData = allStatusData.concat(data);
                 offset += PAGE_SIZE;
-                
+
                 if (data.length < PAGE_SIZE) {
                     hasMore = false;
                 }
@@ -143,15 +143,15 @@ export async function getOnOffData() {
         // 3. Fetch Matching Customers
         let customerData: any[] = [];
         const BATCH_SIZE = 1000;
-        
+
         try {
-             for (let i = 0; i < uniqueIdTbs.length; i += BATCH_SIZE) {
+            for (let i = 0; i < uniqueIdTbs.length; i += BATCH_SIZE) {
                 const batch = uniqueIdTbs.slice(i, i + BATCH_SIZE);
                 const { data, error } = await getSupabase()
                     .from('assigned_customers')
-                    .select('ref_id, danh_bo, ten_kh, so_nha, duong, ky_nam, so_than, hop_bv') 
+                    .select('ref_id, danh_bo, ten_kh, so_nha, duong, ky_nam, so_than, hop_bv, mlt2')
                     .in('ref_id', batch);
-                
+
                 if (!error && data) {
                     customerData.push(...data);
                 }
@@ -168,7 +168,7 @@ export async function getOnOffData() {
 
         const result = statusData.map((item: any) => {
             const customer = customerMap.get(item.id_tb) || {};
-            
+
             // PRIORITY: water_lock_status -> assigned_customers -> Empty
             const tenKF = item.ten_kh || customer.ten_kh || '';
             const soNha = item.so_nha || customer.so_nha || '';
@@ -187,16 +187,17 @@ export async function getOnOffData() {
                 Dot: item.dot,
                 TongKy: item.tong_ky,
                 TongNo: item.tong_no,
-                
+
                 // Joined Fields with Priority
                 TenKH: tenKF,
                 SoNha: soNha,
                 Duong: duong,
                 KyNam: kyNam,
-                
+
                 // Fields from Customer Table Only
                 SoThan: customer.so_than || '',
-                
+                MLT2: item.mlt2 || customer.mlt2 || '',
+
                 // Fields from Both (Priority to Water Lock Status if synced)
                 HopBaoVe: item.hop_bv || customer.hop_bv || '',
 
@@ -207,7 +208,7 @@ export async function getOnOffData() {
                 CsMo: item.cs_mo,
                 GhiChuMo: item.ghi_chu_mo,
                 HinhMo: normalizeImagePath(item.hinh_mo, 'database_Images'),
-                FileDeNghi: item.file_cpmn || item.file_de_nghi, 
+                FileDeNghi: item.file_cpmn || item.file_de_nghi,
                 FileCpmn: item.file_cpmn,
                 NgayCpmn: item.ngay_cpmn,
                 TgCpmn: item.tg_cpmn,
@@ -219,17 +220,17 @@ export async function getOnOffData() {
 
         // Sort by NgayKhoa (DD/MM/YYYY)
         return result.sort((a: any, b: any) => {
-             const parseDate = (dStr: string) => {
-                 if (!dStr) return 0;
-                 const parts = dStr.trim().split(/[/\s-]/);
-                 if (parts.length >= 3) {
-                     if (parts[2].length === 4) {
-                         return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])).getTime();
-                     }
-                 }
-                 return 0;
-             };
-             return parseDate(b.NgayKhoa) - parseDate(a.NgayKhoa);
+            const parseDate = (dStr: string) => {
+                if (!dStr) return 0;
+                const parts = dStr.trim().split(/[/\s-]/);
+                if (parts.length >= 3) {
+                    if (parts[2].length === 4) {
+                        return new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0])).getTime();
+                    }
+                }
+                return 0;
+            };
+            return parseDate(b.NgayKhoa) - parseDate(a.NgayKhoa);
         });
 
     } catch (error) {
@@ -244,8 +245,8 @@ function normalizeImagePath(path: string, defaultFolder: string) {
     // Strip AppSheet prefix: "database::database_Images/..."
     if (path.startsWith('database::')) {
         path = path.replace('database::database_Images/', 'database_Images/')
-                   .replace('database::ON_OFF_Images/', 'ON_OFF_Images/')
-                   .replace(/^database::/, '');
+            .replace('database::ON_OFF_Images/', 'ON_OFF_Images/')
+            .replace(/^database::/, '');
     }
     if (path.includes('/')) return path; // Already has folder
     return `${defaultFolder}/${path}`;
@@ -265,8 +266,8 @@ export async function getDriveImageUrl(pathOrUrl: string): Promise<string> {
     let cleanPath = pathOrUrl;
     if (cleanPath.startsWith('database::')) {
         cleanPath = cleanPath.replace('database::database_Images/', 'database_Images/')
-                             .replace('database::ON_OFF_Images/', 'ON_OFF_Images/')
-                             .replace(/^database::/, '');
+            .replace('database::ON_OFF_Images/', 'ON_OFF_Images/')
+            .replace(/^database::/, '');
     }
 
     // Nếu path không có folder prefix → giả sử database_Images

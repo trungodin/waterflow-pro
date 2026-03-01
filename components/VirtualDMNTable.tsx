@@ -16,9 +16,10 @@ interface VirtualTableProps {
 // Default columns configuration - Generous widths to fit content automatically
 const DEFAULT_COLUMNS = [
   { id: 'danhBa', label: 'Danh Bạ', width: 110 },
-  { id: 'tenKH', label: 'Tên Khách Hàng', width: 350 },
+  { id: 'mlt2', label: 'MLT2', width: 80 },
+  { id: 'tenKH', label: 'Tên Khách Hàng', width: 280 },
   { id: 'soNha', label: 'Số Nhà', width: 100 },
-  { id: 'duong', label: 'Đường', width: 250 },
+  { id: 'duong', label: 'Đường', width: 200 },
 
   { id: 'tinhTrang', label: 'Tình Trạng', width: 110, align: 'center' },
   { id: 'tongKy', label: 'Kỳ', width: 50, align: 'center' },
@@ -26,7 +27,7 @@ const DEFAULT_COLUMNS = [
   { id: 'kyNam', label: 'Kỳ/Năm', width: 220 },
   { id: 'nhomKhoa', label: 'Nhóm Khóa', width: 110, align: 'center' },
   { id: 'ngayMo', label: 'Ngày Mở', width: 110, align: 'right' },
-  
+
   // Columns kept after user request
   { id: 'kieuKhoa', label: 'Kiểu Khóa', width: 100 },
   { id: 'nvMo', label: 'NV Mở', width: 150 },
@@ -293,7 +294,7 @@ export default function VirtualDMNTable({
               case 'kyNam': content = <span style={tc} className="font-medium text-[11px]" title={row.KyNam}>{row.KyNam || 'N/A'}</span>; break;
 
               // New Columns for Report
-              case 'mlt2': content = <span style={tc} className="font-mono">{row.MLT2}</span>; break;
+              case 'mlt2': content = <span style={isManualAdd ? tc : { color: '#2563eb' }} className="font-mono font-bold text-sm">{row.MLT2}</span>; break;
               case 'soMoi': content = <span style={tc} className="italic">{row.SoMoi}</span>; break;
               case 'soThan': content = <span style={tc} className="font-medium text-[13px]">{row.SoThan}</span>; break;
 

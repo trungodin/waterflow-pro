@@ -30,7 +30,6 @@ interface ThongBaoRow {
   hinh_tb: string;
   ngay_goi_tb: string;
   tinh_trang: string;
-  hinh_anh: string;
   nhom: string;
   stt?: number | string;
   dot?: string;
@@ -38,6 +37,7 @@ interface ThongBaoRow {
   so_than?: string;
   dia_chi?: string;
   ngay_giao?: string | Date;
+  mlt2?: string;
 }
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
@@ -50,6 +50,16 @@ const isUnpaid = (t: string) => {
   if (!t) return false;
   const u = t.toUpperCase().normalize("NFC");
   return u.includes("CHƯA THANH TOÁN");
+};
+const isHandled = (t: string) => {
+  if (!t) return false;
+  const u = t.toUpperCase().normalize("NFC");
+  return u.includes("ĐÃ XỬ LÝ");
+};
+const isLocked = (t: string) => {
+  if (!t) return false;
+  const u = t.toUpperCase().normalize("NFC");
+  return u.includes("KHÓA NƯỚC") || u.includes("ĐANG KHOÁ");
 };
 
 function fmtDate(raw: string) {
@@ -66,7 +76,7 @@ function fmtDate(raw: string) {
         minute: "2-digit",
       });
     }
-  } catch {}
+  } catch { }
   return raw;
 }
 
@@ -267,18 +277,44 @@ function ThongBaoCard({
 }) {
   const paid = isProcessed(row.tinh_trang);
   const unpaid = isUnpaid(row.tinh_trang);
+  const locked = isLocked(row.tinh_trang);
+  const handled = isHandled(row.tinh_trang);
+
   const proxyUrl = (path: string) =>
     path ? `/api/drive/image?path=${encodeURIComponent(path)}` : "";
 
+  // Thêm classes tương ứng với từng trạng thái
+  let cardClass = "border-gray-200 bg-white";
+  let circleClass = "bg-gray-100 text-gray-700 border-gray-300";
+  let statusClass = "bg-gray-100 text-gray-600";
+
+  if (locked) {
+    cardClass = "border-red-200 bg-red-50";
+    circleClass = "bg-red-100 text-red-700 border-red-300";
+    statusClass = "bg-red-100 text-red-700";
+  } else if (handled) {
+    cardClass = "border-purple-200 bg-purple-50";
+    circleClass = "bg-purple-100 text-purple-700 border-purple-300";
+    statusClass = "bg-purple-100 text-purple-700";
+  } else if (paid) {
+    cardClass = "border-green-200 bg-green-50";
+    circleClass = "bg-green-100 text-green-700 border-green-300";
+    statusClass = "bg-green-100 text-green-700";
+  } else if (unpaid) {
+    cardClass = "border-orange-200 bg-orange-50";
+    circleClass = "bg-orange-100 text-orange-700 border-orange-300";
+    statusClass = "bg-orange-100 text-orange-700";
+  }
+
   return (
     <div
-      className={`rounded-xl border-2 p-4 cursor-pointer transition-all hover:shadow-md ${paid ? "border-green-200 bg-green-50" : unpaid ? "border-orange-200 bg-orange-50" : "border-gray-200 bg-white"}`}
+      className={`rounded-xl border-2 p-4 cursor-pointer transition-all hover:shadow-md ${cardClass}`}
       onClick={onViewDetail}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3">
           <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 shadow-sm ${paid ? "bg-green-100 text-green-700 border-green-300" : "bg-orange-100 text-orange-700 border-orange-300"}`}
+            className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 border-2 shadow-sm ${circleClass}`}
           >
             <span className="text-lg font-black">{row.stt || "-"}</span>
           </div>
@@ -291,7 +327,7 @@ function ThongBaoCard({
         </div>
         <div className="flex flex-col items-end">
           <span
-            className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 mb-1 ${paid ? "bg-green-100 text-green-700" : unpaid ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-600"}`}
+            className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 mb-1 ${statusClass}`}
           >
             {row.tinh_trang || "Chưa kiểm tra"}
           </span>
@@ -632,13 +668,13 @@ export default function ThongBaoTab() {
       tableRows += `
         <tr>
           <td style="text-align: center;">${r.stt || ""}</td>
-          <td>${r.danh_bo || ""}</td>
+          <td style="font-weight: bold; font-size: 13px; text-align: center;">${r.danh_bo || ""}</td>
           <td>${r.so_nha || ""}</td>
           <td>${r.dia_chi || ""}</td>
           <td>${r.duong || ""}</td>
           <td>${r.ten_kh || ""}</td>
           <td style="text-align: center;">${r.tong_ky || ""}</td>
-          <td style="text-align: right;">${formattedToCurrency}</td>
+          <td style="text-align: right; font-size: 13px;">${formattedToCurrency}</td>
           <td>${r.ky_nam || ""}</td>
           <td style="text-align: center;">${(r as any).gb || ""}</td>
           <td style="text-align: center;">${(r as any).dot || ""}</td>
@@ -655,6 +691,9 @@ export default function ThongBaoTab() {
         <title>${title}</title>
         <style>
           @media print {
+            .no-print {
+              display: none !important;
+            }
             @page {
               margin: 0;
             }
@@ -704,11 +743,11 @@ export default function ThongBaoTab() {
             font-weight: bold;
           }
           .col-stt { width: 3%; }
-          .col-danhbo { width: 8%; }
+          .col-danhbo { width: 9%; }
           .col-sonha { width: 8%; }
-          .col-dctt { width: 10%; }
+          .col-dctt { width: 6%; }
           .col-duong { width: 10%; }
-          .col-tenkh { width: 13%; }
+          .col-tenkh { width: 16%; }
           .col-ky { width: 3%; }
           .col-tongtien { width: 8%; }
           .col-kynam { width: 11%; }
@@ -719,6 +758,10 @@ export default function ThongBaoTab() {
         </style>
       </head>
       <body>
+        <div class="no-print" style="margin-bottom: 20px; padding: 10px; background: #f8fafc; border-bottom: 2px dashed #cbd5e1; display: flex; justify-content: flex-end; gap: 10px; position: sticky; top: 0; z-index: 50;">
+          <button onclick="window.print()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px;">🖨️ In</button>
+          <button onclick="window.close()" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">❌ Đóng</button>
+        </div>
         <h2>${title}</h2>
         <div class="header-info">Ngày : ${formattedDate}</div>
         <div class="header-info" style="margin-bottom: 10px;">Nhóm : ${groupName}</div>
@@ -744,14 +787,6 @@ export default function ThongBaoTab() {
             ${tableRows}
           </tbody>
         </table>
-        <script>
-          window.onload = function() {
-            setTimeout(() => {
-              window.print();
-              setTimeout(() => { window.close(); }, 500);
-            }, 500);
-          }
-        </script>
       </body>
       </html>
     `;
@@ -773,14 +808,14 @@ export default function ThongBaoTab() {
             {isToday
               ? `Hôm nay – ${new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" })}`
               : new Date(selectedDate + "T00:00:00").toLocaleDateString(
-                  "vi-VN",
-                  {
-                    weekday: "long",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  },
-                )}
+                "vi-VN",
+                {
+                  weekday: "long",
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                },
+              )}
           </p>
         </div>
         <div className="flex gap-3 flex-wrap items-center">
@@ -1071,7 +1106,7 @@ export default function ThongBaoTab() {
                     Tình Trạng Nợ
                   </span>
                   <div
-                    className={`font-semibold ${isUnpaid(detailRow.tinh_trang) ? "text-orange-600" : "text-green-600"}`}
+                    className={`font-semibold ${isLocked(detailRow.tinh_trang) ? "text-red-600" : isHandled(detailRow.tinh_trang) ? "text-purple-600" : isUnpaid(detailRow.tinh_trang) ? "text-orange-600" : "text-green-600"}`}
                   >
                     {detailRow.tinh_trang || "Chưa kiểm tra"}
                   </div>

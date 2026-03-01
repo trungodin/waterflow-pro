@@ -65,7 +65,7 @@ export async function fetchMoNuocByDate(targetDate?: string) {
         while (hasMore) {
             const { data, error } = await supabase
                 .from('water_lock_status')
-                .select('id,id_tb,danh_bo,ten_kh,so_nha,duong,ky_nam,tinh_trang,ngay_cpmn,tg_cpmn,ngay_mo,nv_mo,ghi_chu_mo,hinh_khoa,hinh_mo,tong_ky,tong_no,nhom_khoa,kieu_khoa,ngay_khoa')
+                .select('id,id_tb,danh_bo,ten_kh,so_nha,duong,ky_nam,tinh_trang,ngay_cpmn,tg_cpmn,ngay_mo,nv_mo,ghi_chu_mo,hinh_khoa,hinh_mo,tong_ky,tong_no,nhom_khoa,kieu_khoa,ngay_khoa,mlt2')
                 .range(offset, offset + PAGE_SIZE - 1)
 
             if (error) throw error
@@ -108,7 +108,7 @@ export async function fetchMoNuocByDate(targetDate?: string) {
         if (uniqueIdTbs.length > 0) {
             const { data: customers } = await supabase
                 .from('assigned_customers')
-                .select('ref_id, danh_bo, ten_kh, so_nha, duong, ky_nam')
+                .select('ref_id, danh_bo, ten_kh, so_nha, duong, ky_nam, mlt2')
                 .in('ref_id', uniqueIdTbs)
 
             if (customers) {
@@ -139,6 +139,7 @@ export async function fetchMoNuocByDate(targetDate?: string) {
                 NhomKhoa: item.nhom_khoa || '',
                 KieuKhoa: item.kieu_khoa || '',
                 NgayKhoa: item.ngay_khoa || '',
+                MLT2: item.mlt2 || cust.mlt2 || '',
             }
         })
     } catch (err) {

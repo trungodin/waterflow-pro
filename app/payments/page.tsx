@@ -135,15 +135,15 @@ export default function PaymentsPage() {
   // Evaluate default active tab based on permissions
   const defaultTab = canViewDoanhThu ? 'doanh_thu'
     : canViewDongMoNuoc ? 'dong_mo_nuoc'
-    : canViewTraCuuDMN ? 'tra_cuu_dmn'
-    : canViewMoNuoc ? 'mo_nuoc'
-    : canViewThongBao ? 'thong_bao'
-    : ''
+      : canViewTraCuuDMN ? 'tra_cuu_dmn'
+        : canViewMoNuoc ? 'mo_nuoc'
+          : canViewThongBao ? 'thong_bao'
+            : ''
 
   const [activeTab, setActiveTab] = useState(defaultTab)
   const [subTabDoanhThu, setSubTabDoanhThu] = useState('phan_tich_doanh_thu')
   const [subTabDMN, setSubTabDMN] = useState('loc_du_lieu_ton')
-  
+
   // Refresh activeTab if permissions finish loading later
   useEffect(() => {
     if (!activeTab && defaultTab) {
@@ -289,6 +289,7 @@ export default function PaymentsPage() {
         (item.TenKH && item.TenKH.toLowerCase().includes(lowerTerm)) ||
         (item.SoNha && item.SoNha.toLowerCase().includes(lowerTerm)) ||
         (item.Duong && item.Duong.toLowerCase().includes(lowerTerm)) ||
+        (item.MLT2 && item.MLT2.toLowerCase().includes(lowerTerm)) ||
         (fullAddress.includes(lowerTerm))
       )
 
@@ -555,7 +556,7 @@ export default function PaymentsPage() {
                     </div>
                     <input
                       type="text"
-                      placeholder="Tìm kiếm danh bạ, tên, địa chỉ..."
+                      placeholder="Tìm kiếm MLT, danh bạ, tên, địa chỉ..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 font-medium"
@@ -782,13 +783,13 @@ export default function PaymentsPage() {
         )
         }
       </Modal >
-        
-        {/* Add Customer Modal */}
-        <AddCustomerModal 
-          isOpen={isAddModalOpen} 
-          onClose={() => setIsAddModalOpen(false)} 
-          onAdded={() => fetchData(true)} 
-        />
+
+      {/* Add Customer Modal */}
+      <AddCustomerModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdded={() => fetchData(true)}
+      />
     </div >
   )
 }
