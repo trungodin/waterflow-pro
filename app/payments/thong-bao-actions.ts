@@ -265,3 +265,112 @@ export async function saveDebtCheckResult(
     return { success: false, error: err.message };
   }
 }
+
+// Kiểm tra nợ hàng loạt (Bulk Check)
+export async function checkBulkCustomerDebt(danhBaList: string[]) {
+  try {
+    if (!danhBaList || danhBaList.length === 0) {
+      return { success: true, results: [] };
+    }
+
+    // 1. Get ALL unpaid invoices for the list of customers
+    const formattedDanhBaList = danhBaList.map((db) => `'${db}'`).join(",");
+    const sqlQuery = `
+            SELECT DANHBA, SOHOADON, TONGCONG
+            FROM HoaDon WITH (NOLOCK)
+            WHERE DANHBA IN (${formattedDanhBaList}) AND NGAYGIAI IS NULL
+        `;
+    const allInvoices = await fetchSql("f_Select_SQL_Thutien", sqlQuery);
+
+    if (!allInvoices || allInvoices.length === 0) {
+      // Nobody has any unpaid invoices
+      return {
+        success: true,
+        results: danhBaList.map(db => ({ danh_bo: db, isDebt: false, totalDebt: 0 }))
+      };
+    }
+
+    // 2. Filter out those that are already paid via BGW (Bank)
+    const soHoaDonList = allInvoices.map((inv: any) => inv.SOHOADON).filter(Boolean);
+    let paidSet = new Set();
+    
+    if (soHoaDonList.length > 0) {
+      const formattedShdList = soHoaDonList.map((s: any) => `'${s}'`).join(",");
+      const bgwQuery = `
+              SELECT SHDon 
+              FROM BGW_HD WITH (NOLOCK)
+              WHERE SHDon IN (${formattedShdList})
+          `;
+      const bgwPaid = await fetchSql("f_Select_SQL_Nganhang", bgwQuery);
+      if (bgwPaid && bgwPaid.length > 0) {
+        paidSet = new Set(bgwPaid.map((x: any) => x.SHDon));
+      }
+    }
+
+    // 3. Group remaining invoices by DanhBa
+    const unpaidInvoices = allInvoices.filter((inv: any) => !paidSet.has(inv.SOHOADON));
+    
+    const debtMap = new Map<string, number>();
+    for (const inv of unpaidInvoices) {
+      const db = typeof inv.DANHBA === 'string' ? inv.DANHBA.padStart(11, '0') : String(inv.DANHBA).padStart(11, '0');
+      const currentDebt = debtMap.get(db) || 0;
+      debtMap.set(db, currentDebt + (Number(inv.TONGCONG) || 0));
+    }
+
+    // 4. Transform into final results array
+    const results = danhBaList.map((db) => {
+      // Ensure we format the danhBa the same way for lookup
+      const lookupDb = db.padStart(11, '0');
+      const totalDebt = debtMap.get(lookupDb) || 0;
+      return {
+        danh_bo: db,
+        isDebt: totalDebt > 0,
+        totalDebt: totalDebt
+      };
+    });
+
+    return { success: true, results };
+  } catch (err: any) {
+    console.error("checkBulkCustomerDebt error:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+// Lưu trạng thái nợ hàng loạt (Bulk Save)
+export async function saveBulkDebtCheckResult(
+  updates: { ref_id: string; tinh_trang: string; tong_tien: number }[]
+) {
+  try {
+    if (!updates || updates.length === 0) return { success: true };
+    const supabase = getSupabase();
+
+    // Supabase JS client doesn't have a direct "bulk update by id" built-in that handles different values per row smoothly unless we use an RPC or upsert.
+    // For upsert to work, we need the primary key or unique constraint. 
+    // Assuming 'ref_id' or 'id' is unique, we can use upsert or iterate if the batch is reasonable. 
+    // Wait, assigned_customers might use 'id' as primary key.
+    
+    // Fallback to Promise.all for updates since it's much faster than sequential, 
+    // and safer than blindly upserting if we don't know the exact PK/constraint setup.
+    // 100 parallel updates to Supabase (Postgres) is trivial.
+    
+    const chunkSize = 20; // 20 concurrent updates at a time to be kind to the DB pool
+    for (let i = 0; i < updates.length; i += chunkSize) {
+      const chunk = updates.slice(i, i + chunkSize);
+      await Promise.all(
+        chunk.map(u => 
+          supabase.from("assigned_customers")
+            .update({
+              tinh_trang: u.tinh_trang,
+              tong_tien: u.tong_tien,
+            })
+            .eq("ref_id", u.ref_id)
+        )
+      );
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("saveBulkDebtCheckResult error:", err);
+    return { success: false, error: err.message };
+  }
+}

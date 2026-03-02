@@ -7,6 +7,8 @@ import {
   uploadHinhThongBao,
   checkCustomerDebt,
   saveDebtCheckResult,
+  checkBulkCustomerDebt,
+  saveBulkDebtCheckResult
 } from "@/app/payments/thong-bao-actions";
 import { useAuth } from "@/lib/hooks/useAuth";
 import {
@@ -482,55 +484,65 @@ export default function ThongBaoTab() {
     );
 
     let completed = 0;
-    const chunkSize = 10; // Tăng lên 10 để check lẹ hơn
+    const chunkSize = 50; // Quét bulk 50 người 1 lần, nhanh gấp 5 lần bản gốc
 
     for (let i = 0; i < toCheck.length; i += chunkSize) {
       if (cancelDebtCheckRef.current) {
         break; // Dừng check nợ
       }
       const chunk = toCheck.slice(i, i + chunkSize);
+      const danhBoList = chunk.map((r) => r.danh_bo);
 
-      // Batch cập nhật state để tránh giật lag UI (re-render nhiều lần)
-      const chunkResults: { ref_id: string; tinh_trang: string }[] = [];
+      // 1. Gọi Bulk Check API thay vì Promise.all từng cái một
+      const res = await checkBulkCustomerDebt(danhBoList);
+      
+      if (res.success && res.results && !cancelDebtCheckRef.current) {
+        const updatePayloads: { ref_id: string; tinh_trang: string; tong_tien: number }[] = [];
+        const chunkResults: { ref_id: string; tinh_trang: string }[] = [];
 
-      await Promise.all(
-        chunk.map(async (row) => {
-          if (cancelDebtCheckRef.current) return;
-          const res = await checkCustomerDebt(row.danh_bo);
-          if (res.success && !cancelDebtCheckRef.current) {
-            const newStatus = res.isDebt ? "CHƯA THANH TOÁN" : "ĐÃ THANH TOÁN";
-            chunkResults.push({ ref_id: row.ref_id, tinh_trang: newStatus });
-
-            // Ghi đè trạng thái lên server
-            await saveDebtCheckResult(
-              row.ref_id,
-              newStatus,
-              res.isDebt ? res.totalDebt : 0,
-            );
+        // Map kết quả về đúng Row
+        for (const r of chunk) {
+          const checkResult = res.results.find((cr: any) => cr.danh_bo === r.danh_bo);
+          if (checkResult) {
+            const newStatus = checkResult.isDebt ? "CHƯA THANH TOÁN" : "ĐÃ THANH TOÁN";
+            chunkResults.push({ ref_id: r.ref_id, tinh_trang: newStatus });
+            
+            updatePayloads.push({
+              ref_id: r.ref_id,
+              tinh_trang: newStatus,
+              tong_tien: checkResult.isDebt ? checkResult.totalDebt : 0
+            });
           }
-        }),
-      );
+        }
 
-      if (chunkResults.length > 0 && !cancelDebtCheckRef.current) {
-        setRows((prev) => {
-          const newRows = prev.map((r) => {
-            const result = chunkResults.find((cr) => cr.ref_id === r.ref_id);
-            if (result) {
-              return { ...r, tinh_trang: result.tinh_trang };
-            }
-            return r;
+        // 2. Gọi Bulk Save API
+        if (updatePayloads.length > 0) {
+           await saveBulkDebtCheckResult(updatePayloads);
+        }
+
+        // 3. Update UI state (batch update)
+        if (chunkResults.length > 0 && !cancelDebtCheckRef.current) {
+          setRows((prev) => {
+            const newRows = prev.map((r) => {
+              const result = chunkResults.find((cr) => cr.ref_id === r.ref_id);
+              if (result) {
+                return { ...r, tinh_trang: result.tinh_trang };
+              }
+              return r;
+            });
+            setThongBaoCache(selectedDate, newRows);
+            return newRows;
           });
-          setThongBaoCache(selectedDate, newRows);
-          return newRows;
-        });
+        }
       }
 
       if (!cancelDebtCheckRef.current) {
         completed += chunk.length;
         setDebtCheckProgress(completed);
       }
-      // Add a very small delay between chunks to avoid rate limit
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      
+      // Delays 100ms giữa các cục 50 người để UI vẫn mượt
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     setIsCheckingDebt(false);
@@ -668,16 +680,15 @@ export default function ThongBaoTab() {
       tableRows += `
         <tr>
           <td style="text-align: center;">${r.stt || ""}</td>
-          <td style="font-weight: bold; font-size: 13px; text-align: center;">${r.danh_bo || ""}</td>
+          <td style="font-weight: bold; text-align: center;">${r.danh_bo || ""}</td>
           <td>${r.so_nha || ""}</td>
           <td>${r.dia_chi || ""}</td>
           <td>${r.duong || ""}</td>
           <td>${r.ten_kh || ""}</td>
           <td style="text-align: center;">${r.tong_ky || ""}</td>
-          <td style="text-align: right; font-size: 13px;">${formattedToCurrency}</td>
+          <td style="text-align: right; font-weight: bold;">${formattedToCurrency}</td>
           <td>${r.ky_nam || ""}</td>
-          <td style="text-align: center;">${(r as any).gb || ""}</td>
-          <td style="text-align: center;">${(r as any).dot || ""}</td>
+          <td style="text-align: center; font-weight: bold;">${(r as any).mlt2 || ""}</td>
           <td style="text-align: center;">${r.hop_bv || ""}</td>
           <td style="text-align: center;">${(r as any).so_than || ""}</td>
         </tr>
@@ -706,7 +717,7 @@ export default function ThongBaoTab() {
           }
           body {
             font-family: Arial, sans-serif;
-            font-size: 11px;
+            font-size: 13px;
             margin: 0;
             padding: 10mm;
             -webkit-print-color-adjust: exact;
@@ -751,8 +762,7 @@ export default function ThongBaoTab() {
           .col-ky { width: 3%; }
           .col-tongtien { width: 8%; }
           .col-kynam { width: 11%; }
-          .col-gb { width: 3%; }
-          .col-dot { width: 3%; }
+          .col-mlt2 { width: 6%; }
           .col-hop { width: 4%; }
           .col-sothan { width: 6%; }
         </style>
@@ -777,8 +787,7 @@ export default function ThongBaoTab() {
               <th class="col-ky">Kỳ</th>
               <th class="col-tongtien">Tổng tiền</th>
               <th class="col-kynam">Kỳ năm</th>
-              <th class="col-gb">GB</th>
-              <th class="col-dot">Đợt</th>
+              <th class="col-mlt2">MLT2</th>
               <th class="col-hop">Hộp</th>
               <th class="col-sothan">Số thân</th>
             </tr>
@@ -869,6 +878,14 @@ export default function ThongBaoTab() {
             </div>
             <div className="text-xs text-gray-500">Chưa TT</div>
           </div>
+          <button
+            onClick={() => load(selectedDate, true)}
+            disabled={loading}
+            className={`px-4 py-2 bg-blue-100 text-blue-700 text-sm font-bold rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-2 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+            title="Làm mới dữ liệu từ máy chủ"
+          >
+            <span className={loading ? "animate-spin" : ""}>🔄</span> Cập nhật
+          </button>
           <button
             onClick={startDebtCheck}
             disabled={!isCheckingDebt && filtered.length === 0}
