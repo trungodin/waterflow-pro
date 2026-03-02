@@ -93,7 +93,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, TabPermission[]> = {
   manager: ['dashboard', 'ghi', 'payments', 'customer'],
   reader: ['dashboard', 'ghi', 'customer'],
   collector: ['dashboard', 'payments', 'customer'],
-  dmn_staff: ['dashboard', 'payments', 'customer'],
+  dmn_staff: ['payments', 'customer'],
   pending: [] // No access until approved
 }
 
@@ -145,8 +145,8 @@ export const ROLE_ACTIONS: Record<UserRole, ActionPermission[]> = {
     'view_customer'
   ],
   dmn_staff: [
-    'view_dashboard',
-    'view_payments', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'view_thong_bao', 'edit_payments', // Only DMN specific tabs
+    
+    'view_payments', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'edit_payments', // Only DMN specific tabs
     'view_customer'
   ],
   pending: []
