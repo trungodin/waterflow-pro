@@ -227,12 +227,17 @@ export const generateWordNotice = async (
                         scanRight++
                     }
 
-                    // Replace with TOKEN first
-                    const before = cleanedXml.substring(0, startReplace)
-                    const after = cleanedXml.substring(endReplace)
+                    const isUnsafe = ['NAM', 'NGAY', 'THANG', 'DOT', 'STT', 'GB', 'NAM}', 'SSTT'].includes(tag);
 
-                    cleanedXml = before + token + after
-                    searchStart = startReplace + token.length
+                    if (isUnsafe && (bracesFound < 2 || bracesEndFound < 2)) {
+                        searchStart = foundAt + matchLength;
+                    } else {
+                        const before = cleanedXml.substring(0, startReplace)
+                        const after = cleanedXml.substring(endReplace)
+
+                        cleanedXml = before + token + after
+                        searchStart = startReplace + token.length
+                    }
                 }
             })
 
