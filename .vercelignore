@@ -1,11 +1,2 @@
 scripts/
-*.log
-*.txt
 print_cols.js
-analyze_*.txt
-unreferenced_files.txt
-supabase/
-GOOGLE_SHEETS_SETUP.md
-HOW_TO_GET_SHEET_ID.md
-README.md
-SETUP.md
