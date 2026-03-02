@@ -227,7 +227,7 @@ export const generateWordNotice = async (
                         scanRight++
                     }
 
-                    const isUnsafe = ['NAM', 'NGAY', 'THANG', 'DOT', 'STT', 'GB', 'NAM}', 'SSTT'].includes(tag);
+                    const isUnsafe = ['NAM', 'NGAY', 'THANG', 'GB', 'NAM}', 'SSTT'].includes(tag);
 
                     if (isUnsafe && (bracesFound < 2 || bracesEndFound < 2)) {
                         searchStart = foundAt + matchLength;
