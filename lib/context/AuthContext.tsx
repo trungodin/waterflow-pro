@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const fetchPromise = supabase
         .from('user_profiles')
-        .select('user_id, role, status, email, full_name')
+        .select('*')
         .eq('user_id', userId)
         .maybeSingle()
 
@@ -82,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!data) return null
       
+      // Always save fresh data to cache (overwrite stale cached profile)
       if (typeof window !== 'undefined') {
         localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(data))
       }
