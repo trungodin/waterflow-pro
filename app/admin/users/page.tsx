@@ -373,9 +373,36 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
   )
 
   const toggleTab = (tab: TabPermission) => {
+    const isAdding = !extraTabs.includes(tab)
+
+    // Mapping: khi tick vào tab nào thì tự động thêm/xóa action tương ứng
+    const TAB_ACTIONS_MAP: Partial<Record<TabPermission, ActionPermission[]>> = {
+      ghi:      ['view_ghi', 'edit_ghi'],
+      payments: ['view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'view_thong_bao', 'edit_payments'],
+      dashboard: ['view_dashboard'],
+      customer:  ['view_customer'],
+      users:     ['manage_users', 'approve_users'],
+    }
+
+    const relatedActions = (TAB_ACTIONS_MAP[tab] || []) as ActionPermission[]
+
     setExtraTabs(prev =>
-      prev.includes(tab) ? prev.filter(t => t !== tab) : [...prev, tab]
+      isAdding ? [...prev, tab] : prev.filter(t => t !== tab)
     )
+
+    if (relatedActions.length > 0) {
+      setExtraActions(prev => {
+        if (isAdding) {
+          // Thêm các action liên quan (không trùng)
+          const toAdd = relatedActions.filter(a => !prev.includes(a) && !roleActions.includes(a))
+          return [...prev, ...toAdd]
+        } else {
+          // Xóa các action liên quan (trừ những gì đã là trong extra trước)
+          const originalExtra = (user.extra_permissions?.actions as ActionPermission[]) || []
+          return prev.filter(a => !relatedActions.includes(a) || originalExtra.includes(a))
+        }
+      })
+    }
   }
 
   const toggleAction = (action: ActionPermission) => {
