@@ -324,3 +324,33 @@ export async function logActivity(data: {
     console.error('Error logging activity:', error)
   }
 }
+
+// Update extra permissions for a user (admin only)
+export async function updateUserExtraPermissions(
+  userId: string,
+  extraPermissions: {
+    tabs?: string[]
+    actions?: string[]
+  }
+) {
+  try {
+    const supabase = await createClient()
+    // @ts-ignore
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .update({ extra_permissions: extraPermissions })
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating extra permissions:', error)
+      return { success: false, error: 'Failed to update permissions: ' + error.message }
+    }
+
+    return { success: true, user: data }
+  } catch (error) {
+    console.error('Error in updateUserExtraPermissions:', error)
+    return { success: false, error: 'Failed to update extra permissions' }
+  }
+}

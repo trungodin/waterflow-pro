@@ -19,6 +19,10 @@ export interface UserProfile {
   approved_at?: string
   created_at: string
   updated_at: string
+  extra_permissions?: {
+    tabs?: TabPermission[]
+    actions?: ActionPermission[]
+  }
 }
 
 // Admin emails – đọc từ env variable ADMIN_EMAILS (phân cách bằng dấu phẩy)

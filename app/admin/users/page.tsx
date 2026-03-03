@@ -10,9 +10,10 @@ import {
   updateUserRole,
   suspendUser,
   reactivateUser,
-  deleteUser
+  deleteUser,
+  updateUserExtraPermissions
 } from '@/lib/actions/user-management'
-import { UserProfile, UserRole, UserStatus, ROLE_INFO, getRoleInfo } from '@/lib/rbac/roles'
+import { UserProfile, UserRole, UserStatus, ROLE_INFO, getRoleInfo, ROLE_PERMISSIONS, ROLE_ACTIONS, TabPermission, ActionPermission } from '@/lib/rbac/roles'
 import { useAuth } from '@/lib/hooks/useAuth'
 
 export default function UserManagementPage() {
@@ -66,6 +67,21 @@ export default function UserManagementPage() {
       await loadUsers()
       setSelectedUser(null)
       alert('Đã từ chối user!')
+    } else {
+      alert('Lỗi: ' + result.error)
+    }
+    setActionLoading(false)
+  }
+
+  const handleUpdateExtraPermissions = async (
+    userId: string,
+    extraPermissions: { tabs?: string[]; actions?: string[] }
+  ) => {
+    setActionLoading(true)
+    const result = await updateUserExtraPermissions(userId, extraPermissions)
+    if (result.success) {
+      await loadUsers()
+      alert('Đã cập nhật phân quyền bổ sung!')
     } else {
       alert('Lỗi: ' + result.error)
     }
@@ -260,6 +276,7 @@ export default function UserManagementPage() {
           onSuspend={handleSuspend}
           onReactivate={handleReactivate}
           onDelete={handleDelete}
+          onUpdateExtraPermissions={handleUpdateExtraPermissions}
           loading={actionLoading}
         />
       )}
@@ -332,7 +349,7 @@ function StatusBadge({ status }: { status: UserStatus }) {
 }
 
 // User Detail Modal Component
-function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onSuspend, onReactivate, onDelete, loading }: {
+function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onSuspend, onReactivate, onDelete, onUpdateExtraPermissions, loading }: {
   user: UserProfile
   onClose: () => void
   onApprove: (userId: string, role: UserRole) => void
@@ -341,10 +358,54 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
   onSuspend: (userId: string, notes: string) => void
   onReactivate: (userId: string) => void
   onDelete: (userId: string) => void
+  onUpdateExtraPermissions: (userId: string, extra: { tabs?: string[]; actions?: string[] }) => void
   loading: boolean
 }) {
   const [selectedRole, setSelectedRole] = useState<UserRole>(user.requested_role || user.role)
   const [notes, setNotes] = useState('')
+
+  // Extra permissions state (initialised from user data)
+  const [extraTabs, setExtraTabs] = useState<TabPermission[]>(
+    (user.extra_permissions?.tabs as TabPermission[]) || []
+  )
+  const [extraActions, setExtraActions] = useState<ActionPermission[]>(
+    (user.extra_permissions?.actions as ActionPermission[]) || []
+  )
+
+  const toggleTab = (tab: TabPermission) => {
+    setExtraTabs(prev =>
+      prev.includes(tab) ? prev.filter(t => t !== tab) : [...prev, tab]
+    )
+  }
+
+  const toggleAction = (action: ActionPermission) => {
+    setExtraActions(prev =>
+      prev.includes(action) ? prev.filter(a => a !== action) : [...prev, action]
+    )
+  }
+
+  // Tabs the user already gets from their role
+  const roleTabs = ROLE_PERMISSIONS[user.role] || []
+  const roleActions = ROLE_ACTIONS[user.role] || []
+
+  const allTabs: { key: TabPermission; label: string; icon: string }[] = [
+    { key: 'dashboard', label: 'Dashboard',    icon: '📊' },
+    { key: 'ghi',       label: 'Đọc số',       icon: '📖' },
+    { key: 'payments',  label: 'Thu tiền',     icon: '💰' },
+    { key: 'customer',  label: 'Tra cứu KH',   icon: '🔍' },
+    { key: 'users',     label: 'Quản lý Users',icon: '👥' },
+  ]
+
+  const allSubActions: { key: ActionPermission; label: string; icon: string }[] = [
+    { key: 'view_doanh_thu',    label: 'Doanh thu',     icon: '💹' },
+    { key: 'view_thong_bao',    label: 'Thông báo',     icon: '🔔' },
+    { key: 'view_dong_mo_nuoc', label: 'Đóng mở nước', icon: '🚰' },
+    { key: 'view_tra_cuu_dmn',  label: 'Tra cứu DMN',  icon: '🔎' },
+    { key: 'view_mo_nuoc',      label: 'Mở nước',       icon: '💧' },
+    { key: 'edit_ghi',          label: 'Sửa đọc số',    icon: '✏️' },
+    { key: 'edit_payments',     label: 'Sửa thu tiền',  icon: '✏️' },
+    { key: 'export_data',       label: 'Xuất dữ liệu',  icon: '📤' },
+  ]
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
@@ -410,6 +471,94 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
               </div>
             )}
           </div>
+
+          {/* Extra Permissions Section */}
+          {user.status === 'active' && (
+            <div className="border-2 border-indigo-200 rounded-xl p-5 bg-indigo-50">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">🔐</span>
+                <h3 className="text-base font-bold text-indigo-900">Phân quyền bổ sung</h3>
+                <span className="text-xs text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">ngoài role gốc</span>
+              </div>
+
+              {/* Tab permissions */}
+              <div className="mb-4">
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">📑 Tab truy cập</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {allTabs.map(({ key, label, icon }) => {
+                    const fromRole = roleTabs.includes(key)
+                    const checked = fromRole || extraTabs.includes(key)
+                    return (
+                      <label
+                        key={key}
+                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
+                          fromRole
+                            ? 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'
+                            : checked
+                            ? 'border-indigo-400 bg-indigo-100'
+                            : 'border-gray-200 bg-white hover:border-indigo-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={fromRole}
+                          onChange={() => toggleTab(key)}
+                          className="w-4 h-4 accent-indigo-600"
+                        />
+                        <span className="text-sm">{icon} {label}</span>
+                        {fromRole && <span className="text-xs text-gray-400 ml-auto">role</span>}
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Sub-action permissions */}
+              <div className="mb-4">
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">⚡ Hành động chi tiết</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {allSubActions.map(({ key, label, icon }) => {
+                    const fromRole = roleActions.includes(key)
+                    const checked = fromRole || extraActions.includes(key)
+                    return (
+                      <label
+                        key={key}
+                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
+                          fromRole
+                            ? 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'
+                            : checked
+                            ? 'border-indigo-400 bg-indigo-100'
+                            : 'border-gray-200 bg-white hover:border-indigo-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={fromRole}
+                          onChange={() => toggleAction(key)}
+                          className="w-4 h-4 accent-indigo-600"
+                        />
+                        <span className="text-sm">{icon} {label}</span>
+                        {fromRole && <span className="text-xs text-gray-400 ml-auto">role</span>}
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <button
+                onClick={() => onUpdateExtraPermissions(user.user_id, {
+                  tabs: extraTabs,
+                  actions: extraActions
+                })}
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              >
+                <span>💾</span> Lưu phân quyền bổ sung
+              </button>
+            </div>
+          )}
 
           {/* Actions Section - Clear Separation */}
           <div className="border-t-2 border-gray-200 pt-8 space-y-4">

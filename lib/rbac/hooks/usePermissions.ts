@@ -18,20 +18,26 @@ export function usePermissions() {
   const status = userProfile?.status || 'pending'
   const isActive = isActiveUser(status)
 
-  // Check if user can access a specific tab
+  // Extra permissions stored per-user in DB
+  const extraTabs: TabPermission[] = userProfile?.extra_permissions?.tabs || []
+  const extraActions: ActionPermission[] = userProfile?.extra_permissions?.actions || []
+
+  // Check if user can access a specific tab (role OR extra)
   const canAccessTab = (tab: TabPermission): boolean => {
     if (!isActive) return false
-    return hasTabPermission(role, tab)
+    return hasTabPermission(role, tab) || extraTabs.includes(tab)
   }
 
-  // Check if user can perform a specific action
+  // Check if user can perform a specific action (role OR extra)
   const canPerformAction = (action: ActionPermission): boolean => {
     if (!isActive) return false
-    return hasActionPermission(role, action)
+    return hasActionPermission(role, action) || extraActions.includes(action)
   }
 
-  // Get all allowed tabs for current user
-  const allowedTabs = isActive ? getAllowedTabs(role) : []
+  // Get all allowed tabs for current user (union of role + extra)
+  const allowedTabs = isActive
+    ? [...new Set([...getAllowedTabs(role), ...extraTabs])]
+    : []
 
   // Specific permission checks
   const permissions = {
@@ -63,6 +69,8 @@ export function usePermissions() {
     canAccessTab,
     canPerformAction,
     allowedTabs,
+    extraTabs,
+    extraActions,
     ...permissions
   }
 }
