@@ -40,6 +40,7 @@ interface ThongBaoRow {
   dia_chi?: string;
   ngay_giao?: string | Date;
   mlt2?: string;
+  user_sua?: string;
 }
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
@@ -135,12 +136,13 @@ function ThongBaoModal({
       const hinhTbPath = uploadRes.path;
 
       // Lưu DB
-      const saveRes = await saveThongBaoImage(row.ref_id, hinhTbPath);
+      const saveRes = await saveThongBaoImage(row.ref_id, hinhTbPath, userEmail);
       if (!saveRes.success) throw new Error(saveRes.error || "Lỗi lưu dữ liệu");
 
       onSuccess({
         hinh_tb: hinhTbPath,
         ngay_goi_tb: saveRes.ngayGoiTb || new Date().toLocaleString("vi-VN"),
+        user_sua: userEmail,
       });
     } catch (err: any) {
       setError(err.message);
@@ -1136,8 +1138,9 @@ export default function ThongBaoTab() {
                 <h4 className="font-bold text-gray-700 mb-2">📢 Thông Báo</h4>
                 {detailRow.ngay_goi_tb ? (
                   <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
-                    <div className="text-sm font-semibold text-blue-800 mb-2">
-                      Đã gửi lúc: {fmtDate(detailRow.ngay_goi_tb)}
+                    <div className="text-sm font-semibold text-blue-800 mb-2 flex flex-col gap-1">
+                      <span>Đã gửi lúc: {fmtDate(detailRow.ngay_goi_tb)}</span>
+                      <span>NV gởi: {detailRow.user_sua || "Chưa ghi nhận"}</span>
                     </div>
                     {detailRow.hinh_tb ? (
                       <img

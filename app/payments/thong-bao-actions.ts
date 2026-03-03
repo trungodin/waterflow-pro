@@ -76,7 +76,7 @@ export async function fetchThongBaoByDate(targetDate?: string) {
     const { data: dbData, error } = await supabase
       .from("assigned_customers")
       .select(
-        "id,ref_id,ky_nam,danh_bo,ten_kh,so_nha,duong,tong_tien,tong_ky,hop_bv,hinh_tb,ngay_giao,ngay_goi_tb,tinh_trang,nhom,stt,dot,gb,so_than,dia_chi,mlt2",
+        "id,ref_id,ky_nam,danh_bo,ten_kh,so_nha,duong,tong_tien,tong_ky,hop_bv,hinh_tb,ngay_giao,ngay_goi_tb,tinh_trang,nhom,stt,dot,gb,so_than,dia_chi,mlt2,user_sua",
       )
       .or(filterString);
 
@@ -154,6 +154,7 @@ export async function uploadHinhThongBao(
 export async function saveThongBaoImage(
   id: string, // ref_id
   hinhTbPath: string,
+  userEmail: string,
 ) {
   try {
     const supabase = getSupabase();
@@ -167,6 +168,7 @@ export async function saveThongBaoImage(
       .update({
         hinh_tb: hinhTbPath,
         ngay_goi_tb: ngayGoiTb,
+        user_sua: userEmail,
       })
       .eq("ref_id", id);
 
