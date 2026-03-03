@@ -415,23 +415,40 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
   const roleTabs = ROLE_PERMISSIONS[user.role] || []
   const roleActions = ROLE_ACTIONS[user.role] || []
 
-  const allTabs: { key: TabPermission; label: string; icon: string }[] = [
-    { key: 'dashboard', label: 'Dashboard',    icon: '📊' },
-    { key: 'ghi',       label: 'Đọc số',       icon: '📖' },
-    { key: 'payments',  label: 'Thu tiền',     icon: '💰' },
-    { key: 'customer',  label: 'Tra cứu KH',   icon: '🔍' },
-    { key: 'users',     label: 'Quản lý Users',icon: '👥' },
+  const permissionsHierarchy = [
+    {
+      tab: { key: 'dashboard' as TabPermission, label: 'Dashboard', icon: '📊' },
+      actions: []
+    },
+    {
+      tab: { key: 'ghi' as TabPermission, label: 'Đọc số', icon: '📖' },
+      actions: [
+        { key: 'edit_ghi' as ActionPermission, label: 'Sửa đọc số', icon: '✏️' }
+      ]
+    },
+    {
+      tab: { key: 'payments' as TabPermission, label: 'Thu tiền', icon: '💰' },
+      actions: [
+        { key: 'view_doanh_thu' as ActionPermission, label: 'Doanh thu', icon: '💹' },
+        { key: 'view_dong_mo_nuoc' as ActionPermission, label: 'Đóng mở nước', icon: '🚰' },
+        { key: 'view_tra_cuu_dmn' as ActionPermission, label: 'Tra cứu DMN', icon: '🔎' },
+        { key: 'view_mo_nuoc' as ActionPermission, label: 'Mở nước', icon: '💧' },
+        { key: 'view_thong_bao' as ActionPermission, label: 'Thông báo', icon: '🔔' },
+        { key: 'edit_payments' as ActionPermission, label: 'Sửa thu tiền', icon: '✏️' },
+      ]
+    },
+    {
+      tab: { key: 'customer' as TabPermission, label: 'Tra cứu KH', icon: '🔍' },
+      actions: []
+    },
+    {
+      tab: { key: 'users' as TabPermission, label: 'Quản lý Users', icon: '👥' },
+      actions: []
+    }
   ]
 
-  const allSubActions: { key: ActionPermission; label: string; icon: string }[] = [
-    { key: 'view_doanh_thu',    label: 'Doanh thu',     icon: '💹' },
-    { key: 'view_thong_bao',    label: 'Thông báo',     icon: '🔔' },
-    { key: 'view_dong_mo_nuoc', label: 'Đóng mở nước', icon: '🚰' },
-    { key: 'view_tra_cuu_dmn',  label: 'Tra cứu DMN',  icon: '🔎' },
-    { key: 'view_mo_nuoc',      label: 'Mở nước',       icon: '💧' },
-    { key: 'edit_ghi',          label: 'Sửa đọc số',    icon: '✏️' },
-    { key: 'edit_payments',     label: 'Sửa thu tiền',  icon: '✏️' },
-    { key: 'export_data',       label: 'Xuất dữ liệu',  icon: '📤' },
+  const globalActions = [
+    { key: 'export_data' as ActionPermission, label: 'Xuất dữ liệu', icon: '📤' }
   ]
 
   return (
@@ -508,44 +525,80 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
                 <span className="text-xs text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-full">ngoài role gốc</span>
               </div>
 
-              {/* Tab permissions */}
-              <div className="mb-4">
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">📑 Tab truy cập</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {allTabs.map(({ key, label, icon }) => {
-                    const fromRole = roleTabs.includes(key)
-                    const checked = fromRole || extraTabs.includes(key)
+              {/* Phân quyền phân cấp */}
+              <div className="mb-6">
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">📑 Quyền truy cập các chức năng</p>
+                <div className="flex flex-col gap-3">
+                  {permissionsHierarchy.map(({ tab, actions }) => {
+                    const fromRoleTab = roleTabs.includes(tab.key)
+                    const tabChecked = fromRoleTab || extraTabs.includes(tab.key)
+
                     return (
-                      <label
-                        key={key}
-                        className={`flex items-center gap-2 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
-                          fromRole
-                            ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
-                            : checked
-                            ? 'border-indigo-400 bg-indigo-100'
-                            : 'border-gray-300 bg-white hover:border-indigo-300'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          disabled={fromRole}
-                          onChange={() => toggleTab(key)}
-                          className="w-4 h-4 accent-indigo-600"
-                        />
-                        <span className="text-sm font-medium text-gray-800">{icon} {label}</span>
-                        {fromRole && <span className="text-xs font-semibold text-indigo-600 ml-auto bg-indigo-100 px-1.5 py-0.5 rounded">role</span>}
-                      </label>
+                      <div key={tab.key} className="flex flex-col">
+                        {/* Parent Tab */}
+                        <label
+                          className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                            fromRoleTab
+                              ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
+                              : tabChecked
+                              ? 'border-indigo-400 bg-indigo-100 shadow-sm'
+                              : 'border-gray-300 bg-white hover:border-indigo-300'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={tabChecked}
+                            disabled={fromRoleTab}
+                            onChange={() => toggleTab(tab.key)}
+                            className="w-5 h-5 accent-indigo-600"
+                          />
+                          <span className="text-sm font-bold text-gray-900">{tab.icon} {tab.label}</span>
+                          {fromRoleTab && <span className="text-xs font-semibold text-indigo-600 ml-auto bg-indigo-100 px-2 py-0.5 rounded">role</span>}
+                        </label>
+                        
+                        {/* Children Actions (chỉ hiện khi tab được chọn) */}
+                        {actions.length > 0 && tabChecked && (
+                          <div className="pl-6 md:pl-10 grid grid-cols-1 md:grid-cols-2 gap-2 mt-2 relative before:content-[''] before:absolute before:left-3 md:before:left-5 before:top-0 before:bottom-0 before:w-0.5 before:bg-indigo-300/50">
+                            {actions.map(({ key: actKey, label: actLabel, icon: actIcon }) => {
+                              const fromRoleAct = roleActions.includes(actKey)
+                              const actChecked = fromRoleAct || extraActions.includes(actKey)
+                              
+                              return (
+                                <label
+                                  key={actKey}
+                                  className={`flex items-center gap-2 p-2 rounded-lg border-2 cursor-pointer transition-all ${
+                                    fromRoleAct
+                                      ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
+                                      : actChecked
+                                      ? 'border-indigo-400 bg-indigo-50'
+                                      : 'border-gray-200 bg-white hover:border-indigo-300'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={actChecked}
+                                    disabled={fromRoleAct}
+                                    onChange={() => toggleAction(actKey)}
+                                    className="w-4 h-4 accent-indigo-600"
+                                  />
+                                  <span className="text-sm font-medium text-gray-800">{actIcon} {actLabel}</span>
+                                  {fromRoleAct && <span className="text-[10px] font-semibold text-indigo-500 ml-auto bg-indigo-100/50 px-1.5 py-0.5 rounded">role</span>}
+                                </label>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
                     )
                   })}
                 </div>
               </div>
 
-              {/* Sub-action permissions */}
-              <div className="mb-4">
-                <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">⚡ Hành động chi tiết</p>
+              {/* Global Actions */}
+              <div className="mb-6 pt-5 border-t-2 border-indigo-100">
+                <p className="text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">🌍 Quyền toàn cục</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {allSubActions.map(({ key, label, icon }) => {
+                  {globalActions.map(({ key, label, icon }) => {
                     const fromRole = roleActions.includes(key)
                     const checked = fromRole || extraActions.includes(key)
                     return (
