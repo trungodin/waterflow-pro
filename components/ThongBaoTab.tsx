@@ -349,8 +349,15 @@ function ThongBaoCard({
 
       {row.ngay_goi_tb && (
         <div className="mt-2 flex flex-col gap-1">
-          <div className="flex items-center gap-1 text-xs text-blue-600 font-bold">
-            <span>🕐</span> Thông báo: {fmtDate(row.ngay_goi_tb)}
+          <div className="flex flex-col gap-1 text-xs text-blue-600 font-bold">
+            <div className="flex gap-1 items-center">
+              <span>🕐</span> Thông báo: {fmtDate(row.ngay_goi_tb.split(' - ')[0])}
+            </div>
+            {row.ngay_goi_tb.includes(' - ') && (
+              <div className="flex gap-1 items-center">
+                <span>👤</span> NV gởi: {row.ngay_goi_tb.split(' - ')[1]}
+              </div>
+            )}
           </div>
           {row.hinh_tb && (
             <div
@@ -1139,8 +1146,8 @@ export default function ThongBaoTab() {
                 {detailRow.ngay_goi_tb ? (
                   <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
                     <div className="text-sm font-semibold text-blue-800 mb-2 flex flex-col gap-1">
-                      <span>Đã gửi lúc: {fmtDate(detailRow.ngay_goi_tb)}</span>
-                      <span>NV gởi: {detailRow.user_sua || "Chưa ghi nhận"}</span>
+                      <span>Đã gửi lúc: {fmtDate(detailRow.ngay_goi_tb.split(' - ')[0])}</span>
+                      <span>NV gởi: {detailRow.ngay_goi_tb.includes(' - ') ? detailRow.ngay_goi_tb.split(' - ')[1] : (detailRow.user_sua || "Chưa ghi nhận")}</span>
                     </div>
                     {detailRow.hinh_tb ? (
                       <img

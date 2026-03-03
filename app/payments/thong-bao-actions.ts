@@ -160,7 +160,7 @@ export async function saveThongBaoImage(
     const supabase = getSupabase();
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
-    const ngayGoiTb = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const ngayGoiTb = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} - ${userEmail}`;
 
     // Update assigned_customers
     const { error: errorS1 } = await supabase
