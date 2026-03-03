@@ -104,6 +104,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, TabPermission[]> = {
 export type ActionPermission =
   | 'view_dashboard'
   | 'view_ghi'
+  | 'view_ghi_tong_quan' // Sub-tab of Đọc số
+  | 'view_ghi_chi_tiet'  // Sub-tab of Đọc số
+  | 'view_ghi_to_may'    // Sub-tab of Đọc số
+  | 'view_ghi_dot'       // Sub-tab of Đọc số
   | 'edit_ghi'
   | 'view_payments'
   | 'view_doanh_thu' // Sub-tab 1 của Thu Tiền
@@ -122,7 +126,7 @@ export type ActionPermission =
 export const ROLE_ACTIONS: Record<UserRole, ActionPermission[]> = {
   admin: [
     'view_dashboard',
-    'view_ghi', 'edit_ghi',
+    'view_ghi', 'view_ghi_tong_quan', 'view_ghi_chi_tiet', 'view_ghi_to_may', 'view_ghi_dot', 'edit_ghi',
     'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'view_thong_bao', 'edit_payments',
     'view_customer',
     'export_data',
@@ -133,14 +137,14 @@ export const ROLE_ACTIONS: Record<UserRole, ActionPermission[]> = {
   ],
   manager: [
     'view_dashboard',
-    'view_ghi', 'edit_ghi',
+    'view_ghi', 'view_ghi_tong_quan', 'view_ghi_chi_tiet', 'view_ghi_to_may', 'view_ghi_dot', 'edit_ghi',
     'view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'view_thong_bao', 'edit_payments',
     'view_customer',
     'export_data'
   ],
   reader: [
     'view_dashboard',
-    'view_ghi', 'edit_ghi',
+    'view_ghi', 'view_ghi_tong_quan', 'view_ghi_chi_tiet', 'view_ghi_to_may', 'view_ghi_dot', 'edit_ghi',
     'view_customer'
   ],
   collector: [

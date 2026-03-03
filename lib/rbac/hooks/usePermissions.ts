@@ -43,6 +43,10 @@ export function usePermissions() {
   const permissions = {
     canViewDashboard: canAccessTab('dashboard'),
     canViewGhi: canAccessTab('ghi'),
+    canViewGhiTongQuan: canPerformAction('view_ghi_tong_quan'),
+    canViewGhiChiTiet: canPerformAction('view_ghi_chi_tiet'),
+    canViewGhiToMay: canPerformAction('view_ghi_to_may'),
+    canViewGhiDot: canPerformAction('view_ghi_dot'),
     canViewPayments: canAccessTab('payments'),
     canViewDoanhThu: canPerformAction('view_doanh_thu'),
     canViewDongMoNuoc: canPerformAction('view_dong_mo_nuoc'),

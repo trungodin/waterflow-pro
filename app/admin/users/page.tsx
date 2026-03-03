@@ -377,7 +377,7 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
 
     // Mapping: khi tick vào tab nào thì tự động thêm/xóa action tương ứng
     const TAB_ACTIONS_MAP: Partial<Record<TabPermission, ActionPermission[]>> = {
-      ghi:      ['view_ghi', 'edit_ghi'],
+      ghi:      ['view_ghi', 'view_ghi_tong_quan', 'view_ghi_chi_tiet', 'view_ghi_to_may', 'view_ghi_dot', 'edit_ghi'],
       payments: ['view_payments', 'view_doanh_thu', 'view_dong_mo_nuoc', 'view_tra_cuu_dmn', 'view_mo_nuoc', 'view_thong_bao', 'edit_payments'],
       dashboard: ['view_dashboard'],
       customer:  ['view_customer'],
@@ -423,6 +423,10 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
     {
       tab: { key: 'ghi' as TabPermission, label: 'Đọc số', icon: '📖' },
       actions: [
+        { key: 'view_ghi_tong_quan' as ActionPermission, label: 'Biểu Đồ Tổng Quan', icon: '📊' },
+        { key: 'view_ghi_chi_tiet' as ActionPermission, label: 'Tra Cứu Chi Tiết', icon: '📝' },
+        { key: 'view_ghi_to_may' as ActionPermission, label: 'Phân Tích Tổ Máy', icon: '🏭' },
+        { key: 'view_ghi_dot' as ActionPermission, label: 'Phân Tích Đợt', icon: '🌊' },
         { key: 'edit_ghi' as ActionPermission, label: 'Sửa đọc số', icon: '✏️' }
       ]
     },
