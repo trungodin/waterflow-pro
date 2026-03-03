@@ -493,10 +493,10 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
                         key={key}
                         className={`flex items-center gap-2 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
                           fromRole
-                            ? 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'
+                            ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
                             : checked
                             ? 'border-indigo-400 bg-indigo-100'
-                            : 'border-gray-200 bg-white hover:border-indigo-300'
+                            : 'border-gray-300 bg-white hover:border-indigo-300'
                         }`}
                       >
                         <input
@@ -506,8 +506,8 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
                           onChange={() => toggleTab(key)}
                           className="w-4 h-4 accent-indigo-600"
                         />
-                        <span className="text-sm">{icon} {label}</span>
-                        {fromRole && <span className="text-xs text-gray-400 ml-auto">role</span>}
+                        <span className="text-sm font-medium text-gray-800">{icon} {label}</span>
+                        {fromRole && <span className="text-xs font-semibold text-indigo-600 ml-auto bg-indigo-100 px-1.5 py-0.5 rounded">role</span>}
                       </label>
                     )
                   })}
@@ -526,10 +526,10 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
                         key={key}
                         className={`flex items-center gap-2 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
                           fromRole
-                            ? 'border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed'
+                            ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
                             : checked
                             ? 'border-indigo-400 bg-indigo-100'
-                            : 'border-gray-200 bg-white hover:border-indigo-300'
+                            : 'border-gray-300 bg-white hover:border-indigo-300'
                         }`}
                       >
                         <input
@@ -539,8 +539,8 @@ function UserDetailModal({ user, onClose, onApprove, onReject, onChangeRole, onS
                           onChange={() => toggleAction(key)}
                           className="w-4 h-4 accent-indigo-600"
                         />
-                        <span className="text-sm">{icon} {label}</span>
-                        {fromRole && <span className="text-xs text-gray-400 ml-auto">role</span>}
+                        <span className="text-sm font-medium text-gray-800">{icon} {label}</span>
+                        {fromRole && <span className="text-xs font-semibold text-indigo-600 ml-auto bg-indigo-100 px-1.5 py-0.5 rounded">role</span>}
                       </label>
                     )
                   })}
