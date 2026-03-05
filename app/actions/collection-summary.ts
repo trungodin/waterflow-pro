@@ -30,42 +30,67 @@ export async function getCollectionSummary(startDate: string, endDate: string): 
         MaNH, 
         TThu, 
         DBo, 
-        CONVERT(varchar(16), NgayThanhToan, 120) as NgayThanhToanPhut
+        CONVERT(varchar(19), NgayThanhToan, 120) as NgayThanhToanStr
       FROM BGW_HD
       WHERE CAST(NgayThanhToan AS DATE) BETWEEN '${startDate}' AND '${endDate}'
         AND MaNH IS NOT NULL AND LTRIM(RTRIM(MaNH)) <> ''
+      ORDER BY NgayThanhToan ASC
     `
     
     const result = await executeSqlQuery('f_Select_SQL_Nganhang', query)
     if (!result || !Array.isArray(result)) return []
 
     // Group by bank
-    const bankMap = new Map<string, { count: number; total: number; uniqueCustomers: Set<string> }>()
+    const bankMap = new Map<string, { count: number; total: number; customerClusters: Map<string, number[]> }>()
     result.forEach((row: any) => {
       const bank = String(row.MaNH || '').trim()
       const amount = parseFloat(row.TThu || 0)
       const dbo = String(row.DBo || '').trim()
-      const timeStr = String(row.NgayThanhToanPhut || '').trim()
-      const uniqueKey = `${dbo}_${timeStr}`
+      const timeStr = String(row.NgayThanhToanStr || '').trim().replace(' ', 'T')
+      const timeMs = timeStr ? new Date(timeStr).getTime() : 0
       
       if (!bankMap.has(bank)) {
-        bankMap.set(bank, { count: 0, total: 0, uniqueCustomers: new Set() })
+        bankMap.set(bank, { count: 0, total: 0, customerClusters: new Map() })
       }
       const entry = bankMap.get(bank)!
       entry.count += 1
       entry.total += amount
-      if (dbo) {
-         entry.uniqueCustomers.add(uniqueKey)
+      
+      if (dbo && timeMs > 0) {
+        let clusters = entry.customerClusters.get(dbo)
+        if (!clusters) {
+            clusters = []
+            entry.customerClusters.set(dbo, clusters)
+        }
+        
+        let merged = false
+        for (let i = clusters.length - 1; i >= 0; i--) {
+            // Check if within 30 seconds
+            if (Math.abs(timeMs - clusters[i]) <= 30 * 1000) {
+                clusters[i] = Math.max(clusters[i], timeMs) // Extend cluster window
+                merged = true
+                break
+            }
+        }
+        if (!merged) {
+            clusters.push(timeMs)
+        }
       }
     })
 
     const summary = Array.from(bankMap.entries())
-      .map(([bank, stats]) => ({
-        bank,
-        count: stats.count,
-        customerCount: stats.uniqueCustomers.size,
-        total: stats.total
-      }))
+      .map(([bank, stats]) => {
+        let customerCount = 0
+        stats.customerClusters.forEach(clusters => {
+            customerCount += clusters.length
+        })
+        return {
+          bank,
+          count: stats.count,
+          customerCount: customerCount,
+          total: stats.total
+        }
+      })
       .sort((a, b) => a.bank.localeCompare(b.bank))
 
     return summary

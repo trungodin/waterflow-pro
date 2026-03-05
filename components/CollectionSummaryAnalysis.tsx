@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { getCollectionSummary, getCollectionDetails, CollectionSummary, CollectionDetail } from '@/app/actions/collection-summary'
 
 export default function CollectionSummaryAnalysis() {
@@ -64,11 +64,62 @@ export default function CollectionSummaryAnalysis() {
     }
   }
 
+  // Pre-process details based on calculationMode
+  const processedDetails = useMemo(() => {
+    if (calculationMode === 'invoice') return details;
+    
+    // In 'customer' mode: Group by danhBa with a +/- 1 minute window
+    // First, sort details by time
+    const sortedDetails = [...details].sort((a, b) => {
+        const t1 = new Date(a.ngayThanhToan).getTime();
+        const t2 = new Date(b.ngayThanhToan).getTime();
+        return t1 - t2;
+    });
+
+    const groups: any[] = [];
+    
+    for (const d of sortedDetails) {
+        const dTime = new Date(d.ngayThanhToan).getTime();
+        
+        // Find existing group for the same user within +/- 30 seconds
+        let foundGroup = null;
+        for (let i = groups.length - 1; i >= 0; i--) {
+            if (groups[i].danhBa === d.danhBa) {
+                if (Math.abs(dTime - groups[i].lastTimeMs) <= 30 * 1000) {
+                    foundGroup = groups[i];
+                    break;
+                }
+            }
+        }
+        
+        if (foundGroup) {
+            foundGroup.soTien += d.soTien;
+            foundGroup.lastTimeMs = Math.max(foundGroup.lastTimeMs, dTime); // extend the sliding window
+            
+            // combine strings without duplicates
+            if (!String(foundGroup.ky).includes(String(d.ky))) foundGroup.ky += `, ${d.ky}`;
+            if (!String(foundGroup.nam).includes(String(d.nam))) foundGroup.nam += `, ${d.nam}`;
+            if (d.soHoaDon && !foundGroup.soHoaDon.includes(d.soHoaDon)) foundGroup.soHoaDon += `, ${d.soHoaDon}`;
+            if (d.soBK && !foundGroup.soBK.includes(d.soBK)) foundGroup.soBK += foundGroup.soBK ? `, ${d.soBK}` : d.soBK;
+        } else {
+            groups.push({
+                ...d,
+                ky: String(d.ky),
+                nam: String(d.nam),
+                soHoaDon: d.soHoaDon || '',
+                soBK: d.soBK || '',
+                lastTimeMs: dTime // track for calculating time diff
+            });
+        }
+    }
+    return groups;
+  }, [details, calculationMode]);
+
   const exportToExcel = () => {
-    if (details.length === 0) return
+    if (processedDetails.length === 0) return
 
     // Prepare data for export
-    const exportData = details.map((row, idx) => ({
+    const exportData = processedDetails.map((row, idx) => ({
       'STT': idx + 1,
       'Số BK': row.soBK || '',
       'Danh bạ': row.danhBa,
@@ -132,7 +183,7 @@ export default function CollectionSummaryAnalysis() {
   }
 
   // Group details by date
-  const dailySummary = details.reduce((acc, d) => {
+  const dailySummary = processedDetails.reduce((acc, d) => {
     const date = d.ngayThanhToan.split('T')[0]
     if (!acc[date]) acc[date] = { count: 0, total: 0 }
     acc[date].count += 1
@@ -369,7 +420,7 @@ export default function CollectionSummaryAnalysis() {
                       onClick={exportToExcel}
                       className="px-3 py-1.5 bg-green-500 text-white text-sm rounded-md hover:bg-green-400 font-bold flex items-center gap-1 shadow-[0_3px_0_rgb(21,128,61)] active:shadow-none active:translate-y-[3px] transition-all"
                     >
-                      📥 Tải Excel ({details.length} giao dịch)
+                      📥 Tải Excel ({processedDetails.length.toLocaleString()} giao dịch)
                     </button>
                   )}
                 </div>
@@ -381,12 +432,12 @@ export default function CollectionSummaryAnalysis() {
                     <thead className="bg-gray-100">
                       <tr>
                         <th className="px-3 py-2 text-left font-medium text-gray-900">Ngày</th>
-                        <th className="px-3 py-2 text-right font-medium text-gray-900">Số HĐ</th>
+                        <th className="px-3 py-2 text-right font-medium text-gray-900">{calculationMode === 'invoice' ? 'Số HĐ' : 'Số KH'}</th>
                         <th className="px-3 py-2 text-right font-medium text-gray-900">Tổng cộng</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {dailyRows.map(([date, stats]) => (
+                      {dailyRows.map(([date, stats]: [string, any]) => (
                         <tr key={date} className="hover:bg-gray-50">
                           <td className="px-3 py-2 font-medium text-gray-900">{formatDate(date)}</td>
                           <td className="px-3 py-2 text-right font-medium text-gray-900">{stats.count.toLocaleString()}</td>
@@ -397,8 +448,8 @@ export default function CollectionSummaryAnalysis() {
                     <tfoot className="bg-orange-400 text-white font-bold">
                       <tr>
                         <td className="px-3 py-2">TỔNG CỘNG</td>
-                        <td className="px-3 py-2 text-right">{details.length.toLocaleString()}</td>
-                        <td className="px-3 py-2 text-right">{formatCurrency(details.reduce((s, d) => s + d.soTien, 0))}</td>
+                        <td className="px-3 py-2 text-right">{processedDetails.length.toLocaleString()}</td>
+                        <td className="px-3 py-2 text-right">{formatCurrency(processedDetails.reduce((s: any, d: any) => s + d.soTien, 0))}</td>
                       </tr>
                     </tfoot>
                   </table>
