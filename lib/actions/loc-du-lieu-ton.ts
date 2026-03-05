@@ -175,7 +175,8 @@ export async function getDebtData(params: DebtFilterParams) {
                 CoCu: row.CoCu,
                 HopBaoVe: row.HopBaoVe,
                 SDT: row.SDT,
-                GB_COL: row.GB // Add GB to customer object for Step 8 bypass check consistency
+                GB_COL: row.GB, // Add GB to customer object for Step 8 bypass check consistency
+                MAX_KY_NAM: row.NAM * 100 + row.KY
             })
             invoicesByCustomer.set(db, [])
         }
@@ -185,6 +186,20 @@ export async function getDebtData(params: DebtFilterParams) {
         customer.TONGKY += 1
         customer.KY_LIST.push(`${row.NAM}-${row.KY}`)
         customer.SOHOADON_LIST.push(row.SOHOADON)
+        
+        // Cập nhật thông tin Khách hàng theo Hóa đơn MỚI NHẤT
+        const currentKyNam = row.NAM * 100 + row.KY
+        if (currentKyNam > customer.MAX_KY_NAM) {
+            customer.MAX_KY_NAM = currentKyNam
+            customer.TEN = row.TENKH
+            customer.DIACHI = `${row.SO || ''} ${row.DUONG || ''}`.trim()
+            customer.TENKH = row.TENKH
+            customer.SO = row.SO
+            customer.DUONG = row.DUONG
+            customer.GB = row.GB
+            customer.GB_COL = row.GB
+            customer.DOT = row.DOT
+        }
         
         invoicesByCustomer.get(db)?.push(row)
     })
