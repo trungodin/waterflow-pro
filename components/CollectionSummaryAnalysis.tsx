@@ -15,6 +15,9 @@ export default function CollectionSummaryAnalysis() {
   const [loading, setLoading] = useState(false)
   const [loadingDetails, setLoadingDetails] = useState(false)
   
+  // Toggle mode
+  const [calculationMode, setCalculationMode] = useState<'invoice' | 'customer'>('invoice')
+
   // Sort State
   const [sortConfig, setSortConfig] = useState<{ key: 'bank' | 'count' | 'total'; direction: 'asc' | 'desc' }>({ key: 'bank', direction: 'asc' })
 
@@ -157,8 +160,16 @@ export default function CollectionSummaryAnalysis() {
 
   // Calculate sorted data
   const sortedSummary = [...summary].sort((a, b) => {
-    if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1
-    if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1
+    let valA = a[sortConfig.key] as string | number;
+    let valB = b[sortConfig.key] as string | number;
+    
+    if (sortConfig.key === 'count') {
+      valA = calculationMode === 'invoice' ? a.count : a.customerCount;
+      valB = calculationMode === 'invoice' ? b.count : b.customerCount;
+    }
+
+    if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1
+    if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1
     return 0
   })
 
@@ -203,7 +214,33 @@ export default function CollectionSummaryAnalysis() {
         {/* Left: Summary Table */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900">Bảng Tổng Hợp</h3>
+            <div className="flex items-center gap-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                Bảng Tổng Hợp
+              </h3>
+              <div className="inline-flex bg-gray-200/60 rounded-lg p-0.5 border border-gray-300/50">
+                <button
+                  onClick={() => setCalculationMode('invoice')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                    calculationMode === 'invoice' 
+                      ? 'bg-white text-blue-700 shadow-sm border border-gray-200' 
+                      : 'text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  Theo Hóa Đơn
+                </button>
+                <button
+                  onClick={() => setCalculationMode('customer')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                    calculationMode === 'customer' 
+                      ? 'bg-white text-blue-700 shadow-sm border border-gray-200' 
+                      : 'text-gray-500 hover:text-gray-800'
+                  }`}
+                >
+                  Theo Khách Hàng
+                </button>
+              </div>
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={selectAll}
@@ -240,7 +277,7 @@ export default function CollectionSummaryAnalysis() {
                         className="px-3 py-3 text-right font-bold border-r border-blue-500 w-32 cursor-pointer hover:bg-blue-700 transition"
                         onClick={() => handleSort('count')}
                    >
-                       Số HĐ <SortIcon colKey="count" />
+                       {calculationMode === 'invoice' ? 'Số HĐ' : 'Số KH'} <SortIcon colKey="count" />
                    </th>
                    <th 
                         className="px-3 py-3 text-right font-bold border-r border-blue-500 cursor-pointer hover:bg-blue-700 transition"
@@ -276,7 +313,7 @@ export default function CollectionSummaryAnalysis() {
                                   
                                   {/* Count Column - Orange Tint */}
                                   <td className="px-3 py-2 text-right border-r border-gray-100 font-medium text-gray-900 bg-orange-50">
-                                      {row.count.toLocaleString()}
+                                      {(calculationMode === 'invoice' ? row.count : row.customerCount).toLocaleString()}
                                   </td>
                                   
                                   {/* Total Column - Green Tint */}
@@ -300,7 +337,7 @@ export default function CollectionSummaryAnalysis() {
                     <td className="px-3 py-2 border-r border-orange-300"></td>
                     <td className="px-3 py-2 border-r border-orange-300"></td>
                     <td className="px-3 py-2 text-center border-r border-orange-300">TỔNG CỘNG</td>
-                    <td className="px-3 py-2 text-right border-r border-orange-300">{summary.reduce((s, r) => s + r.count, 0).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-right border-r border-orange-300">{summary.reduce((s, r) => s + (calculationMode === 'invoice' ? r.count : r.customerCount), 0).toLocaleString()}</td>
                     <td className="px-3 py-2 text-right border-r border-orange-300">{formatCurrency(summary.reduce((s, r) => s + r.total, 0))}</td>
                     <td className="px-3 py-2 text-right">100%</td>
                   </tr>

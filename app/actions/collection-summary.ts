@@ -5,6 +5,7 @@ import { executeSqlQuery } from '@/lib/soap'
 export interface CollectionSummary {
   bank: string
   count: number
+  customerCount: number
   total: number
 }
 
@@ -25,7 +26,11 @@ export interface CollectionDetail {
 export async function getCollectionSummary(startDate: string, endDate: string): Promise<CollectionSummary[]> {
   try {
     const query = `
-      SELECT MaNH, TThu 
+      SELECT 
+        MaNH, 
+        TThu, 
+        DBo, 
+        CONVERT(varchar(16), NgayThanhToan, 120) as NgayThanhToanPhut
       FROM BGW_HD
       WHERE CAST(NgayThanhToan AS DATE) BETWEEN '${startDate}' AND '${endDate}'
         AND MaNH IS NOT NULL AND LTRIM(RTRIM(MaNH)) <> ''
@@ -35,23 +40,30 @@ export async function getCollectionSummary(startDate: string, endDate: string): 
     if (!result || !Array.isArray(result)) return []
 
     // Group by bank
-    const bankMap = new Map<string, { count: number; total: number }>()
+    const bankMap = new Map<string, { count: number; total: number; uniqueCustomers: Set<string> }>()
     result.forEach((row: any) => {
       const bank = String(row.MaNH || '').trim()
       const amount = parseFloat(row.TThu || 0)
+      const dbo = String(row.DBo || '').trim()
+      const timeStr = String(row.NgayThanhToanPhut || '').trim()
+      const uniqueKey = `${dbo}_${timeStr}`
       
       if (!bankMap.has(bank)) {
-        bankMap.set(bank, { count: 0, total: 0 })
+        bankMap.set(bank, { count: 0, total: 0, uniqueCustomers: new Set() })
       }
       const entry = bankMap.get(bank)!
       entry.count += 1
       entry.total += amount
+      if (dbo) {
+         entry.uniqueCustomers.add(uniqueKey)
+      }
     })
 
     const summary = Array.from(bankMap.entries())
       .map(([bank, stats]) => ({
         bank,
         count: stats.count,
+        customerCount: stats.uniqueCustomers.size,
         total: stats.total
       }))
       .sort((a, b) => a.bank.localeCompare(b.bank))
