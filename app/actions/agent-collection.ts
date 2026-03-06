@@ -7,10 +7,11 @@ const BANK_DICT: Record<string, string> = {
     '0': 'AGRIBANK', 'A': 'ACB', 'Ai': 'AIRPAY', 'B': 'BIDV', 'BP': 'AGRIBANK',
     'D': 'DONGA', 'Da': 'DONGA', 'E': 'EXIMBANK', 'K': 'KHO BAC', 'M': 'MOMO',
     'OC': 'OCEANBANK', 'P': 'PAYOO', 'Pv': 'PAYOO', 'Pd': 'PAYOO', 'Q': 'QUẦY',
-    'V': 'VIETTEL', 'VC': 'VIETCOMBANK', 'VT': 'VIETTIN', 'Vn': 'VNPAY', 'Z': 'ZALOPAY'
+    'V': 'VIETTEL', 'VC': 'VIETCOMBANK', 'VT': 'VIETTIN', 'Vn': 'VNPAY', 'Z': 'ZALOPAY',
+    'H': '0 tiền'
 }
 // Regex pattern to identify bank codes from SoBK
-const BANK_PATTERN = /Ai|Z|Pv|VT|VC|Vn|Pd|Da|E|^A|BP|V|^M|B|D|Q|P|K|OC|SG|B/
+const BANK_PATTERN = /Ai|Z|Pv|VT|VC|Vn|Pd|Da|E|^A|BP|V|^M|B|D|Q|P|K|OC|SG|B|H/
 
 export interface AgentCollectionRow {
     NganHang: string
@@ -35,7 +36,7 @@ export async function getAgentCollectionData(startDate: string, endDate: string)
         const query = `
             SELECT 
                 SoBK, 
-                (ISNULL(Giaban, 0) + ISNULL(Thue, 0) + ISNULL(Phi, 0) + ISNULL(ThueDVTN, 0)) AS TienBT
+                ISNULL(Giaban, 0) AS TienBT
             FROM ThuUNC
             WHERE CAST(NgayThu AS DATE) BETWEEN '${startDate}' AND '${endDate}'
         `
