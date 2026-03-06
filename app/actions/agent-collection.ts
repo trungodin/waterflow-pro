@@ -111,10 +111,10 @@ export async function getOutstandingAnalysisData(): Promise<OutstandingAnalysis 
 
         const query = `
             SELECT
-                SUM(CASE WHEN NAM < ${currentYear} THEN TONGCONG_BD ELSE 0 END) AS TonNamCu,
-                SUM(CASE WHEN NAM = ${currentYear} AND KY < ${currentPeriod} THEN TONGCONG_BD ELSE 0 END) AS TonLuyKeNamHienTai,
-                SUM(CASE WHEN NAM = ${currentYear} AND KY = ${currentPeriod} THEN TONGCONG_BD ELSE 0 END) AS TonKyHienTai,
-                SUM(TONGCONG_BD) AS TonTatCa
+                SUM(CASE WHEN NAM < ${currentYear} THEN ISNULL(GIABAN_BD, 0) ELSE 0 END) AS TonNamCu,
+                SUM(CASE WHEN NAM = ${currentYear} AND KY < ${currentPeriod} THEN ISNULL(GIABAN_BD, 0) ELSE 0 END) AS TonLuyKeNamHienTai,
+                SUM(CASE WHEN NAM = ${currentYear} AND KY = ${currentPeriod} THEN ISNULL(GIABAN_BD, 0) ELSE 0 END) AS TonKyHienTai,
+                SUM(ISNULL(GIABAN_BD, 0)) AS TonTatCa
             FROM HoaDon
             WHERE NGAYGIAI IS NULL
         `
