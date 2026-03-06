@@ -16,7 +16,9 @@ import {
 } from "recharts";
 import {
   getYearlyRevenue,
+  getYearlyRevenueLuyKe,
   getMonthlyRevenue,
+  getMonthlyRevenueLuyKe,
   getDailyRevenue,
   YearlyRevenue,
   MonthlyRevenue,
@@ -77,6 +79,12 @@ export default function RevenueAnalysis() {
     cached?.state.activeTab ?? "year",
   );
 
+  // Monthly calculation mode
+  const [monthlyMode, setMonthlyMode] = useState<'duong-nien' | 'luy-ke'>('duong-nien')
+
+  // Yearly calculation mode
+  const [yearlyMode, setYearlyMode] = useState<'duong-nien' | 'luy-ke'>('duong-nien')
+
   // Sync state to cache
   useEffect(() => {
     setRevenueCache({
@@ -99,10 +107,13 @@ export default function RevenueAnalysis() {
 
   // --- HANDLERS ---
 
-  const handleRunAnalysis = async () => {
+  const handleRunAnalysis = async (mode?: 'duong-nien' | 'luy-ke') => {
+    const resolvedMode = mode ?? yearlyMode
     setLoadingYearly(true);
     try {
-      const data = await getYearlyRevenue(startYear, endYear, dateUntil);
+      const data = resolvedMode === 'luy-ke'
+        ? await getYearlyRevenueLuyKe(startYear, endYear, dateUntil)
+        : await getYearlyRevenue(startYear, endYear, dateUntil);
       setYearlyData(data);
       // Reset lower levels
       setMonthlyData([]);
@@ -116,12 +127,20 @@ export default function RevenueAnalysis() {
     }
   };
 
-  const handleSelectYear = async (year: number) => {
+  const handleSwitchYearlyMode = async (newMode: 'duong-nien' | 'luy-ke') => {
+    setYearlyMode(newMode)
+    await handleRunAnalysis(newMode)
+  }
+
+  const handleSelectYear = async (year: number, mode?: 'duong-nien' | 'luy-ke') => {
+    const resolvedMode = mode ?? monthlyMode
     setSelectedYear(year);
     setActiveTab("month");
     setLoadingMonthly(true);
     try {
-      const data = await getMonthlyRevenue(year);
+      const data = resolvedMode === 'luy-ke'
+        ? await getMonthlyRevenueLuyKe(year)
+        : await getMonthlyRevenue(year);
       setMonthlyData(data);
       // Reset daily
       setDailyData([]);
@@ -132,6 +151,24 @@ export default function RevenueAnalysis() {
       setLoadingMonthly(false);
     }
   };
+
+  const handleSwitchMonthlyMode = async (newMode: 'duong-nien' | 'luy-ke') => {
+    setMonthlyMode(newMode)
+    if (selectedYear) {
+      setLoadingMonthly(true)
+      try {
+        const data = newMode === 'luy-ke'
+          ? await getMonthlyRevenueLuyKe(selectedYear)
+          : await getMonthlyRevenue(selectedYear)
+        setMonthlyData(data)
+        setDailyData([])
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoadingMonthly(false)
+      }
+    }
+  }
 
   const handleSelectKy = async (ky: number) => {
     if (!selectedYear) return;
@@ -154,6 +191,16 @@ export default function RevenueAnalysis() {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const chuanThu = payload.find((p: any) =>
+        p.dataKey === 'TongDoanhThuKy' || p.dataKey === 'TongDoanhThu'
+      )?.value
+      const thucThu = payload.find((p: any) =>
+        p.dataKey === 'TongThucThuThang' || p.dataKey === 'TongThucThu'
+      )?.value
+      const phanTram = chuanThu && chuanThu > 0
+        ? ((thucThu / chuanThu) * 100).toFixed(2)
+        : null
+
       return (
         <div className="bg-white p-3 border-2 border-gray-700 shadow-lg rounded text-sm font-semibold text-gray-900">
           <p className="font-bold mb-2 border-b border-gray-200 pb-1">
@@ -185,6 +232,12 @@ export default function RevenueAnalysis() {
               </p>
             );
           })}
+          {phanTram && (
+            <p className="flex justify-between gap-4 text-amber-600 font-bold border-t border-gray-200 mt-1 pt-1">
+              <span>% Đạt:</span>
+              <span>{phanTram}%</span>
+            </p>
+          )}
         </div>
       );
     }
@@ -229,7 +282,7 @@ export default function RevenueAnalysis() {
           />
         </div>
         <button
-          onClick={handleRunAnalysis}
+          onClick={() => handleRunAnalysis()}
           disabled={loadingYearly}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 font-medium"
         >
@@ -242,31 +295,28 @@ export default function RevenueAnalysis() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab("year")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "year"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "year"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             📊 Theo Năm
           </button>
           <button
             onClick={() => setActiveTab("month")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "month"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "month"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             📅 Theo Kỳ {selectedYear ? `(${selectedYear})` : ""}
           </button>
           <button
             onClick={() => setActiveTab("day")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "day"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "day"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             🗓️ Theo Ngày{" "}
             {selectedKy && selectedYearForDaily
@@ -281,6 +331,31 @@ export default function RevenueAnalysis() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Table */}
           <div className="overflow-x-auto border border-gray-200 rounded-lg">
+            {/* Yearly mode toggle */}
+            <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
+              <span className="text-sm font-bold text-gray-700">Giai đoạn {startYear} – {endYear}</span>
+              <div className="inline-flex bg-gray-200/60 rounded-lg p-0.5 border border-gray-300/50">
+                <button
+                  onClick={() => handleSwitchYearlyMode('duong-nien')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${yearlyMode === 'duong-nien'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-800'
+                    }`}
+                >
+                  Đương niên
+                </button>
+                <button
+                  onClick={() => handleSwitchYearlyMode('luy-ke')}
+                  disabled={loadingYearly}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${yearlyMode === 'luy-ke'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-gray-500 hover:text-gray-800'
+                    } disabled:opacity-50`}
+                >
+                  Lũy kế
+                </button>
+              </div>
+            </div>
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-blue-600 text-white select-none">
                 <tr>
@@ -402,6 +477,30 @@ export default function RevenueAnalysis() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Table */}
               <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
+                  <span className="text-sm font-bold text-gray-700">Năm {selectedYear}</span>
+                  {/* Đương niên / Lũy kế toggle */}
+                  <div className="inline-flex bg-gray-200/60 rounded-lg p-0.5 border border-gray-300/50">
+                    <button
+                      onClick={() => handleSwitchMonthlyMode('duong-nien')}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${monthlyMode === 'duong-nien'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-500 hover:text-gray-800'
+                        }`}
+                    >
+                      Đương niên
+                    </button>
+                    <button
+                      onClick={() => handleSwitchMonthlyMode('luy-ke')}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${monthlyMode === 'luy-ke'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-500 hover:text-gray-800'
+                        }`}
+                    >
+                      Lũy kế
+                    </button>
+                  </div>
+                </div>
                 <table className="min-w-full divide-y divide-gray-200 text-sm">
                   <thead className="bg-blue-600 text-white select-none">
                     <tr>
@@ -473,7 +572,7 @@ export default function RevenueAnalysis() {
 
               {/* Chart - Side by Side Bar for Months */}
               <div className="bg-white p-4 border border-gray-200 rounded-lg h-[400px]">
-                <h4 className="text-center font-bold mb-2">
+                <h4 className="text-center font-bold mb-2 text-gray-800">
                   Biểu đồ Kỳ - Năm {selectedYear}
                 </h4>
                 <ResponsiveContainer width="100%" height="100%">
@@ -495,12 +594,14 @@ export default function RevenueAnalysis() {
                     <Bar
                       dataKey="TongDoanhThuKy"
                       name="Chuẩn thu"
-                      fill="#8884d8"
+                      fill="#1d4ed8"
+                      radius={[4, 4, 0, 0]}
                     />
                     <Bar
                       dataKey="TongThucThuThang"
                       name="Thực thu"
-                      fill="#82ca9d"
+                      fill="#16a34a"
+                      radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>

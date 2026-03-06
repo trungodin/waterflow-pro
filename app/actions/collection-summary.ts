@@ -23,7 +23,7 @@ export interface CollectionDetail {
   soBK?: string
 }
 
-export async function getCollectionSummary(startDate: string, endDate: string): Promise<CollectionSummary[]> {
+export async function getCollectionSummary(startDate: string, endDate: string, thresholdSec: number = 60): Promise<CollectionSummary[]> {
   try {
     const query = `
       SELECT 
@@ -36,7 +36,7 @@ export async function getCollectionSummary(startDate: string, endDate: string): 
         AND MaNH IS NOT NULL AND LTRIM(RTRIM(MaNH)) <> ''
       ORDER BY NgayThanhToan ASC
     `
-    
+
     const result = await executeSqlQuery('f_Select_SQL_Nganhang', query)
     if (!result || !Array.isArray(result)) return []
 
@@ -48,32 +48,32 @@ export async function getCollectionSummary(startDate: string, endDate: string): 
       const dbo = String(row.DBo || '').trim()
       const timeStr = String(row.NgayThanhToanStr || '').trim().replace(' ', 'T')
       const timeMs = timeStr ? new Date(timeStr).getTime() : 0
-      
+
       if (!bankMap.has(bank)) {
         bankMap.set(bank, { count: 0, total: 0, customerClusters: new Map() })
       }
       const entry = bankMap.get(bank)!
       entry.count += 1
       entry.total += amount
-      
+
       if (dbo && timeMs > 0) {
         let clusters = entry.customerClusters.get(dbo)
         if (!clusters) {
-            clusters = []
-            entry.customerClusters.set(dbo, clusters)
+          clusters = []
+          entry.customerClusters.set(dbo, clusters)
         }
-        
+
         let merged = false
         for (let i = clusters.length - 1; i >= 0; i--) {
-            // Check if within 30 seconds
-            if (Math.abs(timeMs - clusters[i]) <= 30 * 1000) {
-                clusters[i] = Math.max(clusters[i], timeMs) // Extend cluster window
-                merged = true
-                break
-            }
+          // Check if within threshold seconds
+          if (Math.abs(timeMs - clusters[i]) <= thresholdSec * 1000) {
+            clusters[i] = Math.max(clusters[i], timeMs) // Extend cluster window
+            merged = true
+            break
+          }
         }
         if (!merged) {
-            clusters.push(timeMs)
+          clusters.push(timeMs)
         }
       }
     })
@@ -82,7 +82,7 @@ export async function getCollectionSummary(startDate: string, endDate: string): 
       .map(([bank, stats]) => {
         let customerCount = 0
         stats.customerClusters.forEach(clusters => {
-            customerCount += clusters.length
+          customerCount += clusters.length
         })
         return {
           bank,
@@ -111,7 +111,7 @@ export async function getCollectionDetails(
 
     // Build IN clause
     const bankList = banks.map(b => `'${b}'`).join(',')
-    
+
     const query = `
       SELECT 
         DBo, KyHD, NamHD, KHang, DChi1, DChi2, MaNH,

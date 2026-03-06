@@ -3,38 +3,38 @@
 import { executeSqlQuery } from '@/lib/soap'
 
 export interface YearlyRevenue {
-  Nam: number
-  TongDoanhThu: number
-  TongThucThu: number
-  TonThu: number
-  PhanTramDat: number
+    Nam: number
+    TongDoanhThu: number
+    TongThucThu: number
+    TonThu: number
+    PhanTramDat: number
 }
 
 export interface MonthlyRevenue {
-  Ky: number
-  TongDoanhThuKy: number
-  TongThucThuThang: number
-  TonThu: number
-  PhanTramDat: number
+    Ky: number
+    TongDoanhThuKy: number
+    TongThucThuThang: number
+    TonThu: number
+    PhanTramDat: number
 }
 
 export interface DailyRevenue {
-  NgayGiaiNgan: string // YYYY-MM-DD or ISO
-  SoLuongHoaDon: number
-  TongCongNgay: number
+    NgayGiaiNgan: string // YYYY-MM-DD or ISO
+    SoLuongHoaDon: number
+    TongCongNgay: number
 }
 
 // Helper to format date for SQL
 const formatDateForSQL = (date: Date) => {
-  return date.toISOString().split('T')[0] + ' 23:59:59'
+    return date.toISOString().split('T')[0] + ' 23:59:59'
 }
 
 export async function getYearlyRevenue(startYear: number, endYear: number, dateUntil: string): Promise<YearlyRevenue[]> {
-  try {
-    // Note: dateUntil is expected to be 'YYYY-MM-DD'
-    const endOfDayStr = `${dateUntil} 23:59:59`
+    try {
+        // Note: dateUntil is expected to be 'YYYY-MM-DD'
+        const endOfDayStr = `${dateUntil} 23:59:59`
 
-    const query = `
+        const query = `
       WITH TermA_CTE AS (
           SELECT 
               hd_a.NAM AS Nam_A, 
@@ -85,27 +85,105 @@ export async function getYearlyRevenue(startYear: number, endYear: number, dateU
       WHERE a.Nam_A IS NOT NULL ORDER BY a.Nam_A;
     `
 
-    const result = await executeSqlQuery('f_Select_SQL_Thutien', query)
-    
-    if (!result || !Array.isArray(result)) return []
+        const result = await executeSqlQuery('f_Select_SQL_Thutien', query)
 
-    return result.map((row: any) => {
-        const doanhThu = parseFloat(row.TongDoanhThu || 0)
-        const thucThu = parseFloat(row.TongThucThu || 0)
-        return {
-            Nam: parseInt(row.Nam),
-            TongDoanhThu: doanhThu,
-            TongThucThu: thucThu,
-            TonThu: doanhThu - thucThu,
-            PhanTramDat: doanhThu !== 0 ? (thucThu / doanhThu) * 100 : 0
-        }
-    })
+        if (!result || !Array.isArray(result)) return []
 
-  } catch (error) {
-    console.error('Error fetching yearly revenue:', error)
-    return []
-  }
+        return result.map((row: any) => {
+            const doanhThu = parseFloat(row.TongDoanhThu || 0)
+            const thucThu = parseFloat(row.TongThucThu || 0)
+            return {
+                Nam: parseInt(row.Nam),
+                TongDoanhThu: doanhThu,
+                TongThucThu: thucThu,
+                TonThu: doanhThu - thucThu,
+                PhanTramDat: doanhThu !== 0 ? (thucThu / doanhThu) * 100 : 0
+            }
+        })
+
+    } catch (error) {
+        console.error('Error fetching yearly revenue:', error)
+        return []
+    }
 }
+
+// Lũy kế: Tính thực thu theo NAM của hóa đơn, KHÔNG ràng buộc năm giải ngân = năm hóa đơn
+// Gom tất cả tiền đã thu được cho hóa đơn thuộc năm X, bất kể trả năm nào
+export async function getYearlyRevenueLuyKe(startYear: number, endYear: number, dateUntil: string): Promise<YearlyRevenue[]> {
+    try {
+        const endOfDayStr = `${dateUntil} 23:59:59`
+
+        const query = `
+      WITH TermA_CTE AS (
+          SELECT 
+              hd_a.NAM AS Nam_A, 
+              SUM(hd_a.GIABAN_BD) AS Sum_A_giaban_bd 
+          FROM HoaDon hd_a 
+          WHERE hd_a.NAM >= ${startYear} AND hd_a.NAM <= ${endYear}
+          AND (
+              hd_a.NV_GIAI <> 'NKD' 
+              OR YEAR(hd_a.NGAYGIAI) <> hd_a.NAM 
+              OR hd_a.NGAYGIAI IS NULL
+          )
+          AND hd_a.GIABAN_BD IS NOT NULL 
+          GROUP BY hd_a.NAM
+      ),
+      TermB_CTE AS (
+          SELECT 
+              hd_b.NAM AS Nam_B, 
+              SUM(hd_b.GIABAN_BD - hd_b.GIABAN) AS Sum_B_adjustment 
+          FROM HoaDon hd_b 
+          WHERE hd_b.NAM >= ${startYear} AND hd_b.NAM <= ${endYear} 
+          AND hd_b.NGAYGIAI IS NOT NULL 
+          AND hd_b.NGAYGIAI <= '${endOfDayStr}' 
+          AND hd_b.GIABAN_BD IS NOT NULL 
+          AND hd_b.GIABAN IS NOT NULL 
+          GROUP BY hd_b.NAM
+      ),
+      ThucThu_CTE AS (
+          SELECT 
+              t.NAM AS Nam_TT, 
+              SUM(t.GIABAN) AS ActualThucThu 
+          FROM HoaDon t 
+          WHERE t.NAM >= ${startYear} AND t.NAM <= ${endYear} 
+          AND t.NGAYGIAI IS NOT NULL 
+          AND t.NGAYGIAI <= '${endOfDayStr}' 
+          AND (t.NV_GIAI <> 'NKD' OR t.NV_GIAI IS NULL) 
+          AND t.GIABAN IS NOT NULL 
+          GROUP BY t.NAM
+      )
+      SELECT 
+          a.Nam_A AS Nam, 
+          (ISNULL(a.Sum_A_giaban_bd, 0) - ISNULL(b.Sum_B_adjustment, 0)) AS TongDoanhThu, 
+          ISNULL(tt.ActualThucThu, 0) AS TongThucThu 
+      FROM TermA_CTE a 
+      LEFT JOIN ThucThu_CTE tt ON a.Nam_A = tt.Nam_TT 
+      LEFT JOIN TermB_CTE b ON a.Nam_A = b.Nam_B 
+      WHERE a.Nam_A IS NOT NULL ORDER BY a.Nam_A;
+    `
+
+        const result = await executeSqlQuery('f_Select_SQL_Thutien', query)
+
+        if (!result || !Array.isArray(result)) return []
+
+        return result.map((row: any) => {
+            const doanhThu = parseFloat(row.TongDoanhThu || 0)
+            const thucThu = parseFloat(row.TongThucThu || 0)
+            return {
+                Nam: parseInt(row.Nam),
+                TongDoanhThu: doanhThu,
+                TongThucThu: thucThu,
+                TonThu: doanhThu - thucThu,
+                PhanTramDat: doanhThu !== 0 ? (thucThu / doanhThu) * 100 : 0
+            }
+        })
+
+    } catch (error) {
+        console.error('Error fetching yearly revenue (luy ke):', error)
+        return []
+    }
+}
+
 
 export async function getMonthlyRevenue(year: number): Promise<MonthlyRevenue[]> {
     try {
@@ -134,7 +212,7 @@ export async function getMonthlyRevenue(year: number): Promise<MonthlyRevenue[]>
             WHERE COALESCE(dtk.KyDT, ttth.ThangTT) IS NOT NULL 
             ORDER BY Ky;
         `
-        
+
         const result = await executeSqlQuery('f_Select_SQL_Thutien', query)
 
         if (!result || !Array.isArray(result)) return []
@@ -156,6 +234,58 @@ export async function getMonthlyRevenue(year: number): Promise<MonthlyRevenue[]>
         return []
     }
 }
+
+// Lũy kế: Tính thực thu theo KỲ của hóa đơn (không ràng buộc tháng giải ngân = kỳ)
+// Nghĩa là: gom tất cả tiền đã thu được cho hóa đơn thuộc kỳ X, bất kể trả lúc nào
+export async function getMonthlyRevenueLuyKe(year: number): Promise<MonthlyRevenue[]> {
+    try {
+        const query = `
+            WITH DoanhThuTheoKy AS (
+                SELECT KY AS KyDT, SUM(GIABAN_BD) AS DoanhThuKyCalc 
+                FROM HoaDon 
+                WHERE NAM = ${year} AND KY IS NOT NULL AND GIABAN_BD IS NOT NULL 
+                GROUP BY KY
+            ), 
+            ThucThuTheoKy AS (
+                SELECT KY AS KyTT, SUM(GIABAN) AS ThucThuKyCalc 
+                FROM HoaDon 
+                WHERE NAM = ${year}
+                AND NGAYGIAI IS NOT NULL
+                AND GIABAN IS NOT NULL 
+                GROUP BY KY
+            )
+            SELECT 
+                COALESCE(dtk.KyDT, ttk.KyTT) AS Ky, 
+                ISNULL(dtk.DoanhThuKyCalc, 0) AS TongDoanhThuKy, 
+                ISNULL(ttk.ThucThuKyCalc, 0) AS TongThucThuThang 
+            FROM DoanhThuTheoKy dtk 
+            FULL OUTER JOIN ThucThuTheoKy ttk ON dtk.KyDT = ttk.KyTT 
+            WHERE COALESCE(dtk.KyDT, ttk.KyTT) IS NOT NULL 
+            ORDER BY Ky;
+        `
+
+        const result = await executeSqlQuery('f_Select_SQL_Thutien', query)
+
+        if (!result || !Array.isArray(result)) return []
+
+        return result.map((row: any) => {
+            const doanhThu = parseFloat(row.TongDoanhThuKy || 0)
+            const thucThu = parseFloat(row.TongThucThuThang || 0)
+            return {
+                Ky: parseInt(row.Ky),
+                TongDoanhThuKy: doanhThu,
+                TongThucThuThang: thucThu,
+                TonThu: doanhThu - thucThu,
+                PhanTramDat: doanhThu !== 0 ? (thucThu / doanhThu) * 100 : 0
+            }
+        })
+
+    } catch (error) {
+        console.error('Error fetching monthly revenue (luy ke):', error)
+        return []
+    }
+}
+
 
 export async function getDailyRevenue(year: number, ky: number): Promise<DailyRevenue[]> {
     try {

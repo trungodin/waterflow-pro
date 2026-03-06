@@ -15,7 +15,7 @@ import { getOnOffData, getDriveImageLink } from '@/lib/googlesheets'
 import LatenessAnalysisMain from '@/components/lateness-analysis/LatenessAnalysisMain'
 import DebtAnalysisMain from '@/components/debt-analysis/DebtAnalysisMain'
 import WeeklyReportMain from '@/components/weekly-report/WeeklyReportMain'
-import { getDmnCache, setDmnCache } from '@/lib/dmn-cache'
+import { getDmnCache, setDmnCache, getDmnLocalCache, setDmnLocalCache } from '@/lib/dmn-cache'
 import AddCustomerModal from '@/components/AddCustomerModal'
 import MoNuocTab from '@/components/MoNuocTab'
 import ThongBaoTab from '@/components/ThongBaoTab'
@@ -160,6 +160,7 @@ export default function PaymentsPage() {
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('ALL')
   const [filterDate, setFilterDate] = useState<string>('')
+  const [isBackgroundRefreshing, setIsBackgroundRefreshing] = useState(false)
 
   // State for Modal
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
@@ -171,20 +172,24 @@ export default function PaymentsPage() {
   }
 
   const fetchData = async (forceRefresh = false) => {
-    setLoading(true)
+    // Check if we already have data to show (stale data from localStorage)
+    const hasStaleData = dmnData.length > 0
+
+    if (hasStaleData && !forceRefresh) {
+      // Silent background refresh — no loading spinner
+      setIsBackgroundRefreshing(true)
+    } else {
+      setLoading(true)
+    }
+
     try {
-      // 1. Try to load from cache first if not forced
+      // 1. Try in-memory cache (15 min) if not forced
       if (!forceRefresh) {
         const cached = getDmnCache()
         if (cached) {
           setDmnData(cached)
-          // If we have filters active (which is unlikely on fresh tab load but possible if navigating back), 
-          // the separate useEffect [dmnData] will handle setFilteredDmnData logic, 
-          // OR we can explicitly set it here if the useEffect filter logic depends on state change.
-          // Let's set it here to be sure for initial render.
           setFilteredDmnData(cached)
           setLastRefreshed(new Date())
-          setLoading(false)
           return
         }
       }
@@ -192,17 +197,21 @@ export default function PaymentsPage() {
       // 2. Fetch from API
       const data = await getOnOffData()
 
-      // 3. Save to Cache
+      // 3. Save to both cache layers
       setDmnCache(data)
+      setDmnLocalCache(data)
 
       setDmnData(data)
       setFilteredDmnData(data)
       setLastRefreshed(new Date())
     } catch (error) {
       console.error('Error fetching ON_OFF data:', error)
-      alert('Có lỗi khi tải dữ liệu từ Google Sheets')
+      if (!hasStaleData) {
+        alert('Có lỗi khi tải dữ liệu từ Google Sheets')
+      }
     } finally {
       setLoading(false)
+      setIsBackgroundRefreshing(false)
     }
   }
 
@@ -253,16 +262,20 @@ export default function PaymentsPage() {
 
 
 
-  // Initial fetch when tab is active
+  // On mount: load localStorage instantly (stale-while-revalidate)
+  useEffect(() => {
+    const localData = getDmnLocalCache()
+    if (localData && localData.length > 0) {
+      setDmnData(localData)
+      setFilteredDmnData(localData)
+    }
+  }, [])
+
+  // When tab becomes active: trigger background refresh
   useEffect(() => {
     if (activeTab === 'tra_cuu_dmn') {
-      const cached = getDmnCache()
-      // If we have cached data, use it immediately without loading spinner if possible, 
-      // or just call fetchData(false) which handles it.
-      // But if dmnData is already populated (from React state preservation), we don't need to do anything.
-      if (dmnData.length === 0) {
-        fetchData(false)
-      }
+      // Always refresh in background — stale data already shown from localStorage
+      fetchData(false)
     }
   }, [activeTab])
 
@@ -456,8 +469,8 @@ export default function PaymentsPage() {
               <div className="flex gap-4 border-b border-gray-200 pb-4 mb-6 overflow-x-auto">
                 {[
                   { id: 'phan_tich_doanh_thu', label: 'Phân tích Doanh thu' },
-                  { id: 'phan_tich_thu_ho', label: 'Đăng ngân ngày' },
-                  { id: 'tong_hop_thu_ho', label: 'Tổng hợp Ngân hàng Thu hộ' },
+                  { id: 'phan_tich_thu_ho', label: 'Đăng ngân' },
+                  { id: 'tong_hop_thu_ho', label: 'Ngân hàng thu hộ' },
                   { id: 'thong_ke_nhom', label: 'Thống kê theo Nhóm' }
                 ].map(tab => (
                   <button
@@ -606,7 +619,7 @@ export default function PaymentsPage() {
 
                     <button
                       onClick={() => fetchData(true)}
-                      disabled={loading}
+                      disabled={loading || isBackgroundRefreshing}
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-bold whitespace-nowrap disabled:opacity-70 flex items-center gap-2 shadow-[0_3px_0_rgb(29,78,216)] active:shadow-none active:translate-y-[3px] transition-all"
                     >
                       {loading ? 'Đang tải...' : '🔄 Làm mới'}
@@ -621,7 +634,15 @@ export default function PaymentsPage() {
                     ➕ Thêm KH
                   </button>
                   <div className="text-sm text-gray-500 text-right">
-                    {lastRefreshed && <span>Cập nhật: {lastRefreshed.toLocaleTimeString()}</span>}
+                    {isBackgroundRefreshing && (
+                      <span className="flex items-center gap-1 text-blue-500">
+                        <span className="inline-block w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></span>
+                        Đang cập nhật...
+                      </span>
+                    )}
+                    {!isBackgroundRefreshing && lastRefreshed && (
+                      <span>Cập nhật: {lastRefreshed.toLocaleTimeString()}</span>
+                    )}
                   </div>
                 </div>
               </div>

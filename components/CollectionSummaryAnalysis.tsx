@@ -7,24 +7,27 @@ export default function CollectionSummaryAnalysis() {
   const today = new Date().toISOString().split('T')[0]
   const [startDate, setStartDate] = useState(today)
   const [endDate, setEndDate] = useState(today)
-  
+
   const [summary, setSummary] = useState<CollectionSummary[]>([])
   const [selectedBanks, setSelectedBanks] = useState<string[]>([])
   const [details, setDetails] = useState<CollectionDetail[]>([])
-  
+
   const [loading, setLoading] = useState(false)
   const [loadingDetails, setLoadingDetails] = useState(false)
-  
+
   // Toggle mode
   const [calculationMode, setCalculationMode] = useState<'invoice' | 'customer'>('invoice')
 
   // Sort State
   const [sortConfig, setSortConfig] = useState<{ key: 'bank' | 'count' | 'total'; direction: 'asc' | 'desc' }>({ key: 'bank', direction: 'asc' })
 
+  // Threshold for grouping transactions by customer (in seconds)
+  const [thresholdSec, setThresholdSec] = useState<number>(60)
+
   const fetchSummary = async () => {
     setLoading(true)
     try {
-      const result = await getCollectionSummary(startDate, endDate)
+      const result = await getCollectionSummary(startDate, endDate, thresholdSec)
       setSummary(result)
       setSelectedBanks([])
       setDetails([])
@@ -67,53 +70,53 @@ export default function CollectionSummaryAnalysis() {
   // Pre-process details based on calculationMode
   const processedDetails = useMemo(() => {
     if (calculationMode === 'invoice') return details;
-    
+
     // In 'customer' mode: Group by danhBa with a +/- 1 minute window
     // First, sort details by time
     const sortedDetails = [...details].sort((a, b) => {
-        const t1 = new Date(a.ngayThanhToan).getTime();
-        const t2 = new Date(b.ngayThanhToan).getTime();
-        return t1 - t2;
+      const t1 = new Date(a.ngayThanhToan).getTime();
+      const t2 = new Date(b.ngayThanhToan).getTime();
+      return t1 - t2;
     });
 
     const groups: any[] = [];
-    
+
     for (const d of sortedDetails) {
-        const dTime = new Date(d.ngayThanhToan).getTime();
-        
-        // Find existing group for the same user within +/- 30 seconds
-        let foundGroup = null;
-        for (let i = groups.length - 1; i >= 0; i--) {
-            if (groups[i].danhBa === d.danhBa) {
-                if (Math.abs(dTime - groups[i].lastTimeMs) <= 30 * 1000) {
-                    foundGroup = groups[i];
-                    break;
-                }
-            }
+      const dTime = new Date(d.ngayThanhToan).getTime();
+
+      // Find existing group for the same user within +/- 30 seconds
+      let foundGroup = null;
+      for (let i = groups.length - 1; i >= 0; i--) {
+        if (groups[i].danhBa === d.danhBa) {
+          if (Math.abs(dTime - groups[i].lastTimeMs) <= thresholdSec * 1000) {
+            foundGroup = groups[i];
+            break;
+          }
         }
-        
-        if (foundGroup) {
-            foundGroup.soTien += d.soTien;
-            foundGroup.lastTimeMs = Math.max(foundGroup.lastTimeMs, dTime); // extend the sliding window
-            
-            // combine strings without duplicates
-            if (!String(foundGroup.ky).includes(String(d.ky))) foundGroup.ky += `, ${d.ky}`;
-            if (!String(foundGroup.nam).includes(String(d.nam))) foundGroup.nam += `, ${d.nam}`;
-            if (d.soHoaDon && !foundGroup.soHoaDon.includes(d.soHoaDon)) foundGroup.soHoaDon += `, ${d.soHoaDon}`;
-            if (d.soBK && !foundGroup.soBK.includes(d.soBK)) foundGroup.soBK += foundGroup.soBK ? `, ${d.soBK}` : d.soBK;
-        } else {
-            groups.push({
-                ...d,
-                ky: String(d.ky),
-                nam: String(d.nam),
-                soHoaDon: d.soHoaDon || '',
-                soBK: d.soBK || '',
-                lastTimeMs: dTime // track for calculating time diff
-            });
-        }
+      }
+
+      if (foundGroup) {
+        foundGroup.soTien += d.soTien;
+        foundGroup.lastTimeMs = Math.max(foundGroup.lastTimeMs, dTime); // extend the sliding window
+
+        // combine strings without duplicates
+        if (!String(foundGroup.ky).includes(String(d.ky))) foundGroup.ky += `, ${d.ky}`;
+        if (!String(foundGroup.nam).includes(String(d.nam))) foundGroup.nam += `, ${d.nam}`;
+        if (d.soHoaDon && !foundGroup.soHoaDon.includes(d.soHoaDon)) foundGroup.soHoaDon += `, ${d.soHoaDon}`;
+        if (d.soBK && !foundGroup.soBK.includes(d.soBK)) foundGroup.soBK += foundGroup.soBK ? `, ${d.soBK}` : d.soBK;
+      } else {
+        groups.push({
+          ...d,
+          ky: String(d.ky),
+          nam: String(d.nam),
+          soHoaDon: d.soHoaDon || '',
+          soBK: d.soBK || '',
+          lastTimeMs: dTime // track for calculating time diff
+        });
+      }
     }
     return groups;
-  }, [details, calculationMode]);
+  }, [details, calculationMode, thresholdSec]);
 
   const exportToExcel = () => {
     if (processedDetails.length === 0) return
@@ -145,7 +148,7 @@ export default function CollectionSummaryAnalysis() {
     const headers = Object.keys(exportData[0])
     const csvContent = [
       headers.join(','),
-      ...exportData.map(row => 
+      ...exportData.map(row =>
         headers.map(h => {
           const val = row[h as keyof typeof row]
           return typeof val === 'string' && val.includes(',') ? `"${val}"` : val
@@ -205,15 +208,15 @@ export default function CollectionSummaryAnalysis() {
 
   // Render Sort Icon
   const SortIcon = ({ colKey }: { colKey: 'bank' | 'count' | 'total' }) => {
-     if (sortConfig.key !== colKey) return <span className="text-blue-300 ml-1 opacity-50">↕</span>
-     return <span className="text-white ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+    if (sortConfig.key !== colKey) return <span className="text-blue-300 ml-1 opacity-50">↕</span>
+    return <span className="text-white ml-1">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
   }
 
   // Calculate sorted data
   const sortedSummary = [...summary].sort((a, b) => {
     let valA = a[sortConfig.key] as string | number;
     let valB = b[sortConfig.key] as string | number;
-    
+
     if (sortConfig.key === 'count') {
       valA = calculationMode === 'invoice' ? a.count : a.customerCount;
       valB = calculationMode === 'invoice' ? b.count : b.customerCount;
@@ -248,6 +251,26 @@ export default function CollectionSummaryAnalysis() {
             className="px-3 py-2 border rounded-md text-gray-900 font-medium focus:ring-2 focus:ring-blue-500"
           />
         </div>
+
+        {/* Threshold seconds input */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            ⏱ Ngưỡng gom KH
+            <span className="ml-1 text-xs text-gray-400 font-normal">(giây)</span>
+          </label>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="number"
+              min={5}
+              max={300}
+              step={5}
+              value={thresholdSec}
+              onChange={e => setThresholdSec(Math.max(5, parseInt(e.target.value) || 30))}
+              className="w-20 px-3 py-2 border rounded-md text-gray-900 font-bold text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <span className="text-xs text-gray-500 font-medium">s</span>
+          </div>
+        </div>
         <button
           onClick={fetchSummary}
           disabled={loading}
@@ -261,7 +284,7 @@ export default function CollectionSummaryAnalysis() {
 
       {/* 2-column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        
+
         {/* Left: Summary Table */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
@@ -272,21 +295,19 @@ export default function CollectionSummaryAnalysis() {
               <div className="inline-flex bg-gray-200/60 rounded-lg p-0.5 border border-gray-300/50">
                 <button
                   onClick={() => setCalculationMode('invoice')}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
-                    calculationMode === 'invoice' 
-                      ? 'bg-white text-blue-700 shadow-sm border border-gray-200' 
-                      : 'text-gray-500 hover:text-gray-800'
-                  }`}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${calculationMode === 'invoice'
+                    ? 'bg-white text-blue-700 shadow-sm border border-gray-200'
+                    : 'text-gray-500 hover:text-gray-800'
+                    }`}
                 >
                   Theo Hóa Đơn
                 </button>
                 <button
                   onClick={() => setCalculationMode('customer')}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
-                    calculationMode === 'customer' 
-                      ? 'bg-white text-blue-700 shadow-sm border border-gray-200' 
-                      : 'text-gray-500 hover:text-gray-800'
-                  }`}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${calculationMode === 'customer'
+                    ? 'bg-white text-blue-700 shadow-sm border border-gray-200'
+                    : 'text-gray-500 hover:text-gray-800'
+                    }`}
                 >
                   Theo Khách Hàng
                 </button>
@@ -316,27 +337,27 @@ export default function CollectionSummaryAnalysis() {
             <table className="min-w-full divide-y divide-gray-200 text-sm">
               <thead className="bg-blue-600 text-white select-none">
                 <tr>
-                   <th className="px-3 py-3 w-8 text-center font-bold border-r border-blue-500"></th>
-                   <th className="px-3 py-3 w-12 text-center font-bold border-r border-blue-500">STT</th>
-                   <th 
-                        className="px-3 py-3 text-left font-bold border-r border-blue-500 cursor-pointer hover:bg-blue-700 transition"
-                        onClick={() => handleSort('bank')}
-                   >
-                       Mã NH <SortIcon colKey="bank" />
-                   </th>
-                   <th 
-                        className="px-3 py-3 text-right font-bold border-r border-blue-500 w-32 cursor-pointer hover:bg-blue-700 transition"
-                        onClick={() => handleSort('count')}
-                   >
-                       {calculationMode === 'invoice' ? 'Số HĐ' : 'Số KH'} <SortIcon colKey="count" />
-                   </th>
-                   <th 
-                        className="px-3 py-3 text-right font-bold border-r border-blue-500 cursor-pointer hover:bg-blue-700 transition"
-                        onClick={() => handleSort('total')}
-                   >
-                       Tổng thu <SortIcon colKey="total" />
-                   </th>
-                   <th className="px-3 py-3 text-right font-bold w-24">%</th>
+                  <th className="px-3 py-3 w-8 text-center font-bold border-r border-blue-500"></th>
+                  <th className="px-3 py-3 w-12 text-center font-bold border-r border-blue-500">STT</th>
+                  <th
+                    className="px-3 py-3 text-left font-bold border-r border-blue-500 cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort('bank')}
+                  >
+                    Mã NH <SortIcon colKey="bank" />
+                  </th>
+                  <th
+                    className="px-3 py-3 text-right font-bold border-r border-blue-500 w-32 cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort('count')}
+                  >
+                    {calculationMode === 'invoice' ? 'Số HĐ' : 'Số KH'} <SortIcon colKey="count" />
+                  </th>
+                  <th
+                    className="px-3 py-3 text-right font-bold border-r border-blue-500 cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort('total')}
+                  >
+                    Tổng thu <SortIcon colKey="total" />
+                  </th>
+                  <th className="px-3 py-3 text-right font-bold w-24">%</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -345,40 +366,40 @@ export default function CollectionSummaryAnalysis() {
                 ) : (
                   (() => {
                     const grandTotal = summary.reduce((s, r) => s + r.total, 0) || 1
-                    
-                    return sortedSummary
-                        .map((row, idx) => {
-                            const percent = (row.total / grandTotal) * 100
-                            return (
-                                <tr key={row.bank} className="hover:bg-gray-50 transition-colors">
-                                  <td className="px-3 py-2 text-center border-r border-gray-100">
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedBanks.includes(row.bank)}
-                                      onChange={() => toggleBank(row.bank)}
-                                      className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                                    />
-                                  </td>
-                                  <td className="px-3 py-2 text-center border-r border-gray-100 font-medium text-gray-500">{idx + 1}</td>
-                                  <td className="px-3 py-2 border-r border-gray-100 font-medium text-gray-900">{row.bank}</td>
-                                  
-                                  {/* Count Column - Orange Tint */}
-                                  <td className="px-3 py-2 text-right border-r border-gray-100 font-medium text-gray-900 bg-orange-50">
-                                      {(calculationMode === 'invoice' ? row.count : row.customerCount).toLocaleString()}
-                                  </td>
-                                  
-                                  {/* Total Column - Green Tint */}
-                                  <td className="px-3 py-2 text-right border-r border-gray-100 font-bold text-gray-900 bg-green-50">
-                                      {formatCurrency(row.total)}
-                                  </td>
 
-                                  {/* Percent Column - Amber Tint */}
-                                  <td className="px-3 py-2 text-right font-medium text-gray-900 bg-amber-50">
-                                      {percent.toFixed(2)}%
-                                  </td>
-                                </tr>
-                            )
-                        })
+                    return sortedSummary
+                      .map((row, idx) => {
+                        const percent = (row.total / grandTotal) * 100
+                        return (
+                          <tr key={row.bank} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-3 py-2 text-center border-r border-gray-100">
+                              <input
+                                type="checkbox"
+                                checked={selectedBanks.includes(row.bank)}
+                                onChange={() => toggleBank(row.bank)}
+                                className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                              />
+                            </td>
+                            <td className="px-3 py-2 text-center border-r border-gray-100 font-medium text-gray-500">{idx + 1}</td>
+                            <td className="px-3 py-2 border-r border-gray-100 font-medium text-gray-900">{row.bank}</td>
+
+                            {/* Count Column - Orange Tint */}
+                            <td className="px-3 py-2 text-right border-r border-gray-100 font-medium text-gray-900 bg-orange-50">
+                              {(calculationMode === 'invoice' ? row.count : row.customerCount).toLocaleString()}
+                            </td>
+
+                            {/* Total Column - Green Tint */}
+                            <td className="px-3 py-2 text-right border-r border-gray-100 font-bold text-gray-900 bg-green-50">
+                              {formatCurrency(row.total)}
+                            </td>
+
+                            {/* Percent Column - Amber Tint */}
+                            <td className="px-3 py-2 text-right font-medium text-gray-900 bg-amber-50">
+                              {percent.toFixed(2)}%
+                            </td>
+                          </tr>
+                        )
+                      })
                   })()
                 )}
               </tbody>
