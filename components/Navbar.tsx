@@ -40,9 +40,9 @@ export default function Navbar() {
   const handleSignOut = () => {
     // 1. Clear Local Storage
     if (typeof window !== 'undefined') {
-        localStorage.removeItem('waterflow_user_profile_v1')
-        // Force clear any supabase auth token from local storage if any (though SSR uses cookies)
-        localStorage.removeItem('sb-' + process.env.NEXT_PUBLIC_SUPABASE_REF_ID + '-auth-token')
+      localStorage.removeItem('waterflow_user_profile_v1')
+      // Force clear any supabase auth token from local storage if any (though SSR uses cookies)
+      localStorage.removeItem('sb-' + process.env.NEXT_PUBLIC_SUPABASE_REF_ID + '-auth-token')
     }
 
     // 2. Aggressively Clear Cookies (Crucial for Middleware)
@@ -50,16 +50,16 @@ export default function Navbar() {
     if (typeof document !== 'undefined') {
       const cookies = document.cookie.split(";")
       for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i]
-          const eqPos = cookie.indexOf("=")
-          const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
-          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
+        const cookie = cookies[i]
+        const eqPos = cookie.indexOf("=")
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
       }
     }
-    
+
     // 3. Fire and forget Supabase logout
     supabase.auth.signOut().catch(console.error)
-    
+
     // 4. Force hard reload to login page
     // Small delay to ensure cookie clearing takes effect in browser
     setTimeout(() => {
@@ -69,32 +69,32 @@ export default function Navbar() {
 
   const rawNavItems = [
     {
-      name: 'Dashboard', 
-      path: '/dashboard', 
+      name: 'Dashboard',
+      path: '/dashboard',
       permission: 'dashboard',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
       )
     },
     {
-      name: 'Tra cứu KH', 
-      path: '/customers/search', 
+      name: 'Tra cứu KH',
+      path: '/customers/search',
       permission: 'customer',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
       )
     },
     {
-      name: 'Đọc Số', 
-      path: '/readings', 
+      name: 'Đọc Số',
+      path: '/readings',
       permission: 'ghi',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
       )
     },
     {
-      name: 'Thu Tiền', 
-      path: '/payments', 
+      name: 'Thu Tiền',
+      path: '/payments',
       permission: 'payments',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
@@ -112,22 +112,30 @@ export default function Navbar() {
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
       )
     },
+    {
+      name: 'Gửi Mail & Cắt PDF',
+      path: '/admin/send-mail',
+      permission: 'users',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+      )
+    },
   ]
 
   // Filter nav items based on permissions
   const isLoading = permissions.loading && !forceShowMenu
-  
+
   const navItems = isLoading
     ? [] // Empty only during loading - prevents flash
     : !user // No authenticated user
-    ? rawNavItems.filter(item => item.permission === 'dashboard') // Show only dashboard if not logged in
-    : !userProfile // User logged in but no profile yet
-    ? rawNavItems.filter(item => item.permission === 'dashboard') // Show only dashboard while profile loads
-    : rawNavItems.filter(item => {
-        const canAccess = permissions.canAccessTab(item.permission as any)
-        console.log(`[Navbar] Tab: ${item.name}, Permission: ${item.permission}, Can Access: ${canAccess}, Role: ${userProfile?.role}`)
-        return canAccess
-      })
+      ? rawNavItems.filter(item => item.permission === 'dashboard') // Show only dashboard if not logged in
+      : !userProfile // User logged in but no profile yet
+        ? rawNavItems.filter(item => item.permission === 'dashboard') // Show only dashboard while profile loads
+        : rawNavItems.filter(item => {
+          const canAccess = permissions.canAccessTab(item.permission as any)
+          console.log(`[Navbar] Tab: ${item.name}, Permission: ${item.permission}, Can Access: ${canAccess}, Role: ${userProfile?.role}`)
+          return canAccess
+        })
 
   // Filter admin menu items
   const filteredAdminItems = !user || !userProfile
@@ -174,7 +182,7 @@ export default function Navbar() {
                   </Link>
                 )
               })}
-              
+
               {/* Admin Dropdown */}
               {hasAdminAccess && (
                 <div className="relative">
@@ -192,7 +200,7 @@ export default function Navbar() {
                     Admin
                     <svg className={`w-4 h-4 transition-transform ${adminDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                   </button>
-                  
+
                   {adminDropdownOpen && (
                     <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50">
                       {filteredAdminItems.map((item) => {
@@ -237,9 +245,9 @@ export default function Navbar() {
                     <div className="flex flex-col items-start">
                       <span className="text-xs font-bold text-slate-700 max-w-[140px] truncate">
                         {(() => {
-                        console.log('User Metadata:', user.user_metadata) 
-                        return userProfile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.display_name || user.email?.split('@')[0]
-                      })()}
+                          console.log('User Metadata:', user.user_metadata)
+                          return userProfile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.user_metadata?.display_name || user.email?.split('@')[0]
+                        })()}
                       </span>
                       <span className="text-[10px] text-slate-400 font-bold">
                         {userProfile ? getRoleInfo(userProfile.role).label : 'Thành viên'}
@@ -328,7 +336,7 @@ export default function Navbar() {
               {item.name}
             </Link>
           ))}
-          
+
           {/* Admin Items for Mobile */}
           {hasAdminAccess && (
             <>
